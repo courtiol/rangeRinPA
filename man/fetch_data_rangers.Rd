@@ -14,7 +14,11 @@ This function retrieves the data from a Google spreadsheet and format them
 }
 \examples{
 \dontrun{
-fetch_data_rangers()
+## Here is how we created the data stored in this package:
+data_rangers <- fetch_data_rangers()
+if (require(usethis)) {
+  usethis::use_data(data_rangers)
+}
 }
 
 }

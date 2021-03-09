@@ -7,7 +7,11 @@
 #'
 #' @examples
 #' \dontrun{
-#' fetch_data_rangers()
+#' ## Here is how we created the data stored in this package:
+#' data_rangers <- fetch_data_rangers()
+#' if (require(usethis)) {
+#'   usethis::use_data(data_rangers)
+#' }
 #' }
 #'
 fetch_data_rangers <- function() {
@@ -80,3 +84,15 @@ fetch_data_rangers <- function() {
 }
 
 globalVariables(c(".data", "where")) ## avoid note in R CMD check
+
+
+#' Ranger data
+#'
+#' This object contain the data about rangers and other staffs members working in protected areas.
+#'
+#' @seealso `fetch_data_rangers()` for the function used to create such a dataset
+#'
+#' @examples
+#' data_rangers
+#'
+"data_rangers"

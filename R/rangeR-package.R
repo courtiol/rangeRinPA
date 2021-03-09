@@ -20,7 +20,7 @@
 #' ## Loading the data ##
 #' ######################
 #'
-#' data_rangers <- fetch_data_rangers()
+#' # data_rangers <- fetch_data_rangers() # to download data instead of loading them
 #'
 #' if (require("skimr")) {
 #'   skim(data_rangers)
