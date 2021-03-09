@@ -32,10 +32,8 @@ remotes::install_github("courtiol/rangeR")
 ```
 ## Example
 
-```{r example, eval = FALSE}
+```{r example}
 library(rangeR)
-
-data_rangers <- fetch_data_rangers()
 
 if (require("skimr")) {
   skim(data_rangers)
