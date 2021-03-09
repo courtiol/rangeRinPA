@@ -12,8 +12,11 @@ Description: What the package does (one paragraph).
 License: CC BY 4.0 + file LICENSE
 Imports:
     dplyr,
+    ggplot2,
+    sf,
     googlesheets4,
-    magrittr
+    magrittr,
+    rnaturalearth
 Suggests:
     skimr,
     testthat (>= 3.0.0),

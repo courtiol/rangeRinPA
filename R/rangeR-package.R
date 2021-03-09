@@ -26,4 +26,38 @@
 #'   skim(data_rangers)
 #' }
 #'
+#' library(rnaturalearth)
+#' library(dplyr)
+#' library(ggplot2)
+#' library(sf)
+#'
+#' world_sf <- ne_countries(scale = "small", returnclass = "sf")
+#'
+#' i <- which(names(world_sf) != "geometry")
+#' names(world_sf)[i] <- paste0("rne_", names(world_sf)[i])
+#'
+#' data_rangers %>%
+#'   anti_join(world_sf, by = c(country_name_iso = "rne_iso_a3")) %>%
+#'   pull(country_name_eng)
+#'
+#' data_rangers %>%
+#'   right_join(world_sf, by = c(country_name_iso = "rne_iso_a3")) %>%
+#'   st_as_sf() -> world_rangers
+#'
+#' world_rangers %>%
+#'   st_transform(crs = "+proj=moll") -> world_rangers
+#'
+#' ggplot() +
+#'    geom_sf(mapping = aes(fill = area_PA_total / staff_total),
+#'            data = world_rangers, colour = "white", size = 0.1) +
+#'    scale_fill_fermenter(palette = 2,
+#'                         breaks = c(0, 10, 100, 1000, 10000), trans = "log10",
+#'                         guide = guide_colorsteps(title = expression(paste(km^{2}, "/staff")),
+#'                                                  title.vjust = 1, barwidth = 20,
+#'                                                  label.theme = element_text(angle = 0),
+#'                                                  label.hjust = 0.5, label.vjust = 1)) +
+#'    theme_minimal() +
+#'    theme(legend.position = "bottom", panel.grid = element_line(colour = "black", size = 0.3),
+#'          plot.title = element_text(size = 20, hjust = 0.5)) +
+#'    labs(title = "Protected Area per Staff")
 #' }
