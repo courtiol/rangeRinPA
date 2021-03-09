@@ -31,7 +31,7 @@
 #' library(ggplot2)
 #' library(sf)
 #'
-#' world_sf <- ne_countries(scale = "small", returnclass = "sf")
+#' world_sf <- ne_countries(scale = "medium", returnclass = "sf")
 #'
 #' i <- which(names(world_sf) != "geometry")
 #' names(world_sf)[i] <- paste0("rne_", names(world_sf)[i])
