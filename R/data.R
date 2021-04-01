@@ -53,10 +53,18 @@ fetch_data_rangers <- function() {
                   pop_density = "Population Density",
                   IUCN_1_4_prop = "PROPORTION IUCN CAT (I-IV)/(I-VI)",
                   IUCN_1_2_prop = "PROPORTION IUCN CAT (I-II)/(I-VI)",
-                  notes = "Notes")
+                  notes = "Notes") -> d
 
+  ## Some 0 mean NA:
+  d %>%
+    dplyr::mutate(staff_rangers_others_unknown = dplyr::if_else(.data$staff_rangers_others_unknown == 0,
+                                                                NA_real_,
+                                                                .data$staff_rangers_others_unknown)) -> d
+
+  d
 }
 
+globalVariables(".data")
 
 #' Ranger data
 #'
