@@ -36,15 +36,17 @@
 #' i <- which(names(world_sf) != "geometry")
 #' names(world_sf)[i] <- paste0("rne_", names(world_sf)[i])
 #'
-#' data_rangers %>%
-#'   anti_join(world_sf, by = c(country_name_iso = "rne_iso_a3")) %>%
-#'   pull(country_name_eng)
-#'
 #' ## check locations not found in map (depend on scale defined above):
 #' data_rangers %>%
-#'   right_join(world_sf, by = c(country_name_iso = "rne_iso_a3")) %>%
+#'   anti_join(world_sf, by = c(countryname_iso = "rne_iso_a3")) %>%
+#'   pull(countryname_eng)
+#'
+#' ## only keep locations found in map:
+#' data_rangers %>%
+#'   right_join(world_sf, by = c(countryname_iso = "rne_iso_a3")) %>%
 #'   st_as_sf() -> world_rangers
 #'
+#' ## applying projection:
 #' world_rangers %>%
 #'   st_transform(crs = "+proj=moll") -> world_rangers
 #'
