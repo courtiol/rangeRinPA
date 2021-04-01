@@ -28,17 +28,31 @@ You can install the development version of rangeR from [GitHub](https://github.c
 
 ``` r
 # install.packages("remotes")
-remotes::install_github("courtiol/rangeR")
+remotes::install_github("courtiol/rangeR", build_vignettes = TRUE)
 ```
 
-## Example
+## How to use our data?
+
+The data are embedded in the package, so you can use them after installing the package (see above) as any other data frame or tibble in R.
+
+Here is a simple example:
 
 ```{r example}
 library(rangeR)
 
-if (require("skimr")) {
-  skim(data_rangers)
-}
-
-## more to come
+sum(data_rangers$staff_total, na.rm = TRUE)
 ```
+
+## How to get the vignettes?
+
+The different analyses we have done are stored in the package as HTML vignettes.
+
+To view such vignettes, simply install the package (see above) and then type:
+
+```{r, eval=FALSE}
+browseVignettes("rangeR")
+```
+
+Note: if the vignettes are not found, it is probably because you did not successfully install the package.
+In particular, you must type `build_vignettes = TRUE` while installing the package as indicated above.
+
