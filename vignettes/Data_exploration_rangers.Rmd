@@ -86,6 +86,16 @@ data_rangers %>%
   arrange(desc(area_country))
 ```
 
+Here are the countries where the number of rangers is known but 0:
+
+```{r no rangers}
+data_rangers %>%
+  filter(staff_rangers == 0) %>%
+  select("countryname_eng", contains("staff"))
+```
+
+**Question**: do the 0 correspond in facts to NAs?
+
 
 ## Distribution
 
@@ -148,18 +158,18 @@ data_rangers %>%
        y = "Number of rangers")
 ```
 
-**Note**: this suggests a stable power relationship.
+**Conclusion**: there is a nice (expected) relationship between the number of rangers and the the number of other staff.
+Since the slope of the linear model is `r round(coef_fit[2], 2)`, the number of rangers increases less quickly than the number of other staff.
 
-**Question**: do the one along the 0 axes correspond in facts to NAs?
 
 ### with area PA
 
-First, let's explore the 2 variables we have:
+First, let's explore the 3 variables we have:
 
 ```{r corr PA_areas plot, fig.height=8, fig.width=8}
 data_rangers %>%
   ggplot() +
-  aes(y = area_PA_WDPA, x = area_PA_total, label = countryname_iso) +
+  aes(y = area_PA_WDPA, x = area_PA_surveyed, label = countryname_iso) +
   geom_text() +
   geom_abline(slope = 1, intercept = 0, linetype = "dashed") + 
   coord_trans(x = "log1p", y = "log1p") +
@@ -170,8 +180,22 @@ data_rangers %>%
        y = "Area PA according to WDPA")
 ```
 
-**Note**: We have large discrepancy for Turkey and Tanzania.
 
+```{r corr PA_areas plot 2, fig.height=8, fig.width=8}
+data_rangers %>%
+  ggplot() +
+  aes(y = area_PA_WDPA, x = area_PA_total, label = countryname_iso) +
+  geom_text() +
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed") + 
+  coord_trans(x = "log1p", y = "log1p") +
+  scale_x_continuous(breaks = c(0, 10, 100, 1000, 1e4, 1e5, 1e6, 1e7), minor_breaks = NULL) +
+  scale_y_continuous(breaks = c(0, 10, 100, 1000, 1e4, 1e5, 1e6, 1e7), minor_breaks = NULL) +
+  theme_minimal() +
+  labs(x = "Area PA according to clean column",
+       y = "Area PA according to WDPA")
+```
+
+**Note**: We have large discrepancy for Turkey and Tanzania, so for now I will use `area_PA_WDPA`.
 
 ```{r corr PA_areas data}
 data_rangers %>%
@@ -180,4 +204,123 @@ data_rangers %>%
 ```
 
 **Question**: why is `area_PA_total` the same for both country? There seem to be an issue.
+
+Let's look at the correlation between the number of rangers and     the PA area:
+
+```{r corr area_PA_WDPA lm}
+fit  <- lm(log(staff_rangers + 1) ~ log(area_PA_WDPA), data = data_rangers %>% filter(staff_rangers > 0))
+coef_fit <- coef(fit)
+f <- function(x) x^coef_fit[2] * (exp(coef_fit[1]) - 1)
+```
+
+```{r corr area_PA_WDPA plot, fig.height=8, fig.width=8}
+data_rangers %>%
+  ggplot() +
+  aes(y = staff_rangers, x = area_PA_WDPA, label = countryname_iso) +
+  geom_text() +
+  coord_trans(x = "log", y = "log1p") +
+  stat_function(fun = f, colour = "blue", n = 1e5) +
+  scale_x_continuous(breaks = c(10, 100, 1000, 1e4, 1e5, 1e6, 1e7), minor_breaks = NULL, limits = c(10, 1e7)) +
+  scale_y_continuous(breaks = c(0, 10, 100, 1000, 1e4, 1e5, 1e6, 1e7), minor_breaks = NULL) +
+  theme_minimal() +
+  labs(x = "Area PA according to country",
+       y = "Number of rangers")
+```
+
+**Conclusion**: there is a nice (expected) relationship between the number of rangers and the area of PA.
+Since the slope of the linear model is `r round(coef_fit[2], 2)`, the number of rangers increases less quickly than the area of PA.
+
+### with area country
+
+Let's first compare the area of the country and its PA:
+
+```{r corr PA_country_areas plot, fig.height=8, fig.width=8}
+data_rangers %>%
+  ggplot() +
+  aes(y = area_country, x = area_PA_WDPA, label = countryname_iso) +
+  geom_text() +
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed") + 
+  coord_trans(x = "log1p", y = "log1p") +
+  scale_x_continuous(breaks = c(0, 10, 100, 1000, 1e4, 1e5, 1e6, 1e7), minor_breaks = NULL) +
+  scale_y_continuous(breaks = c(0, 10, 100, 1000, 1e4, 1e5, 1e6, 1e7), minor_breaks = NULL) +
+  theme_minimal() +
+  labs(x = "Area PA according to WDPA",
+       y = "Area country")
+```
+
+**Note**: the data for Italy are wrong...
+
+Let's look at the correlation between the number of rangers and the country area:
+
+```{r corr area_country lm}
+fit  <- lm(log(staff_rangers + 1) ~ log(area_country), data = data_rangers %>% filter(staff_rangers > 0, area_country > 0))
+coef_fit <- coef(fit)
+f <- function(x) x^coef_fit[2] * (exp(coef_fit[1]) - 1)
+```
+
+```{r corr area_country plot, fig.height=8, fig.width=8}
+data_rangers %>%
+  ggplot() +
+  aes(y = staff_rangers, x = area_country, label = countryname_iso) +
+  geom_text() +
+  coord_trans(x = "log", y = "log1p") +
+  stat_function(fun = f, colour = "blue", n = 1e5) +
+  scale_x_continuous(breaks = c(10, 100, 1000, 1e4, 1e5, 1e6, 1e7), minor_breaks = NULL, limits = c(10, 1e7)) +
+  scale_y_continuous(breaks = c(0, 10, 100, 1000, 1e4, 1e5, 1e6, 1e7), minor_breaks = NULL) +
+  theme_minimal() +
+  labs(x = "Country area",
+       y = "Number of rangers")
+```
+
+**Conclusion**: there is a nice (expected) relationship between the number of rangers and the area of the country.
+Since the slope of the linear model is `r round(coef_fit[2], 2)`, the number of rangers increases less quickly than the country area.
+
+Let's look at the correlation between the number of rangers and the proportion of country in PA :
+
+```{r corr PA_prop plot, fig.height=8, fig.width=8}
+data_rangers %>%
+  filter(area_country > 1) %>%
+    ggplot() +
+    aes(y = staff_rangers, x = area_PA_WDPA/area_country, label = countryname_iso, size = area_country) +
+    geom_text() +
+    coord_trans(y = "log1p") +
+    scale_y_continuous(breaks = c(0, 10, 100, 1000, 1e4, 1e5, 1e6, 1e7), minor_breaks = NULL) +
+    scale_size_continuous(trans = "sqrt") +
+    theme_minimal() +
+    labs(x = "Proportion of country in PA",
+         y = "Number of rangers",
+         size = "Country area")
+```
+
+**Conclusion**: no clear relationship.
+
+### with reliability
+
+```{r corr reliability plot, fig.height=8, fig.width=8}
+data_rangers %>%
+    ggplot() +
+    aes(y = staff_rangers, x = reliability, label = countryname_iso, colour = country_UN_continent) +
+    geom_text_repel(seed = 123, min.segment.length = 0) +
+    coord_trans(y = "log1p") +
+    scale_y_continuous(breaks = c(0, 10, 100, 1000, 1e4, 1e5, 1e6, 1e7), minor_breaks = NULL) +
+    theme_minimal() +
+    labs(x = "Reliability score",
+         y = "Number of rangers",
+         colour = "continent")
+```
+
+**Conclusion**: no clear relationship. That's good!
+
+
+### with continent
+
+```{r continent}
+data_rangers %>%
+  group_by(country_UN_continent) %>%
+  summarise(total_rangers_known = sum(staff_rangers, na.rm = TRUE),
+            n_missing_countries = sum(is.na(staff_rangers)),
+            PA_area_missing = sum(area_PA_WDPA[is.na(staff_rangers)])) %>%
+  arrange(desc(total_rangers_known))
+```
+
 
