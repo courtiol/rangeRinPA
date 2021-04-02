@@ -70,9 +70,16 @@ fetch_data_rangers <- function() {
     dplyr::mutate(staff_others = .data$staff_total - .data$staff_rangers,
                   .after = .data$staff_rangers) -> d
 
-  ## Decalre some variable as qualitative:
+  ## Declare some variable as qualitative:
   d %>%
     dplyr::mutate(country_UN_continent = as.character(.data$country_UN_continent),
+                  country_UN_continent = dplyr::case_when(
+                    .data$country_UN_continent == "142" ~ "Asia",
+                    .data$country_UN_continent == "150" ~ "Europe",
+                    .data$country_UN_continent == "2" ~ "Africa",
+                    .data$country_UN_continent == "21" ~ "Northern America",
+                    .data$country_UN_continent == "419" ~ "Latin American & Caribbean",
+                    .data$country_UN_continent == "9" ~ "Oceania"),
                   country_UN_subcontinent = as.character(.data$country_UN_subcontinent)) -> d
 
   d
