@@ -1,0 +1,183 @@
+---
+title: "Data exploration (rangers per se)"
+output: 
+  rmarkdown::html_document:
+    df_print: paged
+    toc: true
+    toc_depth: 3
+    toc_float:
+      collapsed: false
+    code_folding: hide
+vignette: >
+  %\VignetteIndexEntry{Data_exploration_rangers}
+  %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup, message=FALSE}
+library(rangeR)
+library(dplyr)
+library(tibble)
+library(ggplot2)
+library(forcats)
+library(tidyr)
+library(ggrepel)
+library(spaMM)
+```
+
+## Data completeness
+
+Here is a plot showing the breakdown of the number of countries for which we retrieved the number of rangers:
+
+```{r completness_rangers computation}
+completness_rangers <- tibble(
+  Category = c("countries for which the numbers for rangers and other staff are both separately known",
+               "countries for which the numbers for rangers and other staff are both known but undistinguishable",
+               "countries for which only the number for rangers is known (other staff missing)",
+               "countries for which we have no about rangers or staff"),
+  N = c(sum(!is.na(data_rangers$staff_rangers_others_known)),
+        sum(!is.na(data_rangers$staff_total_details_unknown)),
+        sum(!is.na(data_rangers$staff_rangers_others_unknown)),
+        sum((is.na(data_rangers$staff_rangers_others_known) &
+             is.na(data_rangers$staff_rangers_others_unknown) &
+             is.na(data_rangers$staff_total_details_unknown)))
+        ))
+```
+
+```{r completness_rangers pie}
+ggplot(completness_rangers) +
+  aes(x = "", y = N, fill = Category, label = N) +
+  geom_bar(stat = "identity") +
+  geom_text(position = position_stack(vjust = 0.5)) +
+  coord_polar("y", start = 0) +
+  theme_void() +
+  theme(legend.position = "top") +
+  guides(fill = guide_legend(nrow = 4, byrow = TRUE)) +
+  labs(fill = "")
+```
+
+**Note**: so far the numbers don't add up due to a data issue with Kenya...
+
+**In summary:** for **`r sum(is.na(data_rangers$staff_rangers_others_known) & is.na(data_rangers$staff_rangers_others_unknown) & is.na(data_rangers$staff_total_details_unknown))`** countries we have no information what-so-ever and for **`r sum(is.na(data_rangers$staff_rangers))`** we have no information on rangers per se.
+
+The countries for which we miss information about rangers or staff are the following ones (ordered by decreasing country area):
+```{r completness_rangers list}
+data_rangers %>%
+  filter(is.na(staff_rangers_others_known) &
+          is.na(staff_rangers_others_unknown) &
+          is.na(staff_total_details_unknown)) %>%
+  arrange(desc(area_country))
+```
+
+
+The countries for which we miss information about rangers per se are the following ones (ordered by decreasing country area):
+```{r completness_rangers list rangers only}
+data_rangers %>%
+  filter(is.na(staff_rangers)) %>%
+  arrange(desc(area_country))
+```
+
+
+## Distribution
+
+Here are the countries sorted by number of rangers (mind the log scale):
+
+```{r distribution rangers plot, fig.height=20}
+data_rangers %>%
+  filter(!is.na(staff_rangers)) %>%
+  mutate(countryname_eng = fct_reorder(countryname_eng, staff_rangers)) %>%
+  ggplot() +
+    aes(x = staff_rangers, y = countryname_eng, fill = country_UN_continent) +
+    geom_col(alpha = 0.5) +
+    coord_trans(x = "log1p", expand = FALSE) +
+    theme_minimal() +
+    scale_x_continuous(breaks = c(0, 10, 100, 1000, 10000), minor_breaks = NULL) +
+    labs(y = "Country", x = "Number of rangers") +
+    theme(legend.position = "none", panel.grid.major.y = element_blank())
+```
+
+Info: colour represents continents.
+
+**Note**: the distribution is highly skewed.
+
+## Summary statistics
+
+Here are the quantiles for the number of rangers:
+```{r distribution rangers stats}
+data_rangers %>%
+  summarise(missing = sum(is.na(staff_rangers)),
+            mean = mean(staff_rangers, na.rm = TRUE),
+            median = median(staff_rangers, na.rm = TRUE),
+            sd = sd(staff_rangers, na.rm = TRUE),
+            quantile = list(quantile(staff_rangers, na.rm = TRUE))) %>%
+  unnest_wider(quantile, names_sep = "_") %>%
+  pivot_longer(cols = everything(), names_to = "statistic")
+```
+
+
+## Correlates
+
+### with number of other staff
+
+```{r corr staff_others lm}
+fit  <- lm(log(staff_rangers + 1) ~ log(staff_others + 1), data = data_rangers %>% filter(staff_rangers > 0, staff_others > 0))
+coef_fit <- coef(fit)
+f <- function(x) (x + 1)^coef_fit[2] * (exp(coef_fit[1]) - 1)
+```
+
+```{r corr staff_others plot, fig.height=8, fig.width=8}
+data_rangers %>%
+  ggplot() +
+  aes(y = staff_rangers, x = staff_others, label = countryname_iso) +
+  geom_text_repel(size = 3, nudge_x = 0, nudge_y = 0, force = 0.03, force_pull = 2, seed = 123, min.segment.length = 0) +
+  stat_function(fun = f, colour = "blue", n = 1e5) +
+  coord_trans(x = "log1p", y = "log1p") +
+  scale_x_continuous(breaks = c(0, 10, 100, 1000, 10000), minor_breaks = NULL) +
+  scale_y_continuous(breaks = c(0, 10, 100, 1000, 10000), minor_breaks = NULL) +
+  theme_minimal() +
+  labs(x = "Number of other staffs",
+       y = "Number of rangers")
+```
+
+**Note**: this suggests a stable power relationship.
+
+**Question**: do the one along the 0 axes correspond in facts to NAs?
+
+### with area PA
+
+First, let's explore the 2 variables we have:
+
+```{r corr PA_areas plot, fig.height=8, fig.width=8}
+data_rangers %>%
+  ggplot() +
+  aes(y = area_PA_WDPA, x = area_PA_total, label = countryname_iso) +
+  geom_text() +
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed") + 
+  coord_trans(x = "log1p", y = "log1p") +
+  scale_x_continuous(breaks = c(0, 10, 100, 1000, 1e4, 1e5, 1e6, 1e7), minor_breaks = NULL) +
+  scale_y_continuous(breaks = c(0, 10, 100, 1000, 1e4, 1e5, 1e6, 1e7), minor_breaks = NULL) +
+  theme_minimal() +
+  labs(x = "Area PA according to country",
+       y = "Area PA according to WDPA")
+```
+
+**Note**: We have large discrepancy for Turkey and Tanzania.
+
+
+```{r corr PA_areas data}
+data_rangers %>%
+  filter(countryname_iso %in% c("TZA", "TUR")) %>%
+  select(contains("countryname"), "area_PA_WDPA", "area_PA_total")
+```
+
+**Question**: why is `area_PA_total` the same for both country? There seem to be an issue.
+
