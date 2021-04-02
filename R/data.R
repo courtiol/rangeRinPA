@@ -66,7 +66,9 @@ fetch_data_rangers <- function() {
     dplyr::mutate(staff_rangers = dplyr::if_else(!is.na(.data$staff_rangers_others_known),
                                                  .data$staff_rangers_others_known,
                                                  .data$staff_rangers_others_unknown),
-                  .after = .data$staff_total) -> d
+                  .after = .data$staff_total) %>%
+    dplyr::mutate(staff_others = .data$staff_total - .data$staff_rangers,
+                  .after = .data$staff_rangers) -> d
 
   ## Decalre some variable as qualitative:
   d %>%
