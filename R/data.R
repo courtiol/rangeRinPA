@@ -61,6 +61,18 @@ fetch_data_rangers <- function() {
                                                                 NA_real_,
                                                                 .data$staff_rangers_others_unknown)) -> d
 
+  ## Compute ranger variable:
+  d %>%
+    dplyr::mutate(staff_rangers = dplyr::if_else(!is.na(.data$staff_rangers_others_known),
+                                                 .data$staff_rangers_others_known,
+                                                 .data$staff_rangers_others_unknown),
+                  .after = .data$staff_total) -> d
+
+  ## Decalre some variable as qualitative:
+  d %>%
+    dplyr::mutate(country_UN_continent = as.character(.data$country_UN_continent),
+                  country_UN_subcontinent = as.character(.data$country_UN_subcontinent)) -> d
+
   d
 }
 
