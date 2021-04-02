@@ -1,5 +1,5 @@
 ---
-title: "Description raw data (staff)"
+title: "Data exploration (staff)"
 output: 
   rmarkdown::html_document:
     df_print: paged
@@ -9,7 +9,7 @@ output:
       collapsed: false
     code_folding: hide
 vignette: >
-  %\VignetteIndexEntry{Description_raw_data_on_staff}
+  %\VignetteIndexEntry{Data_exploration_staff}
   %\VignetteEncoding{UTF-8}
   %\VignetteEngine{knitr::rmarkdown}
 editor_options: 
@@ -28,6 +28,7 @@ library(rangeR)
 library(dplyr)
 library(tibble)
 library(ggplot2)
+library(forcats)
 ```
 
 ## Data completeness
@@ -70,5 +71,29 @@ data_rangers %>%
           is.na(staff_rangers_others_unknown) &
           is.na(staff_total_details_unknown)) %>%
   arrange(desc(area_country))
+```
+
+
+## Distribution
+
+Here are the countries sorted by number of rangers (mind the log scale):
+
+```{r distribution rangers plot, fig.height=20}
+data_rangers %>%
+  filter(!is.na(staff_rangers)) %>%
+  mutate(countryname_eng = fct_reorder(countryname_eng, staff_rangers)) %>%
+  ggplot() +
+    aes(x = staff_rangers, y = countryname_eng, fill = country_UN_continent) +
+    geom_col(alpha = 0.5) +
+    coord_trans(x = "log1p", expand = FALSE) +
+    theme_minimal() +
+    scale_x_continuous(breaks = c(0, 10, 100, 1000, 10000), minor_breaks = NULL) +
+    labs(y = "Country", x = "Number of rangers") +
+    theme(legend.position = "none", panel.grid.major.y = element_blank())
+```
+
+
+```{r distribution rangers stats}
+
 ```
 
