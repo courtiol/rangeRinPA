@@ -1,5 +1,5 @@
 ---
-title: "Data exploration (rangers per se)"
+title: "Data correlates"
 output: 
   rmarkdown::html_document:
     df_print: paged
@@ -7,7 +7,7 @@ output:
     toc_depth: 3
     code_folding: hide
 vignette: >
-  %\VignetteIndexEntry{Data_exploration_rangers}
+  %\VignetteIndexEntry{Data_correlates}
   %\VignetteEncoding{UTF-8}
   %\VignetteEngine{knitr::rmarkdown}
 editor_options: 
@@ -28,8 +28,8 @@ knitr::opts_chunk$set(
   error = TRUE,
   comment = "#>",
   cache = FALSE, # don't put TRUE as inline chunk make R CMD check to crash
-  cache.path = "cache_vignette_data_explo/",
-  fig.path = "fig_vignette_data_explo/",
+  cache.path = "cache/cache_vignette_data_correlates/",
+  fig.path = "figs/fig_vignette_data_correlates/",
   fig.align = 'center'
 )
 
@@ -57,199 +57,8 @@ library(countrycode)
 library(gt)
 ```
 
-## Data completeness
 
-Here is a plot showing the breakdown of the number of countries for which we retrieved the number of rangers:
-
-```{r completness_rangers computation}
-completness_rangers <- tibble(
-  Category = c("countries for which the numbers for rangers and other staff are both separately known",
-               "countries for which the numbers for rangers and other staff are both known but undistinguishable",
-               "countries for which only the number for rangers is known (other staff missing)",
-               "countries for which we have no about rangers or staff"),
-  N = c(sum(!is.na(data_rangers$staff_rangers_others_known)),
-        sum(!is.na(data_rangers$staff_total_details_unknown)),
-        sum(!is.na(data_rangers$staff_rangers_others_unknown)),
-        sum((is.na(data_rangers$staff_rangers_others_known) &
-             is.na(data_rangers$staff_rangers_others_unknown) &
-             is.na(data_rangers$staff_total_details_unknown)))
-        ))
-```
-
-```{r completness_rangers pie}
-ggplot(completness_rangers) +
-  aes(x = "", y = N, fill = Category, label = N) +
-  geom_bar(stat = "identity") +
-  geom_text(position = position_stack(vjust = 0.5)) +
-  coord_polar("y", start = 0) +
-  theme_void() +
-  theme(legend.position = "top") +
-  guides(fill = guide_legend(nrow = 4, byrow = TRUE)) +
-  labs(fill = "")
-```
-
-**Note**: so far the numbers don't add up due to a data issue with **Kenya**...
-
-**In summary:** for **`r sum(is.na(data_rangers$staff_rangers))`** we have no information on rangers per se, including **`r sum(is.na(data_rangers$staff_rangers_others_known) & is.na(data_rangers$staff_rangers_others_unknown) & is.na(data_rangers$staff_total_details_unknown))`** countries for which we have no information what-so-ever.
-
-The countries for which we miss information about rangers or staff are the following ones (ordered by decreasing country area):
-```{r completness_rangers list}
-data_rangers %>%
-  filter(is.na(staff_rangers_others_known) &
-          is.na(staff_rangers_others_unknown) &
-          is.na(staff_total_details_unknown)) %>%
-  select(countryname_eng) %>%
-  mutate(info = "none") -> no_info_countries
-
-data_rangers %>%
-  filter(is.na(staff_rangers)) %>%
-  select(countryname_iso, countryname_eng, area_country) -> partial_info_countries
-  
-full_join(no_info_countries, partial_info_countries, by = "countryname_eng") %>%
-  mutate(info = if_else(is.na(info), "lumped with other staff", info)) %>%
-  arrange(desc(area_country)) %>%
-  mutate(flags = countrycode(sourcevar = countryname_iso, "iso3c", "unicode.symbol")) %>%
-  mutate(Country = paste(countryname_eng, flags)) %>%
-  select(Country, Info_on_rangers = info) %>%
-  gt()
-```
-
-Here are the countries where the number of rangers is known but 0:
-
-```{r no rangers}
-data_rangers %>%
-  filter(staff_rangers == 0) %>%
-  select("countryname_eng", contains("staff"))
-```
-
-Here are the countries where the number of non rangers is known but 0:
-
-```{r no non rangers, rows.print=25}
-data_rangers %>%
-  filter(staff_others == 0) %>%
-  select("countryname_eng", contains("staff"))
-```
-
-### by continents
-
-**Note**: tables sorted by PA area completeness
-
-```{r continent abs}
-data_rangers %>%
-  group_by(country_UN_continent) %>%
-  summarise(total_rangers_known = sum(staff_rangers, na.rm = TRUE),
-            n_missing_countries = sum(is.na(staff_rangers)),
-            PA_area_missing = sum(area_PA_WDPA[is.na(staff_rangers)]),
-            area_country_missing = sum(area_country[is.na(staff_rangers)])) %>%
-  arrange(PA_area_missing) %>%
-  bind_rows(
-    data_rangers %>%
-      summarise(total_rangers_known = sum(staff_rangers, na.rm = TRUE),
-                n_missing_countries = sum(is.na(staff_rangers)),
-                PA_area_missing = sum(area_PA_WDPA[is.na(staff_rangers)]),
-                area_country_missing = sum(area_country[is.na(staff_rangers)])) %>%
-      mutate(country_UN_continent = "ALL"))
-```
-
-```{r continent prop}
-data_rangers %>%
-  group_by(country_UN_continent) %>%
-  summarise(total_rangers_known = sum(staff_rangers, na.rm = TRUE),
-            n_missing_countries_pct = 100 * sum(is.na(staff_rangers)) / n(),
-            PA_area_missing_pct = 100 * sum(area_PA_WDPA[is.na(staff_rangers)]) / sum(area_PA_WDPA),
-            area_country_missing_pct = 100 * sum(area_country[is.na(staff_rangers)]) / sum(area_country)) %>%
-  arrange(PA_area_missing_pct) %>%
-  bind_rows(
-    data_rangers %>%
-      summarise(total_rangers_known = sum(staff_rangers, na.rm = TRUE),
-                n_missing_countries_pct = 100 * sum(is.na(staff_rangers)) / n(),
-                PA_area_missing_pct = 100 * sum(area_PA_WDPA[is.na(staff_rangers)]) / sum(area_PA_WDPA),
-                area_country_missing_pct = 100 * sum(area_country[is.na(staff_rangers)]) / sum(area_country)) %>%
-      mutate(country_UN_continent = "ALL")) %>%
-      mutate(across(where(is.numeric), round, digits = 2))
-```
-
-### by sub-continents
-
-**Note**: tables sorted by PA area completeness
-
-```{r subcontinent abs, rows.print=25}
-data_rangers %>%
-  group_by(country_UN_subcontinent) %>%
-  summarise(total_rangers_known = sum(staff_rangers, na.rm = TRUE),
-            n_missing_countries = sum(is.na(staff_rangers)),
-            PA_area_missing = sum(area_PA_WDPA[is.na(staff_rangers)]),
-            area_country_missing = sum(area_country[is.na(staff_rangers)])) %>%
-  arrange(PA_area_missing) %>%
-  bind_rows(
-    data_rangers %>%
-      summarise(total_rangers_known = sum(staff_rangers, na.rm = TRUE),
-                n_missing_countries = sum(is.na(staff_rangers)),
-                PA_area_missing = sum(area_PA_WDPA[is.na(staff_rangers)]),
-                area_country_missing = sum(area_country[is.na(staff_rangers)])) %>%
-      mutate(country_UN_subcontinent = "ALL"))
-```
-
-```{r subcontinent prop, rows.print=25}
-data_rangers %>%
-  group_by(country_UN_subcontinent) %>%
-  summarise(total_rangers_known = sum(staff_rangers, na.rm = TRUE),
-            n_missing_countries_pct = 100 * sum(is.na(staff_rangers)) / n(),
-            PA_area_missing_pct = 100 * sum(area_PA_WDPA[is.na(staff_rangers)]) / sum(area_PA_WDPA),
-            area_country_missing_pct = 100 * sum(area_country[is.na(staff_rangers)]) / sum(area_country)) %>%
-  arrange(PA_area_missing_pct) %>%
-  bind_rows(
-    data_rangers %>%
-      summarise(total_rangers_known = sum(staff_rangers, na.rm = TRUE),
-                n_missing_countries_pct = 100 * sum(is.na(staff_rangers)) / n(),
-                PA_area_missing_pct = 100 * sum(area_PA_WDPA[is.na(staff_rangers)]) / sum(area_PA_WDPA),
-                area_country_missing_pct = 100 * sum(area_country[is.na(staff_rangers)]) / sum(area_country)) %>%
-      mutate(country_UN_subcontinent = "ALL")) %>%
-      mutate(across(where(is.numeric), round, digits = 2))
-```
-
-
-## Distribution
-
-Here are the countries sorted by number of rangers (mind the log scale):
-
-```{r distribution rangers plot, fig.height=20, cache=TRUE}
-data_rangers %>%
-  filter(!is.na(staff_rangers)) %>%
-  mutate(countryname_eng = fct_reorder(countryname_eng, staff_rangers)) %>%
-  ggplot() +
-    aes(x = staff_rangers, y = countryname_eng, fill = country_UN_continent) +
-    geom_col(alpha = 0.5) +
-    coord_trans(x = "log1p", expand = FALSE) +
-    theme_minimal() +
-    scale_x_continuous(breaks = c(0, 10, 100, 1000, 10000), minor_breaks = NULL) +
-    labs(y = "Country", x = "Number of rangers") +
-    theme(legend.position = "none", panel.grid.major.y = element_blank())
-```
-
-Info: colour represents continents.
-
-**Note**: the distribution is highly skewed.
-
-## Summary statistics
-
-Here are the quantiles for the number of rangers:
-```{r distribution rangers stats}
-data_rangers %>%
-  summarise(missing = sum(is.na(staff_rangers)),
-            mean = mean(staff_rangers, na.rm = TRUE),
-            median = median(staff_rangers, na.rm = TRUE),
-            sd = sd(staff_rangers, na.rm = TRUE),
-            quantile = list(quantile(staff_rangers, na.rm = TRUE))) %>%
-  unnest_wider(quantile, names_sep = "_") %>%
-  pivot_longer(cols = everything(), names_to = "statistic") %>%
-  gt()
-```
-
-
-## Correlates
-
-### with number of other staff
+## Number of other staff
 
 ```{r corr staff_others lm}
 fit  <- lm(log(staff_rangers + 1) ~ log(staff_others + 1), data = data_rangers %>% filter(staff_rangers > 0, staff_others > 0))
@@ -277,7 +86,7 @@ data_rangers %>%
 Since the slope of the linear model is `r round(coef_fit[2], 2)`, the number of rangers increases less quickly than the number of other staff.
 
 
-### with area PA
+## area PA
 
 First, let's explore the 3 variables we have:
 
@@ -354,7 +163,7 @@ data_rangers %>%
 **Conclusion**: there is a nice (expected) relationship between the number of rangers and the area of PA.
 Since the slope of the linear model is `r round(coef_fit[2], 2)`, the number of rangers increases less quickly than the area of PA.
 
-### with area country
+## area country
 
 Let's first compare the area of the country and its PA:
 
@@ -434,7 +243,7 @@ data_rangers %>%
 
 **Conclusion**: no clear relationship.
 
-### with reliability
+## reliability
 
 ```{r corr reliability plot, fig.height=8, fig.width=8, cache=TRUE}
 data_rangers %>%
@@ -454,7 +263,7 @@ data_rangers %>%
 
 **Conclusion**: no clear relationship. That's good!
 
-### with forest area pct
+## forest area pct
 
 ```{r corr forest_area plot, fig.height=8, fig.width=8, cache=TRUE}
 data_rangers %>%
@@ -474,7 +283,7 @@ data_rangers %>%
 **Conclusion**: no clear relationship. 
 
 
-### with ecological indexes
+## ecological indexes
 
 We start by comparing the ecological indexes:
 
@@ -517,7 +326,7 @@ data_rangers %>%
 
 We then plot the relationship with the number of rangers.
 
-#### with EVI
+### EVI
 
 ```{r corr EVI_rangers plot, fig.height=8, fig.width=8, cache=TRUE}
 data_rangers %>%
@@ -532,7 +341,7 @@ data_rangers %>%
   labs(y = "Number of rangers")
 ```
 
-#### with SPI
+### SPI
 
 ```{r corr SPI_rangers plot, fig.height=8, fig.width=8, cache=TRUE}
 data_rangers %>%
@@ -547,7 +356,7 @@ data_rangers %>%
   labs(y = "Number of rangers")
 ```
 
-#### with EPI
+### EPI
 
 ```{r corr EPI_rangers plot, fig.height=8, fig.width=8, cache=TRUE}
 data_rangers %>%
@@ -562,7 +371,7 @@ data_rangers %>%
   labs(y = "Number of rangers")
 ```
 
-### with GDP
+## GDP
 
 We start by comparing the different GDP metrics:
 
@@ -608,7 +417,7 @@ data_rangers %>%
 
 We then plot the relationship with the number of rangers
 
-#### with GDP per capita
+### GDP per capita
 
 ```{r corr GDP_capita_rangers plot, fig.height=8, fig.width=8, cache=TRUE}
 data_rangers %>%
@@ -624,7 +433,7 @@ data_rangers %>%
   labs(y = "Number of rangers")
 ```
 
-#### with GDP
+### GDP
 
 ```{r corr GDP_2019_rangers plot, fig.height=8, fig.width=8, cache=TRUE}
 data_rangers %>%
@@ -642,7 +451,7 @@ data_rangers %>%
 
 **Note**: there is a strong relationship.
 
-#### with GDP growth
+### GDP growth
 
 ```{r corr GDP_growth_rangers plot, fig.height=8, fig.width=8, cache=TRUE}
 data_rangers %>%
@@ -657,7 +466,7 @@ data_rangers %>%
   labs(y = "Number of rangers")
 ```
 
-### with unemployment
+## unemployment
 
 ```{r corr unemployment_rangers plot, fig.height=8, fig.width=8, cache=TRUE}
 data_rangers %>%
@@ -672,7 +481,7 @@ data_rangers %>%
   labs(y = "Number of rangers")
 ```
 
-### with the proportion of rural inhabitants
+## proportion of rural inhabitants
 
 ```{r corr rural_rangers plot, fig.height=8, fig.width=8, cache=TRUE}
 data_rangers %>%
@@ -687,7 +496,7 @@ data_rangers %>%
   labs(y = "Number of rangers")
 ```
 
-### with income
+## income
 
 Let's first compare the area of the GDP per capita with the income:
 
@@ -724,7 +533,7 @@ data_rangers %>%
 ```
 
 
-### with population density
+## population density
 
 Let's first compare the area of the country and its density:
 
@@ -761,7 +570,7 @@ data_rangers %>%
   labs(y = "Number of rangers")
 ```
 
-### with IUCN categories
+## IUCN categories
 
 Let's first compare the 2 IUCN measurements:
 

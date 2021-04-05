@@ -4,5 +4,5 @@
 ^README\.Rmd$
 ^doc$
 ^Meta$
-^vignettes/cache\_vignette\_data\_explo$
-^fig\_vignette\_data\_explo$
+vignettes/cache
+vignettes/figs

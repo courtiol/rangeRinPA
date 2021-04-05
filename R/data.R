@@ -69,7 +69,9 @@ fetch_data_rangers <- function() {
                   .after = .data$staff_total) %>%
     dplyr::mutate(staff_others = .data$staff_total - .data$staff_rangers,
                   .after = .data$staff_rangers) %>%
-    dplyr::mutate(staff_others = if_else(!is.na(staff_rangers_others_unknown), NA_real_, staff_others)) -> d
+    dplyr::mutate(staff_others = dplyr::if_else(!is.na(.data$staff_rangers_others_unknown),
+                                                NA_real_,
+                                                .data$staff_others)) -> d
 
   ## Deal with continents:
   d %>%
