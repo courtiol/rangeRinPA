@@ -415,6 +415,24 @@ data_rangers %>%
   theme_minimal()
 ```
 
+We check if GDP is related to country area:
+
+```{r GDP_area plot, fig.height=8, fig.width=8, cache=TRUE}
+data_rangers %>%
+  ggplot() +
+  aes(y = GDP_2019, x = area_country, label = countryname, size = area_country, colour = country_UN_continent) +
+  # geom_text_repel(min.segment.length = 0, nudge_x = 0, nudge_y = 0, force = 0.03, force_pull = 2, seed = 123) +
+  geom_text() +
+  coord_trans(y = "log", x = "log") +
+  scale_size_continuous(trans = "sqrt", guide = "none", range = c(3, 7)) +
+  scale_y_continuous(breaks = 10^(0:20), minor_breaks = NULL) +
+  scale_x_continuous(breaks = 10^(0:20), minor_breaks = NULL) +
+  scale_colour_discrete(guide = "none") +
+  theme_minimal()
+```
+
+**Note**: yes it is.
+
 We then plot the relationship with the number of rangers
 
 ### GDP per capita
