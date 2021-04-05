@@ -521,7 +521,6 @@ We then plot the relationship with the number of rangers.
 
 ```{r corr EVI_rangers plot, fig.height=8, fig.width=8, cache=TRUE}
 data_rangers %>%
-  filter(area_country > 0) %>%
   ggplot() +
   aes(y = staff_rangers, x = EVI, label = countryname, size = area_country, colour = country_UN_continent) +
   geom_text() +
@@ -537,7 +536,6 @@ data_rangers %>%
 
 ```{r corr SPI_rangers plot, fig.height=8, fig.width=8, cache=TRUE}
 data_rangers %>%
-  filter(area_country > 0) %>%
   ggplot() +
   aes(y = staff_rangers, x = SPI, label = countryname, size = area_country, colour = country_UN_continent) +
   geom_text() +
@@ -553,7 +551,6 @@ data_rangers %>%
 
 ```{r corr EPI_rangers plot, fig.height=8, fig.width=8, cache=TRUE}
 data_rangers %>%
-  filter(area_country > 0) %>%
   ggplot() +
   aes(y = staff_rangers, x = EPI_2020, label = countryname, size = area_country, colour = country_UN_continent) +
   geom_text() +
@@ -615,7 +612,6 @@ We then plot the relationship with the number of rangers
 
 ```{r corr GDP_capita_rangers plot, fig.height=8, fig.width=8, cache=TRUE}
 data_rangers %>%
-  filter(area_country > 0) %>%
   ggplot() +
   aes(y = staff_rangers, x = GDP_capita, label = countryname, size = area_country, colour = country_UN_continent) +
   geom_text() +
@@ -632,7 +628,6 @@ data_rangers %>%
 
 ```{r corr GDP_2019_rangers plot, fig.height=8, fig.width=8, cache=TRUE}
 data_rangers %>%
-  filter(area_country > 0) %>%
   ggplot() +
   aes(y = staff_rangers, x = GDP_2019, label = countryname, size = area_country, colour = country_UN_continent) +
   geom_text() +
@@ -651,7 +646,6 @@ data_rangers %>%
 
 ```{r corr GDP_growth_rangers plot, fig.height=8, fig.width=8, cache=TRUE}
 data_rangers %>%
-  filter(area_country > 0) %>%
   ggplot() +
   aes(y = staff_rangers, x = GDP_growth, label = countryname, size = area_country, colour = country_UN_continent) +
   geom_text() +
@@ -663,4 +657,150 @@ data_rangers %>%
   labs(y = "Number of rangers")
 ```
 
+### with unemployment
 
+```{r corr unemployment_rangers plot, fig.height=8, fig.width=8, cache=TRUE}
+data_rangers %>%
+  ggplot() +
+  aes(y = staff_rangers, x = unemployment, label = countryname, size = area_country, colour = country_UN_continent) +
+  geom_text() +
+  scale_size_continuous(trans = "sqrt", guide = "none", range = c(3, 7)) +
+  scale_colour_discrete(guide = "none") +
+  coord_trans(y = "log1p") +
+  scale_y_continuous(breaks = c(0, 10, 100, 1000, 1e4, 1e5, 1e6, 1e7), minor_breaks = NULL) +
+  theme_minimal() +
+  labs(y = "Number of rangers")
+```
+
+### with the proportion of rural inhabitants
+
+```{r corr rural_rangers plot, fig.height=8, fig.width=8, cache=TRUE}
+data_rangers %>%
+  ggplot() +
+  aes(y = staff_rangers, x = rural_pct, label = countryname, size = area_country, colour = country_UN_continent) +
+  geom_text() +
+  scale_size_continuous(trans = "sqrt", guide = "none", range = c(3, 7)) +
+  scale_colour_discrete(guide = "none") +
+  coord_trans(y = "log1p") +
+  scale_y_continuous(breaks = c(0, 10, 100, 1000, 1e4, 1e5, 1e6, 1e7), minor_breaks = NULL) +
+  theme_minimal() +
+  labs(y = "Number of rangers")
+```
+
+### with income
+
+Let's first compare the area of the GDP per capita with the income:
+
+```{r GDP_capita_income plot, fig.height=8, fig.width=8, cache=TRUE}
+data_rangers %>%
+  ggplot() +
+  aes(y = income, x = GDP_capita, label = countryname, size = area_country, colour = country_UN_continent) +
+  # geom_text_repel(min.segment.length = 0, nudge_x = 0, nudge_y = 0, force = 0.03, force_pull = 2, seed = 123) +
+  geom_text() +
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed") + 
+  coord_trans(y = "log", x = "log") +
+  scale_size_continuous(trans = "sqrt", guide = "none", range = c(3, 7)) +
+  scale_y_continuous(breaks = 10^(0:20), minor_breaks = NULL) +
+  scale_x_continuous(breaks = 10^(0:20), minor_breaks = NULL) +
+  scale_colour_discrete(guide = "none") +
+  theme_minimal()
+```
+
+**Note**: `income` and `GDP_capita` are very similar:
+
+We then plot the relationship with the number of rangers:
+
+```{r corr income_rangers plot, fig.height=8, fig.width=8, cache=TRUE}
+data_rangers %>%
+  ggplot() +
+  aes(y = staff_rangers, x = income, label = countryname, size = area_country, colour = country_UN_continent) +
+  geom_text() +
+  scale_size_continuous(trans = "sqrt", guide = "none", range = c(3, 7)) +
+  scale_colour_discrete(guide = "none") +
+  coord_trans(y = "log1p", x = "log") +
+  scale_y_continuous(breaks = c(0, 10, 100, 1000, 1e4, 1e5, 1e6, 1e7), minor_breaks = NULL) +
+  theme_minimal() +
+  labs(y = "Number of rangers")
+```
+
+
+### with population density
+
+Let's first compare the area of the country and its density:
+
+```{r corr popdensity_country_areas plot, fig.height=8, fig.width=8, cache=TRUE}
+data_rangers %>%
+  ggplot() +
+  aes(y = pop_density, x = area_country, label = countryname, size = area_country, colour = country_UN_continent) +
+  #geom_text_repel(nudge_x = 0, nudge_y = 0, force = 0.03, force_pull = 2, seed = 123, min.segment.length = 0) +
+  geom_text() +
+  coord_trans(x = "log1p", y = "log1p") +
+  scale_x_continuous(breaks = c(0, 10, 100, 1000, 1e4, 1e5, 1e6, 1e7), minor_breaks = NULL) +
+  scale_y_continuous(breaks = c(0, 10, 100, 1000, 1e4, 1e5, 1e6, 1e7), minor_breaks = NULL) +
+  scale_size_continuous(trans = "sqrt", guide = "none", range = c(3, 7)) +
+  scale_colour_discrete(guide = "none") +
+  theme_minimal() +
+  labs(y = "Population density", x = "Area of the country")
+```
+
+**Note**: we retrieve the expected negative correlation.
+
+We then plot the relationship with the number of rangers:
+
+```{r corr popdensity_rangers plot, fig.height=8, fig.width=8, cache=TRUE}
+data_rangers %>%
+  ggplot() +
+  aes(y = staff_rangers, x = pop_density, label = countryname, size = area_country, colour = country_UN_continent) +
+  geom_text() +
+  scale_size_continuous(trans = "sqrt", guide = "none", range = c(3, 7)) +
+  scale_colour_discrete(guide = "none") +
+  coord_trans(y = "log1p", x = "log") +
+  scale_y_continuous(breaks = c(0, 10, 100, 1000, 1e4, 1e5, 1e6, 1e7), minor_breaks = NULL) +
+  scale_x_continuous(breaks = c(0, 10, 100, 1000, 1e4, 1e5, 1e6, 1e7), minor_breaks = NULL) +
+  theme_minimal() +
+  labs(y = "Number of rangers")
+```
+
+### with IUCN categories
+
+Let's first compare the 2 IUCN measurements:
+
+```{r corr IUCN plot, fig.height=8, fig.width=8, cache=TRUE}
+data_rangers %>%
+  ggplot() +
+  aes(y = IUCN_1_4_prop, x = IUCN_1_2_prop, label = countryname, size = area_country, colour = country_UN_continent) +
+  #geom_text_repel(nudge_x = 0, nudge_y = 0, force = 0.03, force_pull = 2, seed = 123, min.segment.length = 0) +
+  geom_text() +
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed") + 
+  scale_size_continuous(trans = "sqrt", guide = "none", range = c(3, 7)) +
+  scale_colour_discrete(guide = "none") +
+  theme_minimal()
+```
+
+We then plot the relationship with the number of rangers:
+
+```{r corr IUCN12_rangers plot, fig.height=8, fig.width=8, cache=TRUE}
+data_rangers %>%
+  ggplot() +
+  aes(y = staff_rangers, x = IUCN_1_2_prop, label = countryname, size = area_country, colour = country_UN_continent) +
+  geom_text() +
+  scale_size_continuous(trans = "sqrt", guide = "none", range = c(3, 7)) +
+  scale_colour_discrete(guide = "none") +
+  coord_trans(y = "log1p") +
+  scale_y_continuous(breaks = c(0, 10, 100, 1000, 1e4, 1e5, 1e6, 1e7), minor_breaks = NULL) +
+  theme_minimal() +
+  labs(y = "Number of rangers")
+```
+
+```{r corr IUCN14_rangers plot, fig.height=8, fig.width=8, cache=TRUE}
+data_rangers %>%
+  ggplot() +
+  aes(y = staff_rangers, x = IUCN_1_4_prop, label = countryname, size = area_country, colour = country_UN_continent) +
+  geom_text() +
+  scale_size_continuous(trans = "sqrt", guide = "none", range = c(3, 7)) +
+  scale_colour_discrete(guide = "none") +
+  coord_trans(y = "log1p") +
+  scale_y_continuous(breaks = c(0, 10, 100, 1000, 1e4, 1e5, 1e6, 1e7), minor_breaks = NULL) +
+  theme_minimal() +
+  labs(y = "Number of rangers")
+```
