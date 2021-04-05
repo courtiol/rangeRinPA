@@ -33,7 +33,7 @@ fetch_data_rangers <- function() {
                   staff_rangers_others_unknown = "R_ONLY\n NUMBERS WHERE ONLY RANGERS ARE LISTED (NON RANGER NUMBERS NOT PROVIDED)\nNUMBERS WHO ARE SPECIFICALLY IDENTIFIED AS RANGERS",
                   staff_total_details_unknown = "RNR_UND\nNUMBERS PROVIDED AS AN UNDIFFERENTIATED TOTAL (COMBINED RANGERS AND NON RANGERS)",
                   staff_total = "RNRT_1\nTOTAL SURVEYED STAFF  (SUM D,E,F,G)",
-                  area_PA_surveyed = "AREA OF PROTECTED AREAS SURVEYED IN STAFF SURVEY SQ KM",
+                  area_PA_surveyed = "AREA OF PAs REPORTED  SURVEYED IN STAFF SURVEY SQ KM",
                   area_PA_total = "AREA OF TERRESTRIAL PAS IN THE COUNTRY USED FOR CALCULATIONS (Higlighted IF DIFFERENT FROM WDPA)",
                   area_PA_WDPA = "TOTAL AREA OF TERRESTRIAL PAS IN THE COUNTRY in SQ KM (WDPA )",
                   area_country = "TOTAL TERRESTRIAL AREA OF  COUNTRY (WDPA)",
