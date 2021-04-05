@@ -46,7 +46,7 @@ fetch_data_rangers <- function() {
                   EPI_2020 = "EPI.new_2020",
                   GDP_capita = "GDP_Per Capita",
                   GDP_2019 = "GDP_2019",
-                  GPD_growth = "GDP_growth",
+                  GDP_growth = "GDP_growth",
                   unemployment = "Unemployment_total",
                   rural_pct = "Rural_population_percentage",
                   income = "Adjusted net national income per capita",
