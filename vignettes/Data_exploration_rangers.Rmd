@@ -19,7 +19,10 @@ editor_options:
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
-  comment = "#>"
+  comment = "#>",
+  cache = FALSE, # don't put TRUE as inline chunk make R CMD check to crash
+  cache.path = "cache_vignette_data_explo/",
+  fig.path = "fig_vignette_data_explo/"
 )
 ```
 
@@ -101,7 +104,7 @@ data_rangers %>%
 
 Here are the countries sorted by number of rangers (mind the log scale):
 
-```{r distribution rangers plot, fig.height=20}
+```{r distribution rangers plot, fig.height=20, cache=TRUE}
 data_rangers %>%
   filter(!is.na(staff_rangers)) %>%
   mutate(countryname_eng = fct_reorder(countryname_eng, staff_rangers)) %>%
@@ -144,7 +147,7 @@ coef_fit <- coef(fit)
 f <- function(x) (x + 1)^coef_fit[2] * (exp(coef_fit[1]) - 1)
 ```
 
-```{r corr staff_others plot, fig.height=8, fig.width=8}
+```{r corr staff_others plot, fig.height=8, fig.width=8, cache=TRUE}
 data_rangers %>%
   ggplot() +
   aes(y = staff_rangers, x = staff_others, label = countryname_iso) +
@@ -166,7 +169,7 @@ Since the slope of the linear model is `r round(coef_fit[2], 2)`, the number of 
 
 First, let's explore the 3 variables we have:
 
-```{r corr PA_areas plot, fig.height=8, fig.width=8}
+```{r corr PA_areas plot, fig.height=8, fig.width=8, cache=TRUE}
 data_rangers %>%
   ggplot() +
   aes(y = area_PA_WDPA, x = area_PA_surveyed, label = countryname_iso) +
@@ -181,7 +184,7 @@ data_rangers %>%
 ```
 
 
-```{r corr PA_areas plot 2, fig.height=8, fig.width=8}
+```{r corr PA_areas plot 2, fig.height=8, fig.width=8, cache=TRUE}
 data_rangers %>%
   ggplot() +
   aes(y = area_PA_WDPA, x = area_PA_total, label = countryname_iso) +
@@ -213,7 +216,7 @@ coef_fit <- coef(fit)
 f <- function(x) x^coef_fit[2] * (exp(coef_fit[1]) - 1)
 ```
 
-```{r corr area_PA_WDPA plot, fig.height=8, fig.width=8}
+```{r corr area_PA_WDPA plot, fig.height=8, fig.width=8, cache=TRUE}
 data_rangers %>%
   ggplot() +
   aes(y = staff_rangers, x = area_PA_WDPA, label = countryname_iso) +
@@ -234,7 +237,7 @@ Since the slope of the linear model is `r round(coef_fit[2], 2)`, the number of 
 
 Let's first compare the area of the country and its PA:
 
-```{r corr PA_country_areas plot, fig.height=8, fig.width=8}
+```{r corr PA_country_areas plot, fig.height=8, fig.width=8, cache=TRUE}
 data_rangers %>%
   ggplot() +
   aes(y = area_country, x = area_PA_WDPA, label = countryname_iso) +
@@ -258,7 +261,7 @@ coef_fit <- coef(fit)
 f <- function(x) x^coef_fit[2] * (exp(coef_fit[1]) - 1)
 ```
 
-```{r corr area_country plot, fig.height=8, fig.width=8}
+```{r corr area_country plot, fig.height=8, fig.width=8, cache=TRUE}
 data_rangers %>%
   ggplot() +
   aes(y = staff_rangers, x = area_country, label = countryname_iso) +
@@ -277,7 +280,7 @@ Since the slope of the linear model is `r round(coef_fit[2], 2)`, the number of 
 
 Let's look at the correlation between the number of rangers and the proportion of country in PA :
 
-```{r corr PA_prop plot, fig.height=8, fig.width=8}
+```{r corr PA_prop plot, fig.height=8, fig.width=8, cache=TRUE}
 data_rangers %>%
   filter(area_country > 1) %>%
     ggplot() +
@@ -296,7 +299,7 @@ data_rangers %>%
 
 ### with reliability
 
-```{r corr reliability plot, fig.height=8, fig.width=8}
+```{r corr reliability plot, fig.height=8, fig.width=8, cache=TRUE}
 data_rangers %>%
     ggplot() +
     aes(y = staff_rangers, x = reliability, label = countryname_iso, colour = country_UN_continent) +

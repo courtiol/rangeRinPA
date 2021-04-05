@@ -1,2 +1,4 @@
 *.html
 *.R
+cache_vignette_data_explo
+fig_vignette_data_explo
