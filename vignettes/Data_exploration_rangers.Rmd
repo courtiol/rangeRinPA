@@ -5,8 +5,6 @@ output:
     df_print: paged
     toc: true
     toc_depth: 3
-    toc_float:
-      collapsed: false
     code_folding: hide
 vignette: >
   %\VignetteIndexEntry{Data_exploration_rangers}
@@ -16,13 +14,22 @@ editor_options:
   chunk_output_type: console
 ---
 
+<style type="text/css">
+.main-container {
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+}
+</style>
+
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
   cache = FALSE, # don't put TRUE as inline chunk make R CMD check to crash
   cache.path = "cache_vignette_data_explo/",
-  fig.path = "fig_vignette_data_explo/"
+  fig.path = "fig_vignette_data_explo/",
+  fig.align = 'center'
 )
 ```
 
@@ -35,6 +42,8 @@ library(forcats)
 library(tidyr)
 library(ggrepel)
 library(spaMM)
+library(countrycode)
+library(gt)
 ```
 
 ## Data completeness
@@ -68,9 +77,9 @@ ggplot(completness_rangers) +
   labs(fill = "")
 ```
 
-**Note**: so far the numbers don't add up due to a data issue with Kenya...
+**Note**: so far the numbers don't add up due to a data issue with **Kenya**...
 
-**In summary:** for **`r sum(is.na(data_rangers$staff_rangers_others_known) & is.na(data_rangers$staff_rangers_others_unknown) & is.na(data_rangers$staff_total_details_unknown))`** countries we have no information what-so-ever and for **`r sum(is.na(data_rangers$staff_rangers))`** we have no information on rangers per se.
+**In summary:** for **`r sum(is.na(data_rangers$staff_rangers))`** we have no information on rangers per se, including **`r sum(is.na(data_rangers$staff_rangers_others_known) & is.na(data_rangers$staff_rangers_others_unknown) & is.na(data_rangers$staff_total_details_unknown))`** countries for which we have no information what-so-ever.
 
 The countries for which we miss information about rangers or staff are the following ones (ordered by decreasing country area):
 ```{r completness_rangers list}
@@ -78,15 +87,20 @@ data_rangers %>%
   filter(is.na(staff_rangers_others_known) &
           is.na(staff_rangers_others_unknown) &
           is.na(staff_total_details_unknown)) %>%
-  arrange(desc(area_country))
-```
+  select(countryname_eng) %>%
+  mutate(info = "none") -> no_info_countries
 
-
-The countries for which we miss information about rangers per se are the following ones (ordered by decreasing country area):
-```{r completness_rangers list rangers only}
 data_rangers %>%
   filter(is.na(staff_rangers)) %>%
-  arrange(desc(area_country))
+  select(countryname_iso, countryname_eng, area_country) -> partial_info_countries
+  
+full_join(no_info_countries, partial_info_countries, by = "countryname_eng") %>%
+  mutate(info = if_else(is.na(info), "lumped with other staff", info)) %>%
+  arrange(desc(area_country)) %>%
+  mutate(flags = countrycode(sourcevar = countryname_iso, "iso3c", "unicode.symbol")) %>%
+  mutate(Country = paste(countryname_eng, flags)) %>%
+  select(Country, Info_on_rangers = info) %>%
+  gt()
 ```
 
 Here are the countries where the number of rangers is known but 0:
@@ -98,6 +112,84 @@ data_rangers %>%
 ```
 
 **Question**: do the 0 correspond in facts to NAs?
+
+### by continents
+
+**Note**: tables sorted by PA area completeness
+
+```{r continent abs}
+data_rangers %>%
+  group_by(country_UN_continent) %>%
+  summarise(total_rangers_known = sum(staff_rangers, na.rm = TRUE),
+            n_missing_countries = sum(is.na(staff_rangers)),
+            PA_area_missing = sum(area_PA_WDPA[is.na(staff_rangers)]),
+            area_country_missing = sum(area_country[is.na(staff_rangers)])) %>%
+  arrange(PA_area_missing) %>%
+  bind_rows(
+    data_rangers %>%
+      summarise(total_rangers_known = sum(staff_rangers, na.rm = TRUE),
+                n_missing_countries = sum(is.na(staff_rangers)),
+                PA_area_missing = sum(area_PA_WDPA[is.na(staff_rangers)]),
+                area_country_missing = sum(area_country[is.na(staff_rangers)])) %>%
+      mutate(country_UN_continent = "ALL"))
+```
+
+```{r continent prop}
+data_rangers %>%
+  group_by(country_UN_continent) %>%
+  summarise(total_rangers_known = sum(staff_rangers, na.rm = TRUE),
+            n_missing_countries_pct = 100 * sum(is.na(staff_rangers)) / n(),
+            PA_area_missing_pct = 100 * sum(area_PA_WDPA[is.na(staff_rangers)]) / sum(area_PA_WDPA),
+            area_country_missing_pct = 100 * sum(area_country[is.na(staff_rangers)]) / sum(area_country)) %>%
+  arrange(PA_area_missing_pct) %>%
+  bind_rows(
+    data_rangers %>%
+      summarise(total_rangers_known = sum(staff_rangers, na.rm = TRUE),
+                n_missing_countries_pct = 100 * sum(is.na(staff_rangers)) / n(),
+                PA_area_missing_pct = 100 * sum(area_PA_WDPA[is.na(staff_rangers)]) / sum(area_PA_WDPA),
+                area_country_missing_pct = 100 * sum(area_country[is.na(staff_rangers)]) / sum(area_country)) %>%
+      mutate(country_UN_continent = "ALL")) %>%
+      mutate(across(where(is.numeric), round, digits = 2))
+```
+
+### by sub-continents
+
+**Note**: tables sorted by PA area completeness
+
+```{r subcontinent abs, rows.print=25}
+data_rangers %>%
+  group_by(country_UN_subcontinent) %>%
+  summarise(total_rangers_known = sum(staff_rangers, na.rm = TRUE),
+            n_missing_countries = sum(is.na(staff_rangers)),
+            PA_area_missing = sum(area_PA_WDPA[is.na(staff_rangers)]),
+            area_country_missing = sum(area_country[is.na(staff_rangers)])) %>%
+  arrange(PA_area_missing) %>%
+  bind_rows(
+    data_rangers %>%
+      summarise(total_rangers_known = sum(staff_rangers, na.rm = TRUE),
+                n_missing_countries = sum(is.na(staff_rangers)),
+                PA_area_missing = sum(area_PA_WDPA[is.na(staff_rangers)]),
+                area_country_missing = sum(area_country[is.na(staff_rangers)])) %>%
+      mutate(country_UN_subcontinent = "ALL"))
+```
+
+```{r subcontinent prop, rows.print=25}
+data_rangers %>%
+  group_by(country_UN_subcontinent) %>%
+  summarise(total_rangers_known = sum(staff_rangers, na.rm = TRUE),
+            n_missing_countries_pct = 100 * sum(is.na(staff_rangers)) / n(),
+            PA_area_missing_pct = 100 * sum(area_PA_WDPA[is.na(staff_rangers)]) / sum(area_PA_WDPA),
+            area_country_missing_pct = 100 * sum(area_country[is.na(staff_rangers)]) / sum(area_country)) %>%
+  arrange(PA_area_missing_pct) %>%
+  bind_rows(
+    data_rangers %>%
+      summarise(total_rangers_known = sum(staff_rangers, na.rm = TRUE),
+                n_missing_countries_pct = 100 * sum(is.na(staff_rangers)) / n(),
+                PA_area_missing_pct = 100 * sum(area_PA_WDPA[is.na(staff_rangers)]) / sum(area_PA_WDPA),
+                area_country_missing_pct = 100 * sum(area_country[is.na(staff_rangers)]) / sum(area_country)) %>%
+      mutate(country_UN_subcontinent = "ALL")) %>%
+      mutate(across(where(is.numeric), round, digits = 2))
+```
 
 
 ## Distribution
@@ -133,7 +225,8 @@ data_rangers %>%
             sd = sd(staff_rangers, na.rm = TRUE),
             quantile = list(quantile(staff_rangers, na.rm = TRUE))) %>%
   unnest_wider(quantile, names_sep = "_") %>%
-  pivot_longer(cols = everything(), names_to = "statistic")
+  pivot_longer(cols = everything(), names_to = "statistic") %>%
+  gt()
 ```
 
 
@@ -315,15 +408,19 @@ data_rangers %>%
 **Conclusion**: no clear relationship. That's good!
 
 
-### with continent
+### with forest area pct
 
-```{r continent}
+```{r corr forest_area plot, fig.height=8, fig.width=8, cache=TRUE}
 data_rangers %>%
-  group_by(country_UN_continent) %>%
-  summarise(total_rangers_known = sum(staff_rangers, na.rm = TRUE),
-            n_missing_countries = sum(is.na(staff_rangers)),
-            PA_area_missing = sum(area_PA_WDPA[is.na(staff_rangers)])) %>%
-  arrange(desc(total_rangers_known))
+  ggplot() +
+  aes(y = staff_rangers, x = area_forest_pct, label = countryname_iso, colour = country_UN_continent) +
+  geom_text() +
+  coord_trans(y = "log1p") +
+  scale_y_continuous(breaks = c(0, 10, 100, 1000, 1e4, 1e5, 1e6, 1e7), minor_breaks = NULL) +
+  theme_minimal() +
+  labs(x = "Percentage of forest area",
+       y = "Number of rangers",
+         colour = "continent")
 ```
 
-
+**Conclusion**: no clear relationship. 

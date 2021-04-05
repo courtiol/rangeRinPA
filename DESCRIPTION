@@ -18,8 +18,10 @@ Imports:
     magrittr,
     rnaturalearth
 Suggests:
+    countrycode,
     forcats,
     ggrepel,
+    gt,
     knitr,
     rmarkdown,
     rnaturalearthdata,
