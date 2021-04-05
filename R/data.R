@@ -70,7 +70,7 @@ fetch_data_rangers <- function() {
     dplyr::mutate(staff_others = .data$staff_total - .data$staff_rangers,
                   .after = .data$staff_rangers) -> d
 
-  ## Declare some variable as qualitative:
+  ## Deal with continents:
   d %>%
     dplyr::mutate(country_UN_continent = as.character(.data$country_UN_continent),
                   country_UN_continent = dplyr::case_when(
@@ -80,6 +80,34 @@ fetch_data_rangers <- function() {
                     .data$country_UN_continent == "21" ~ "Northern America",
                     .data$country_UN_continent == "419" ~ "Latin American & Caribbean",
                     .data$country_UN_continent == "9" ~ "Oceania"),
+                  country_UN_subcontinent = as.character(.data$country_UN_subcontinent)) -> d
+
+  ## Deal with subcontinents:
+  d %>%
+    dplyr::mutate(country_UN_subcontinent = as.character(.data$country_UN_subcontinent),
+                  country_UN_subcontinent = dplyr::case_when(
+                    .data$country_UN_subcontinent == "15" ~ "Northern Africa",
+                    .data$country_UN_subcontinent == "14" ~ "Eastern Africa",
+                    .data$country_UN_subcontinent == "17" ~ "Middle Africa",
+                    .data$country_UN_subcontinent == "18" ~ "Southern Africa",
+                    .data$country_UN_subcontinent == "11" ~ "Western Africa",
+                    .data$country_UN_subcontinent == "29" ~ "Caribbean",
+                    .data$country_UN_subcontinent == "13" ~ "Central America",
+                    .data$country_UN_subcontinent == "5" ~ "South America",
+                    .data$country_UN_subcontinent == "21" ~ "Northern America",
+                    .data$country_UN_subcontinent == "143" ~ "Central Asia",
+                    .data$country_UN_subcontinent == "30" ~ "Eastern Asia",
+                    .data$country_UN_subcontinent == "35" ~ "South-Eastern Asia",
+                    .data$country_UN_subcontinent == "34" ~ "Southern Asia",
+                    .data$country_UN_subcontinent == "145" ~ "Western Asia",
+                    .data$country_UN_subcontinent == "151" ~ "Eastern Europe",
+                    .data$country_UN_subcontinent == "154" ~ "Northern Europe",
+                    .data$country_UN_subcontinent == "39" ~ "Southern Europe",
+                    .data$country_UN_subcontinent == "155" ~ "Western Europe",
+                    .data$country_UN_subcontinent == "53" ~ "Australia and New Zealand",
+                    .data$country_UN_subcontinent == "54" ~ "Melanesia",
+                    .data$country_UN_subcontinent == "57" ~ "Micronesia",
+                    .data$country_UN_subcontinent == "61" ~ "Polynesia"),
                   country_UN_subcontinent = as.character(.data$country_UN_subcontinent)) -> d
 
   d
