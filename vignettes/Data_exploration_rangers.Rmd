@@ -473,9 +473,10 @@ data_rangers %>%
 
 **Conclusion**: no clear relationship. 
 
-### with EVI
 
-We start by comparing EVI to the 2 other ecological indexes:
+### with ecological indexes
+
+We start by comparing the ecological indexes:
 
 ```{r EVI_SPI plot, fig.height=8, fig.width=8, cache=TRUE}
 data_rangers %>%
@@ -501,7 +502,22 @@ data_rangers %>%
   theme_minimal()
 ```
 
-We then plot the relationship with the number of rangers:
+
+```{r EPI_SPI plot, fig.height=8, fig.width=8, cache=TRUE}
+data_rangers %>%
+  ggplot() +
+  aes(y = EPI_2020, x = SPI, label = countryname, size = area_country, colour = country_UN_continent) +
+  #geom_text_repel(min.segment.length = 0, nudge_x = 0, nudge_y = 0, force = 0.03, force_pull = 2, seed = 123) +
+  geom_text() +
+  coord_fixed(xlim = c(0, 100), ylim = c(0, 100)) +
+  scale_size_continuous(trans = "sqrt", guide = "none", range = c(3, 7)) +
+  scale_colour_discrete(guide = "none") +
+  theme_minimal()
+```
+
+We then plot the relationship with the number of rangers.
+
+#### with EVI
 
 ```{r corr EVI_rangers plot, fig.height=8, fig.width=8, cache=TRUE}
 data_rangers %>%
@@ -517,35 +533,7 @@ data_rangers %>%
   labs(y = "Number of rangers")
 ```
 
-### with SPI
-
-We start by comparing SPI to the 2 other ecological indexes:
-
-```{r SPI_EVI plot, fig.height=8, fig.width=8, cache=TRUE}
-data_rangers %>%
-  ggplot() +
-  aes(y = SPI, x = EVI, label = countryname, size = area_country, colour = country_UN_continent) +
-  #geom_text_repel(min.segment.length = 0, nudge_x = 0, nudge_y = 0, force = 0.03, force_pull = 2, seed = 123) +
-  geom_text() +
-  coord_fixed(xlim = c(0, 100), ylim = c(0, 100)) +
-  scale_size_continuous(trans = "sqrt", guide = "none", range = c(3, 7)) +
-  scale_colour_discrete(guide = "none") +
-  theme_minimal()
-```
-
-```{r SPI_EPI plot, fig.height=8, fig.width=8, cache=TRUE}
-data_rangers %>%
-  ggplot() +
-  aes(y = SPI, x = EPI_2020, label = countryname, size = area_country, colour = country_UN_continent) +
-  #geom_text_repel(min.segment.length = 0, nudge_x = 0, nudge_y = 0, force = 0.03, force_pull = 2, seed = 123) +
-  geom_text() +
-  coord_fixed(xlim = c(0, 100), ylim = c(0, 100)) +
-  scale_size_continuous(trans = "sqrt", guide = "none", range = c(3, 7)) +
-  scale_colour_discrete(guide = "none") +
-  theme_minimal()
-```
-
-We then plot the relationship with the number of rangers:
+#### with SPI
 
 ```{r corr SPI_rangers plot, fig.height=8, fig.width=8, cache=TRUE}
 data_rangers %>%
@@ -561,36 +549,7 @@ data_rangers %>%
   labs(y = "Number of rangers")
 ```
 
-### with EPI
-
-We start by comparing EPI to the 2 other ecological indexes:
-
-```{r EPI_EVI plot, fig.height=8, fig.width=8, cache=TRUE}
-data_rangers %>%
-  ggplot() +
-  aes(y = EPI_2020, x = EVI, label = countryname, size = area_country, colour = country_UN_continent) +
-  # geom_text_repel(min.segment.length = 0, nudge_x = 0, nudge_y = 0, force = 0.03, force_pull = 2, seed = 123) +
-  geom_text() +
-  coord_fixed(xlim = c(20, 80), ylim = c(20, 80)) +
-  scale_size_continuous(trans = "sqrt", guide = "none", range = c(3, 7)) +
-  scale_colour_discrete(guide = "none") +
-  theme_minimal()
-```
-
-```{r EPI_SPI plot, fig.height=8, fig.width=8, cache=TRUE}
-data_rangers %>%
-  ggplot() +
-  aes(y = EPI_2020, x = SPI, label = countryname, size = area_country, colour = country_UN_continent) +
-  #geom_text_repel(min.segment.length = 0, nudge_x = 0, nudge_y = 0, force = 0.03, force_pull = 2, seed = 123) +
-  geom_text() +
-  coord_fixed(xlim = c(0, 100), ylim = c(0, 100)) +
-  scale_size_continuous(trans = "sqrt", guide = "none", range = c(3, 7)) +
-  scale_colour_discrete(guide = "none") +
-  theme_minimal()
-```
-
-We then plot the relationship with the number of rangers:
-
+#### with EPI
 
 ```{r corr EPI_rangers plot, fig.height=8, fig.width=8, cache=TRUE}
 data_rangers %>%
@@ -605,3 +564,103 @@ data_rangers %>%
   theme_minimal() +
   labs(y = "Number of rangers")
 ```
+
+### with GDP
+
+We start by comparing the different GDP metrics:
+
+```{r GDPcapita_2019 plot, fig.height=8, fig.width=8, cache=TRUE}
+data_rangers %>%
+  ggplot() +
+  aes(y = GDP_capita, x = GDP_2019, label = countryname, size = area_country, colour = country_UN_continent) +
+  # geom_text_repel(min.segment.length = 0, nudge_x = 0, nudge_y = 0, force = 0.03, force_pull = 2, seed = 123) +
+  geom_text() +
+  coord_trans(y = "log", x = "log") +
+  scale_size_continuous(trans = "sqrt", guide = "none", range = c(3, 7)) +
+  scale_y_continuous(breaks = 10^(0:20), minor_breaks = NULL) +
+  scale_x_continuous(breaks = 10^(0:20), minor_breaks = NULL) +
+  scale_colour_discrete(guide = "none") +
+  theme_minimal()
+```
+
+```{r GDPcapita_growth plot, fig.height=8, fig.width=8, cache=TRUE}
+data_rangers %>%
+  ggplot() +
+  aes(y = GDP_capita, x = GDP_growth, label = countryname, size = area_country, colour = country_UN_continent) +
+  # geom_text_repel(min.segment.length = 0, nudge_x = 0, nudge_y = 0, force = 0.03, force_pull = 2, seed = 123) +
+  geom_text() +
+  coord_trans(y = "log") +
+  scale_size_continuous(trans = "sqrt", guide = "none", range = c(3, 7)) +
+  scale_y_continuous(breaks = 10^(0:20), minor_breaks = NULL) +
+  scale_colour_discrete(guide = "none") +
+  theme_minimal()
+```
+
+```{r GDP_growth plot, fig.height=8, fig.width=8, cache=TRUE}
+data_rangers %>%
+  ggplot() +
+  aes(y = GDP_2019, x = GDP_growth, label = countryname, size = area_country, colour = country_UN_continent) +
+  # geom_text_repel(min.segment.length = 0, nudge_x = 0, nudge_y = 0, force = 0.03, force_pull = 2, seed = 123) +
+  geom_text() +
+  coord_trans(y = "log") +
+  scale_size_continuous(trans = "sqrt", guide = "none", range = c(3, 7)) +
+  scale_y_continuous(breaks = 10^(0:20), minor_breaks = NULL) +
+  scale_colour_discrete(guide = "none") +
+  theme_minimal()
+```
+
+We then plot the relationship with the number of rangers
+
+#### with GDP per capita
+
+```{r corr GDP_capita_rangers plot, fig.height=8, fig.width=8, cache=TRUE}
+data_rangers %>%
+  filter(area_country > 0) %>%
+  ggplot() +
+  aes(y = staff_rangers, x = GDP_capita, label = countryname, size = area_country, colour = country_UN_continent) +
+  geom_text() +
+  scale_size_continuous(trans = "sqrt", guide = "none", range = c(3, 7)) +
+  scale_colour_discrete(guide = "none") +
+  coord_trans(y = "log1p", x = "log") +
+  scale_y_continuous(breaks = c(0, 10, 100, 1000, 1e4, 1e5, 1e6, 1e7), minor_breaks = NULL) +
+  scale_x_continuous(breaks = 10^(0:20), minor_breaks = NULL) +
+  theme_minimal() +
+  labs(y = "Number of rangers")
+```
+
+#### with GDP
+
+```{r corr GDP_2019_rangers plot, fig.height=8, fig.width=8, cache=TRUE}
+data_rangers %>%
+  filter(area_country > 0) %>%
+  ggplot() +
+  aes(y = staff_rangers, x = GDP_2019, label = countryname, size = area_country, colour = country_UN_continent) +
+  geom_text() +
+  scale_size_continuous(trans = "sqrt", guide = "none", range = c(3, 7)) +
+  scale_colour_discrete(guide = "none") +
+  coord_trans(y = "log1p", x = "log") +
+  scale_y_continuous(breaks = c(0, 10, 100, 1000, 1e4, 1e5, 1e6, 1e7), minor_breaks = NULL) +
+  scale_x_continuous(breaks = 10^(0:20), minor_breaks = NULL) +
+  theme_minimal() +
+  labs(y = "Number of rangers")
+```
+
+**Note**: there is a strong relationship.
+
+#### with GDP growth
+
+```{r corr GDP_growth_rangers plot, fig.height=8, fig.width=8, cache=TRUE}
+data_rangers %>%
+  filter(area_country > 0) %>%
+  ggplot() +
+  aes(y = staff_rangers, x = GDP_growth, label = countryname, size = area_country, colour = country_UN_continent) +
+  geom_text() +
+  scale_size_continuous(trans = "sqrt", guide = "none", range = c(3, 7)) +
+  scale_colour_discrete(guide = "none") +
+  coord_trans(y = "log1p") +
+  scale_y_continuous(breaks = c(0, 10, 100, 1000, 1e4, 1e5, 1e6, 1e7), minor_breaks = NULL) +
+  theme_minimal() +
+  labs(y = "Number of rangers")
+```
+
+
