@@ -207,3 +207,55 @@ data_rangers %>%
       mutate(country_UN_subcontinent = "ALL")) %>%
       mutate(across(where(is.numeric), round, digits = 2))
 ```
+
+## Predictors
+
+```{r predictors, rows.print=30}
+data_rangers %>%
+  select(-contains("staff")) %>%
+  summarize(across(everything(), ~ sum(is.na(.)))) %>%
+  pivot_longer(everything(), values_to = "missings_all", names_to = "variable") -> missing_pred1
+
+data_rangers %>%
+  filter(!is.na(staff_others)) %>%
+  select(-contains("staff")) %>%
+  summarize(across(everything(), ~ sum(is.na(.)))) %>%
+  pivot_longer(everything(), values_to = "missings_rangers_known", names_to = "variable") -> missing_pred2
+
+data_rangers %>%
+  filter(is.na(staff_others)) %>%
+  select(-contains("staff")) %>%
+  summarize(across(everything(), ~ sum(is.na(.)))) %>%
+  pivot_longer(everything(), values_to = "missings_rangers_unknown", names_to = "variable") -> missing_pred3
+
+full_join(full_join(missing_pred1, missing_pred2), missing_pred3) %>%
+  arrange(missings_all, missings_rangers_known, missings_rangers_unknown)
+```
+
+Same for countries larger than 15000 km2:
+
+```{r predictors big countries, rows.print=30}
+data_rangers %>%
+  filter(area_country > 15000) -> data_rangers2
+
+data_rangers2 %>%
+  select(-contains("staff")) %>%
+  summarize(across(everything(), ~ sum(is.na(.)))) %>%
+  pivot_longer(everything(), values_to = "missings_all", names_to = "variable") -> missing_pred1
+
+data_rangers2 %>%
+  filter(!is.na(staff_others)) %>%
+  select(-contains("staff")) %>%
+  summarize(across(everything(), ~ sum(is.na(.)))) %>%
+  pivot_longer(everything(), values_to = "missings_rangers_known", names_to = "variable") -> missing_pred2
+
+data_rangers2 %>%
+  filter(is.na(staff_others)) %>%
+  select(-contains("staff")) %>%
+  summarize(across(everything(), ~ sum(is.na(.)))) %>%
+  pivot_longer(everything(), values_to = "missings_rangers_unknown", names_to = "variable") -> missing_pred3
+
+full_join(full_join(missing_pred1, missing_pred2), missing_pred3) %>%
+  arrange(missings_all, missings_rangers_known, missings_rangers_unknown)
+```
+
