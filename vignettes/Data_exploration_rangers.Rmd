@@ -44,6 +44,12 @@ library(ggrepel)
 library(spaMM)
 library(countrycode)
 library(gt)
+
+# set how to represent countries in plots:
+#data_rangers$countryname <- countrycode(sourcevar = data_rangers$countryname_iso, "iso3c", "unicode.symbol")
+#data_rangers$countryname[data_rangers$countryname_iso == "ZZZ"] <- "ZZZ"
+#data_rangers$countryname[data_rangers$countryname_iso == "KOS"] <- "KOS"
+data_rangers$countryname <- data_rangers$countryname_iso
 ```
 
 ## Data completeness
@@ -243,7 +249,7 @@ f <- function(x) (x + 1)^coef_fit[2] * (exp(coef_fit[1]) - 1)
 ```{r corr staff_others plot, fig.height=8, fig.width=8, cache=TRUE}
 data_rangers %>%
   ggplot() +
-  aes(y = staff_rangers, x = staff_others, label = countryname_iso) +
+  aes(y = staff_rangers, x = staff_others, label = countryname) +
   geom_text_repel(size = 3, nudge_x = 0, nudge_y = 0, force = 0.03, force_pull = 2, seed = 123, min.segment.length = 0) +
   stat_function(fun = f, colour = "blue", n = 1e5) +
   coord_trans(x = "log1p", y = "log1p") +
@@ -265,7 +271,7 @@ First, let's explore the 3 variables we have:
 ```{r corr PA_areas plot, fig.height=8, fig.width=8, cache=TRUE}
 data_rangers %>%
   ggplot() +
-  aes(y = area_PA_WDPA, x = area_PA_surveyed, label = countryname_iso) +
+  aes(y = area_PA_WDPA, x = area_PA_surveyed, label = countryname) +
   geom_text() +
   geom_abline(slope = 1, intercept = 0, linetype = "dashed") + 
   coord_trans(x = "log1p", y = "log1p") +
@@ -280,7 +286,7 @@ data_rangers %>%
 ```{r corr PA_areas plot 2, fig.height=8, fig.width=8, cache=TRUE}
 data_rangers %>%
   ggplot() +
-  aes(y = area_PA_WDPA, x = area_PA_total, label = countryname_iso) +
+  aes(y = area_PA_WDPA, x = area_PA_total, label = countryname) +
   geom_text() +
   geom_abline(slope = 1, intercept = 0, linetype = "dashed") + 
   coord_trans(x = "log1p", y = "log1p") +
@@ -312,7 +318,7 @@ f <- function(x) x^coef_fit[2] * (exp(coef_fit[1]) - 1)
 ```{r corr area_PA_WDPA plot, fig.height=8, fig.width=8, cache=TRUE}
 data_rangers %>%
   ggplot() +
-  aes(y = staff_rangers, x = area_PA_WDPA, label = countryname_iso) +
+  aes(y = staff_rangers, x = area_PA_WDPA, label = countryname) +
   geom_text() +
   coord_trans(x = "log", y = "log1p") +
   stat_function(fun = f, colour = "blue", n = 1e5) +
@@ -333,7 +339,7 @@ Let's first compare the area of the country and its PA:
 ```{r corr PA_country_areas plot, fig.height=8, fig.width=8, cache=TRUE}
 data_rangers %>%
   ggplot() +
-  aes(y = area_country, x = area_PA_WDPA, label = countryname_iso) +
+  aes(y = area_country, x = area_PA_WDPA, label = countryname) +
   geom_text() +
   geom_abline(slope = 1, intercept = 0, linetype = "dashed") + 
   coord_trans(x = "log1p", y = "log1p") +
@@ -357,7 +363,7 @@ f <- function(x) x^coef_fit[2] * (exp(coef_fit[1]) - 1)
 ```{r corr area_country plot, fig.height=8, fig.width=8, cache=TRUE}
 data_rangers %>%
   ggplot() +
-  aes(y = staff_rangers, x = area_country, label = countryname_iso) +
+  aes(y = staff_rangers, x = area_country, label = countryname) +
   geom_text() +
   coord_trans(x = "log", y = "log1p") +
   stat_function(fun = f, colour = "blue", n = 1e5) +
@@ -377,7 +383,7 @@ Let's look at the correlation between the number of rangers and the proportion o
 data_rangers %>%
   filter(area_country > 1) %>%
     ggplot() +
-    aes(y = staff_rangers, x = area_PA_WDPA/area_country, label = countryname_iso, size = area_country) +
+    aes(y = staff_rangers, x = area_PA_WDPA/area_country, label = countryname, size = area_country) +
     geom_text() +
     coord_trans(y = "log1p") +
     scale_y_continuous(breaks = c(0, 10, 100, 1000, 1e4, 1e5, 1e6, 1e7), minor_breaks = NULL) +
@@ -395,7 +401,7 @@ data_rangers %>%
 ```{r corr reliability plot, fig.height=8, fig.width=8, cache=TRUE}
 data_rangers %>%
     ggplot() +
-    aes(y = staff_rangers, x = reliability, label = countryname_iso, colour = country_UN_continent) +
+    aes(y = staff_rangers, x = reliability, label = countryname, colour = country_UN_continent) +
     geom_text_repel(seed = 123, min.segment.length = 0) +
     coord_trans(y = "log1p") +
     scale_y_continuous(breaks = c(0, 10, 100, 1000, 1e4, 1e5, 1e6, 1e7), minor_breaks = NULL) +
@@ -407,13 +413,12 @@ data_rangers %>%
 
 **Conclusion**: no clear relationship. That's good!
 
-
 ### with forest area pct
 
 ```{r corr forest_area plot, fig.height=8, fig.width=8, cache=TRUE}
 data_rangers %>%
   ggplot() +
-  aes(y = staff_rangers, x = area_forest_pct, label = countryname_iso, colour = country_UN_continent) +
+  aes(y = staff_rangers, x = area_forest_pct, label = countryname, colour = country_UN_continent) +
   geom_text() +
   coord_trans(y = "log1p") +
   scale_y_continuous(breaks = c(0, 10, 100, 1000, 1e4, 1e5, 1e6, 1e7), minor_breaks = NULL) +
@@ -424,3 +429,28 @@ data_rangers %>%
 ```
 
 **Conclusion**: no clear relationship. 
+
+### with EVI, SPI, and EPI
+
+We start by comparing the different ecological indexes together:
+
+```{r EVI_SPI_EPI plot, fig.height=8, fig.width=8, cache=TRUE}
+GGally::ggpairs(data_rangers[, c("EVI", "SPI", "EPI_2020")]) +
+  theme_minimal()
+```
+
+**Conclusion**: all 3 indicators are quite correlated between each others.
+
+```{r corr EVI_SPI_EPI plot, fig.height=24, fig.width=8, cache=TRUE}
+data_rangers %>%
+  pivot_longer(c("EVI", "SPI", "EPI_2020"), names_to = "indicator") %>%
+  ggplot() +
+  aes(y = staff_rangers, x = value, label = countryname, colour = indicator) +
+  geom_text() +
+  facet_wrap(~ indicator, nrow = 3) +
+  coord_trans(y = "log1p") +
+  scale_y_continuous(breaks = c(0, 10, 100, 1000, 1e4, 1e5, 1e6, 1e7), minor_breaks = NULL) +
+  theme_minimal() +
+  labs(x = "Indicator",
+       y = "Number of rangers")
+```
