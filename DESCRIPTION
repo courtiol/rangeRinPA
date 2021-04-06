@@ -18,6 +18,7 @@ Imports:
     magrittr,
     rnaturalearth
 Suggests:
+    broom,
     countrycode,
     forcats,
     ggrepel,
