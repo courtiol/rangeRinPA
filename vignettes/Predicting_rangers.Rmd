@@ -53,9 +53,6 @@ I will first characterise the relationship between PA_area and staff_rangers bef
 ```{r data prep, warning=FALSE}
 rm(data_rangers) # delete existing one if any, to make sure we use the one of the package
 data_rangers %>%
-  group_by(countryname_iso) %>%
-  slice(1) %>% ## to remove one duplicate for French polynesia
-  ungroup() %>%
   mutate(PA_area = if_else(!is.na(area_PA_total), area_PA_total, area_PA_WDPA)) %>%
   select(contains("country"), -area_country, staff_rangers, PA_area) -> data_rangers_clean
 
@@ -299,7 +296,7 @@ ggplot(res_simu1) +
 
 As you can see the distribution encompasses well the observed sum (in red).
 
-We can then do the same to predict the sum of rangers across the countries we did not observe:
+We can then do the same to predict the sum of rangers across the countries we did not observe (PS: I am assuming that countries with a null PA_area won't have any ranger):
 
 ```{r plot simu2, fig.height=6, fig.width=6, cache=TRUE}
 data_rangers_clean_noG %>%
@@ -339,6 +336,6 @@ tibble(mean = round(mean(simu2) + sum(pred$staff_rangers)),
 
 We will use other methods to produce predictions, but this gives us a first benchmark.
 
-We thus have an uncertainty of around `r round(quantile(simu2, probs = 0.975)[[1]] - quantile(simu2, probs = 0.025)[[1]])` rangers. Notice however that the interval for our prediction is not centred around the mean prediction, which implies that there is less uncertainty about the lowest possible number of rangers than about the highest possible one. Indeed, 50% of the simulation give a number of unknown rangers between 0 and `r round(quantile(simu2, probs = 0.5)[[1]])` while there is a long tail on the right of the distribution.
+We thus have an uncertainty of around `r format(round(quantile(simu2, probs = 0.975)[[1]] - quantile(simu2, probs = 0.025)[[1]]), scientific = FALSE)` rangers. Notice however that the interval for our prediction is not centred around the mean prediction, which implies that there is less uncertainty about the lowest possible number of rangers than about the highest possible one. Indeed, 50% of the simulation give a number of unknown rangers between 0 and `r format(round(quantile(simu2, probs = 0.5)[[1]]), scientific = FALSE)` while there is a long tail on the right of the distribution.
 
 #### Using the simple linear model
