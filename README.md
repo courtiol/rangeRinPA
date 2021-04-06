@@ -22,7 +22,7 @@ You can install the development version of rangeR from
 
 ``` r
 # install.packages("remotes")
-remotes::install_github("courtiol/rangeR", build_vignettes = TRUE)
+remotes::install_github("courtiol/rangeR", build_vignettes = TRUE, dependencies = TRUE)
 ```
 
 ## How to use our data?
@@ -37,7 +37,7 @@ Here is a simple example:
 library(rangeR)
 
 sum(data_rangers$staff_total, na.rm = TRUE)
-#> [1] 367727
+#> [1] 369059
 ```
 
 ## How to get the vignettes?
