@@ -135,18 +135,18 @@ data_rangers %>%
 
 **Question**: why is `area_PA_total` the same for both country? There seem to be an issue.
 
-Let's look at the correlation between the number of rangers and     the PA area:
+Let's look at the correlation between the number of rangers and the PA area:
 
-```{r corr area_PA_WDPA lm}
-fit  <- lm(log(staff_rangers + 1) ~ log(area_PA_WDPA), data = data_rangers)
+```{r corr area_PA_total lm}
+fit  <- lm(log(staff_rangers + 1) ~ log(area_PA_total), data = data_rangers)
 coef_fit <- coef(fit)
 f <- function(x) x^coef_fit[2] * (exp(coef_fit[1]) - 1)
 ```
 
-```{r corr area_PA_WDPA plot, fig.height=8, fig.width=8, cache=TRUE}
+```{r corr area_PA_total plot, fig.height=8, fig.width=8, cache=TRUE}
 data_rangers %>%
   ggplot() +
-  aes(y = staff_rangers, x = area_PA_WDPA, label = countryname, size = area_country, colour = country_UN_continent) +
+  aes(y = staff_rangers, x = area_PA_total, label = countryname, size = area_country, colour = country_UN_continent) +
   #geom_text_repel(nudge_x = 0, nudge_y = 0, force = 0.03, force_pull = 2, seed = 123, min.segment.length = 0) +
   geom_text() +
   coord_trans(x = "log", y = "log1p") +
@@ -162,6 +162,22 @@ data_rangers %>%
 
 **Conclusion**: there is a nice (expected) relationship between the number of rangers and the area of PA.
 Since the slope of the linear model is `r round(coef_fit[2], 2)`, the number of rangers increases less quickly than the area of PA.
+
+Let's look at this relationship as a ratio between logs:
+
+```{r corr area_PA_WDPA_log plot, fig.height=8, fig.width=8, cache=TRUE}
+data_rangers %>%
+  ggplot() +
+  aes(y = log(staff_rangers + 1) / log(area_PA_total), x = area_PA_total, label = countryname, size = area_country, colour = country_UN_continent) +
+  #geom_text_repel(nudge_x = 0, nudge_y = 0, force = 0.03, force_pull = 2, seed = 123, min.segment.length = 0) +
+  geom_text() +
+  coord_trans(x = "log") +
+  #stat_function(fun = f, colour = "blue", n = 1e5) +
+  scale_x_continuous(breaks = c(10, 100, 1000, 1e4, 1e5, 1e6, 1e7), minor_breaks = NULL, limits = c(10, 1e7)) +
+  scale_size_continuous(trans = "sqrt", guide = "none", range = c(3, 7)) +
+  scale_colour_discrete(guide = "none") +
+  theme_minimal()
+```
 
 ## area country
 
