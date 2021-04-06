@@ -1,0 +1,344 @@
+---
+title: "Predicting the number of rangers"
+output:
+  rmarkdown::html_document:
+    df_print: paged
+    toc: true
+    toc_depth: 4
+    code_folding: hide
+vignette: >
+  %\VignetteIndexEntry{Number_rangers}
+  %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
+editor_options:
+  chunk_output_type: console
+---
+
+<style type="text/css">
+  .main-container {
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+</style>
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  error = TRUE,
+  comment = "#>",
+  cache = FALSE, # don't put TRUE as inline chunk make R CMD check to crash
+  cache.path = "cache/cache_vignette_predicting_rangers/",
+  fig.path = "figs/fig_vignette_predicting_rangers/",
+  fig.align = 'center'
+)
+```
+
+```{r setup, message=FALSE}
+library(rangeR)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(broom)
+library(gt)
+```
+
+## Using only the total area of terrestrial PAs in the country as predictor
+
+At the level of countries, the *total area of terrestrial PAs in the country* (**PA_area** for short) is a very good predictor for the number of rangers (**staff_rangers** for short).
+I will first characterise the relationship between PA_area and staff_rangers before using it to predict the number of rangers in countries for which we don't have it.
+
+### Data used
+
+```{r data prep, warning=FALSE}
+rm(data_rangers) # delete existing one if any, to make sure we use the one of the package
+data_rangers %>%
+  group_by(countryname_iso) %>%
+  slice(1) %>% ## to remove one duplicate for French polynesia
+  ungroup() %>%
+  mutate(PA_area = if_else(!is.na(area_PA_total), area_PA_total, area_PA_WDPA)) %>%
+  select(contains("country"), -area_country, staff_rangers, PA_area) -> data_rangers_clean
+
+rownames(data_rangers_clean) <- data_rangers_clean$countryname_iso
+```
+
+Here is the dataset we are using below:
+
+```{r data}
+data_rangers_clean
+```
+
+We will also use a version of this dataset without Greenland in same cases since this country is a clear outlier.
+
+```{r data_no_greenland, warning=FALSE}
+data_rangers_clean %>%
+  filter(countryname_eng != "Greenland") -> data_rangers_clean_noG
+
+rownames(data_rangers_clean_noG) <- data_rangers_clean_noG$countryname_iso
+```
+
+### Relationship between PA_area and staff_rangers
+
+On the original scale, the relationship is not very obvious:
+
+```{r area_PA_total plot1, fig.height=6, fig.width=6, cache=TRUE}
+ggplot(data_rangers_clean) +
+  aes(y = staff_rangers, x = PA_area, label = countryname_iso, colour = country_UN_continent) +
+  geom_text() +
+  scale_colour_discrete(guide = "none") +
+  theme_minimal()
+```
+
+but when plotting the variable on a log scale, the relation appears more clearly:
+
+```{r area_PA_total plot2, fig.height=6, fig.width=6, cache=TRUE}
+ggplot(data_rangers_clean) +
+  aes(y = staff_rangers, x = PA_area, label = countryname_iso, colour = country_UN_continent) +
+  geom_text() +
+  coord_trans(x = "log", y = "log1p") +
+  scale_x_continuous(breaks = 10^(0:7), minor_breaks = NULL, limits = c(1, 1e7)) +
+  scale_y_continuous(breaks = 10^(0:7), minor_breaks = NULL) +
+  scale_colour_discrete(guide = "none") +
+  theme_minimal()
+```
+
+**That the relationship is (roughly) linear on a log-log plot, suggests an allometric relationship and not a proportional relationship**.
+
+Let's start by showing what is wrong about assuming that the relationship is proportional:
+
+```{r area_PA_total plot3, fig.height=6, fig.width=6, cache=TRUE}
+ggplot(data_rangers_clean_noG) +
+  aes(y = PA_area / staff_rangers, x = PA_area, label = countryname_iso, colour = country_UN_continent) +
+  geom_text() +
+  coord_trans(x = "log", y = "log1p") +
+  scale_x_continuous(breaks = 10^(0:7), minor_breaks = NULL, limits = c(1, 1e7)) +
+  scale_y_continuous(breaks = 10^(0:7), minor_breaks = NULL) +
+  scale_colour_discrete(guide = "none") +
+  theme_minimal()
+```
+
+As you can see in the previous plot, the area of PA per ranger increases sharply with PA_area. So we cannot say that one ranger covers a fixed given area. For the same reason, we cannot say that there is x rangers per square-km of PAs.
+
+In contrast, owing to the particular nature of the allometric relationship we have (more on that later), what is fixed is the ratio of the log quantities:
+
+```{r area_PA_total plot4, fig.height=6, fig.width=6, cache=TRUE}
+ggplot(data_rangers_clean_noG) +
+  aes(y = log(staff_rangers + 1) / log(PA_area), x = PA_area, label = countryname_iso, colour = country_UN_continent) +
+  geom_text() +
+  coord_trans(x = "log") +
+  scale_x_continuous(breaks = 10^(0:7), minor_breaks = NULL, limits = c(1, 1e7)) +
+  scale_y_continuous(breaks = seq(0, 1, by = 0.1), minor_breaks = NULL) +
+  scale_colour_discrete(guide = "none") +
+  theme_minimal()
+```
+
+As you can see, the ratio of the log no longer depend on PA_area.
+(In case you wonder, the $+1$ is there so that to avoid log(0) which are not defined).
+
+### Fitting the allometric relationship
+
+An interesting observation is that the ratio between the logs is approximatively normally distributed. Here is the QQ plot:
+
+```{r gaussian, fig.height=6, fig.width=6, cache=TRUE}
+ggplot(data_rangers_clean_noG) +
+  aes(sample = log(staff_rangers + 1) / log(PA_area)) +
+  geom_qq(colour = "blue") + 
+  geom_qq_line() +
+  theme_minimal()
+```
+
+The mean of such normal distribution is estimated to `r round(mean(log(data_rangers_clean_noG$staff_rangers + 1) / log(data_rangers_clean_noG$PA_area), na.rm = TRUE), digits = 3)` and its SD to `r round(sd(log(data_rangers_clean_noG$staff_rangers + 1) / log(data_rangers_clean_noG$PA_area), na.rm = TRUE), digits = 3)`.
+
+Therefore, this very crude computation suggests that:
+
+$\large{\mathrm{staff\_rangers} + 1 = \mathrm{PA\_area}^{`r round(mean(log(data_rangers_clean_noG$staff_rangers + 1) / log(data_rangers_clean_noG$PA_area), na.rm = TRUE), digits = 3)`}}$.
+
+That the coefficient of allometry is positive implies that staff_rangers increases with PA_area.
+
+That the coefficient of allometry is lower than 1 implies that *the increase in staff_rangers with PA_area* decreases with PA_area
+
+
+To get for formal, let's fit the allometric relationship using for now a simple linear model:
+
+$\mathrm{log}(\mathrm{staff\_rangers} + 1) = a \times \mathrm{log}(\mathrm{PA\_area}) + b$ (model 1).
+
+Here are the estimates we obtain:
+
+```{r lm}
+fit_allometry <- lm(log(staff_rangers + 1) ~  log(PA_area), data = data_rangers_clean_noG)
+tidy(summary(fit_allometry)) %>%
+  mutate(across(where(is.numeric), .fns = round, digits = 3)) %>%
+  gt()
+```
+
+as you can see, the intercept ($b$) is no different from 0, so we can simplify the model to:
+
+$\mathrm{log}(\mathrm{staff\_rangers} + 1) = a \times \mathrm{log}(\mathrm{PA\_area})$ (model 2).
+
+This leads to the following estimates:
+
+```{r lm2}
+fit_allometry2 <- lm(log(staff_rangers + 1) ~  log(PA_area) - 1, data = data_rangers_clean_noG)
+tidy(summary(fit_allometry2)) %>%
+  mutate(across(where(is.numeric), .fns = round, digits = 3)) %>%
+  gt()
+```
+
+Dropping the intercept is more rigorously justified by the fact that doing so improves the predictive ability of the model (AIC model 1 = `r round(AIC(fit_allometry), digits = 1)`; AIC model 2 = `r round(AIC(fit_allometry2), digits = 1)`).
+
+Fitting simple LM thus confirms that we do not need to consider an intercept and it leads a relationship virtually identical to the one we established earlier:
+
+$\large{\mathrm{staff\_rangers} + 1 = \mathrm{PA\_area}^{`r round(coef(fit_allometry2)[[1]], digits = 3)`}}$.
+
+This simple linear models meets well the assumptions of linear regressions (homoscedasticity, independence and normality):
+
+```{r plot lm fit, fig.height=10, fig.width=10, cache=TRUE}
+par(mfrow = c(2, 2))
+plot(fit_allometry2)
+```
+
+
+### Predictive power
+
+We now turn to the predictive power (on the fitted data). So far, so good:
+
+```{r plot lm pred, fig.height=6, fig.width=6, cache=TRUE}
+plot(predict(fit_allometry2), fit_allometry2$model$`log(staff_rangers + 1)`, asp = 1, ylab = "Observed log(staff_rangers + 1)", xlab = "Predicted log(staff_rangers + 1)")
+abline(0, 1, lty = 2)
+```
+
+The Pearson correlation between the predicted and the observed `log(staff_rangers + 1)` is actually pretty high: r = `r round(cor(predict(fit_allometry2), fit_allometry2$model$"log(staff_rangers + 1)"), digits = 2)`.
+
+This is good, very good, but also a little misleading since being a little off on a log scale can mean a lot.
+
+Let's express this predictive power differently by computing the departure from observation as the percentage of the observed number of rangers:
+
+```{r predictive power pct}
+data_rangers_clean_noG %>%
+  filter(!is.na(staff_rangers)) %>%
+  mutate(predicted_rangers = exp(predict(fit_allometry2)),
+         relative_discrepancy = 100 * (predicted_rangers - staff_rangers + 1) / (staff_rangers + 1)) -> pred
+
+ggplot(pred) +
+  aes(y = relative_discrepancy, x = staff_rangers, label = countryname_iso, colour = country_UN_continent) + 
+  geom_text() +
+  coord_trans(x = "log1p") +
+  scale_colour_discrete(guide = "none") +
+  scale_x_continuous(breaks = 10^(0:7), minor_breaks = NULL, limits = c(1, 1e7)) +
+  theme_minimal()
+```
+
+A few countries are very badly predicted, but most (i.e `r sum(pred$relative_discrepancy > -100 & pred$relative_discrepancy  < 100)` out of `r nrow(pred)`) fall within +/- 100%:
+
+```{r predictive power pct 2}
+ggplot(pred) +
+  aes(y = relative_discrepancy, x = staff_rangers, label = countryname_iso, colour = country_UN_continent) + 
+  geom_text() +
+  coord_trans(x = "log1p", ylim = c(-100, 100)) +
+  scale_colour_discrete(guide = "none") +
+  scale_x_continuous(breaks = 10^(0:7), minor_breaks = NULL, limits = c(1, 1e7)) +
+  theme_minimal()
+```
+
+
+Another way to look at the predictive power on the original scale is to compute the sum of rangers for the country for which we know it and compare that to the observations:
+
+```{r predictive sum}
+gt(tibble(total_predicted = sum(pred$predicted_rangers - 1), total_observed = sum(pred$staff_rangers)))
+```
+
+That means that we predict `r round(100*sum(pred$predicted_rangers - 1) / sum(pred$staff_rangers), digits = 1)` % of the observed sum.
+The reason why it is a little lower is that the prediction underestimate the countries with the largest number of rangers. For example, in India alone, the model predicts `r round(pred[pred$countryname_iso == "IND", "predicted_rangers", drop = TRUE])` instead of `r format(pred[pred$countryname_iso == "IND", "staff_rangers", drop = TRUE], scientific = FALSE)`.
+
+So, is this model good or not? The results I just showed you are quite scary, but this is because I did not yet consider the uncertainty on the parameter estimate and the residual variance. In particular, I used the same value for the coefficient of allometry for predicting all countries, but I did show you above that there is quite a lot of uncertainty around this coefficient. For example, on the real data, India does not have a ratio of `r round(coef(fit_allometry2)[[1]], digits = 3)` but of `r round(data_rangers_clean %>% filter(countryname_iso == "IND") %>% mutate(ratio = log(staff_rangers + 1)/log(PA_area)) %>% pull(ratio), digits = 3)`, which is quite different!
+
+There are also other methods we could use to estimate the coefficient of allometry which would lead to different values.
+
+### Predictions
+
+There many ways to compute predicitions and we will perform several of them.
+
+#### Using the distribution of the ratio
+
+We have estimated before that the ratio which yields the coefficient of allometry can be considered as drawn from a normal distribution with a certain mean and variance.
+
+A first simple methods to predict the number of rangers is thus to use such property to compute predictions for the number of rangers in the countries we did observe:
+
+```{r simu1}
+draw_rangers_from_raw_allo <- function(PA_area) {
+  allo <- rnorm(n = length(PA_area),
+        mean = mean(log(data_rangers_clean_noG$staff_rangers + 1) / log(data_rangers_clean_noG$PA_area), na.rm = TRUE),
+        sd = sd(log(data_rangers_clean_noG$staff_rangers + 1) / log(data_rangers_clean_noG$PA_area), na.rm = TRUE))
+  exp(allo * log(PA_area)) - 1
+}
+```
+
+```{r plot simu1, fig.height=6, fig.width=6, cache=TRUE}
+set.seed(1)
+simu1 <- replicate(10000, sum(draw_rangers_from_raw_allo(data_rangers_clean_noG$PA_area[!is.na(data_rangers_clean_noG$staff_rangers)])))
+
+res_simu1 <- tibble(x = simu1, 
+  x_bin = round(simu1 / 20000) * 20000,
+  x_obs = sum(pred$staff_rangers),
+  lower = quantile(x, probs = 0.025),
+  upper = quantile(x, probs = 0.975),
+  filled = factor(if_else(x > lower & x < upper, "in", "out")))
+
+ggplot(res_simu1) +
+  aes(x = x_bin, fill = filled) +
+  geom_bar() +
+  geom_vline(xintercept = res_simu1$x_obs[1], colour = "red", size = 1) +
+  coord_cartesian(xlim = c(80000, 1000000)) +
+  scale_x_continuous(breaks = seq(0, 1e6, by = 100000), labels = seq(0, 1e6, by = 100000), minor_breaks = NULL) +
+  scale_y_continuous(labels = NULL, breaks = NULL) +
+  scale_fill_manual(values = c("darkgreen", "orange")) +
+  labs(fill = "Within 95%", x = "Total number of rangers across observed countries", y = "Density") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90))
+```
+
+As you can see the distribution encompasses well the observed sum (in red).
+
+We can then do the same to predict the sum of rangers across the countries we did not observe:
+
+```{r plot simu2, fig.height=6, fig.width=6, cache=TRUE}
+data_rangers_clean_noG %>%
+  filter(is.na(staff_rangers) & PA_area > 0) %>%
+  pull(PA_area) -> PA_area_for_pred
+
+set.seed(1)
+simu2 <- replicate(10000, sum(draw_rangers_from_raw_allo(PA_area_for_pred)))
+
+res_simu2 <- tibble(x = simu2, 
+  x_bin = round(x / 2000) * 2000,
+  lower = quantile(x, probs = 0.025),
+  upper = quantile(x, probs = 0.975),
+  filled = factor(if_else(x > lower & x < upper, "in", "out")))
+
+ggplot(res_simu2) +
+  aes(x = x_bin, fill = filled) +
+  geom_bar() +
+  coord_cartesian(xlim = c(1000, 100000)) +
+  scale_fill_manual(values = c("darkgreen", "orange")) +
+  scale_x_continuous(breaks = seq(0, 1e6, by = 10000), labels = seq(0, 1e6, by = 10000), minor_breaks = NULL) +
+  scale_y_continuous(labels = NULL, breaks = NULL) +
+  labs(fill = "Within 95%", x = "Total number of rangers across non-observed countries", y = "Density") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90))
+```
+
+Summing this last series of predictions to the total observed, we obtain the following estimation of the total number of rangers on the planet:
+
+```{r total_rangers1}
+tibble(mean = round(mean(simu2) + sum(pred$staff_rangers)),
+       lower = round(quantile(simu2, probs = 0.025) + sum(pred$staff_rangers)),
+       upper = round(quantile(simu2, probs = 0.975) + sum(pred$staff_rangers))) %>%
+  pivot_longer(everything(), names_to = "estimate") %>%
+  gt()
+```
+
+We will use other methods to produce predictions, but this gives us a first benchmark.
+
+We thus have an uncertainty of around `r round(quantile(simu2, probs = 0.975)[[1]] - quantile(simu2, probs = 0.025)[[1]])` rangers. Notice however that the interval for our prediction is not centred around the mean prediction, which implies that there is less uncertainty about the lowest possible number of rangers than about the highest possible one. Indeed, 50% of the simulation give a number of unknown rangers between 0 and `r round(quantile(simu2, probs = 0.5)[[1]])` while there is a long tail on the right of the distribution.
+
+#### Using the simple linear model
