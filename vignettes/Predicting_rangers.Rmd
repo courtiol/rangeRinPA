@@ -41,6 +41,7 @@ library(tidyr)
 library(ggplot2)
 library(broom)
 library(gt)
+library(spaMM)
 ```
 
 ## Using only the total area of terrestrial PAs in the country as predictor
@@ -154,6 +155,18 @@ That the coefficient of allometry is positive implies that staff_rangers increas
 
 That the coefficient of allometry is lower than 1 implies that *the increase in staff_rangers with PA_area* decreases with PA_area
 
+(Note to self: a non linear maximum likelihood fit gives very similar results.)
+```{r nlm, warning=FALSE, cache=TRUE}
+my_logLik <- function(par, data, scale = -1) {
+  coef <- par[1]
+  sd <- par[2]
+  scale * sum(dnorm(log(data$staff_rangers + 1)/log(data$PA_area) - coef, mean = 0, sd = sd, log = TRUE), na.rm = TRUE)
+  }
+
+set.seed(1)
+optim(c(0, 0.1), fn = my_logLik, data = data_rangers_clean_noG)
+```
+
 
 To get for formal, let's fit the allometric relationship using for now a simple linear model:
 
@@ -238,7 +251,7 @@ ggplot(pred) +
 ```
 
 
-Another way to look at the predictive power on the original scale is to compute the sum of rangers for the country for which we know it and compare that to the observations:
+Another way to look at the predictive power on the original scale is to compute the sum of rangers for the country for which we know it and compare that to the observations (nb: those numbers do not include Greenland):
 
 ```{r predictive sum}
 gt(tibble(total_predicted = sum(pred$predicted_rangers - 1), total_observed = sum(pred$staff_rangers)))
@@ -276,7 +289,7 @@ simu1 <- replicate(10000, sum(draw_rangers_from_raw_allo(data_rangers_clean_noG$
 
 res_simu1 <- tibble(x = simu1, 
   x_bin = round(simu1 / 20000) * 20000,
-  x_obs = sum(pred$staff_rangers),
+  x_obs = sum(data_rangers$staff_rangers, na.rm = TRUE),
   lower = quantile(x, probs = 0.025),
   upper = quantile(x, probs = 0.975),
   filled = factor(if_else(x > lower & x < upper, "in", "out")))
@@ -284,7 +297,7 @@ res_simu1 <- tibble(x = simu1,
 ggplot(res_simu1) +
   aes(x = x_bin, fill = filled) +
   geom_bar() +
-  geom_vline(xintercept = res_simu1$x_obs[1], colour = "red", size = 1) +
+  geom_vline(xintercept = sum(data_rangers$staff_rangers, na.rm = TRUE), colour = "red", size = 1) +
   coord_cartesian(xlim = c(80000, 1000000)) +
   scale_x_continuous(breaks = seq(0, 1e6, by = 100000), labels = seq(0, 1e6, by = 100000), minor_breaks = NULL) +
   scale_y_continuous(labels = NULL, breaks = NULL) +
@@ -324,12 +337,12 @@ ggplot(res_simu2) +
   theme(axis.text.x = element_text(angle = 90))
 ```
 
-Summing this last series of predictions to the total observed, we obtain the following estimation of the total number of rangers on the planet:
+Summing this last series of predictions to the total observed, we obtain the following estimation of the total number of rangers on the planet (nb: those numbers do include Greenland):
 
 ```{r total_rangers1}
-tibble(mean = round(mean(simu2) + sum(pred$staff_rangers)),
-       lower = round(quantile(simu2, probs = 0.025) + sum(pred$staff_rangers)),
-       upper = round(quantile(simu2, probs = 0.975) + sum(pred$staff_rangers))) %>%
+tibble(mean = round(mean(simu2) + sum(data_rangers$staff_rangers, na.rm = TRUE)),
+       lower = round(quantile(simu2, probs = 0.025) + sum(data_rangers$staff_rangers, na.rm = TRUE)),
+       upper = round(quantile(simu2, probs = 0.975) + sum(data_rangers$staff_rangers, na.rm = TRUE))) %>%
   pivot_longer(everything(), names_to = "estimate") %>%
   gt()
 ```
@@ -339,3 +352,162 @@ We will use other methods to produce predictions, but this gives us a first benc
 We thus have an uncertainty of around `r format(round(quantile(simu2, probs = 0.975)[[1]] - quantile(simu2, probs = 0.025)[[1]]), scientific = FALSE)` rangers. Notice however that the interval for our prediction is not centred around the mean prediction, which implies that there is less uncertainty about the lowest possible number of rangers than about the highest possible one. Indeed, 50% of the simulation give a number of unknown rangers between 0 and `r format(round(quantile(simu2, probs = 0.5)[[1]]), scientific = FALSE)` while there is a long tail on the right of the distribution.
 
 #### Using the simple linear model
+
+Another way to simulate the non-observed number of rangers is to use the linear model we fitted to simulate new data.
+
+As before, we start by predicting the number of rangers for the countries for which we know it to check that things are OK:
+
+```{r simu3, cache=TRUE}
+fit_allometry2_spaMM <- fitme(log(staff_rangers + 1) ~  log(PA_area) - 1, data = data_rangers_clean_noG)
+set.seed(1)
+simu3 <- replicate(1000, sum(exp(simulate(fit_allometry2_spaMM,
+                                          newdata = data.frame(PA_area = data_rangers_clean_noG$PA_area[!is.na(data_rangers_clean_noG$staff_rangers)]),
+                                          type = "predVar", variances = list(linPred = TRUE, disp = TRUE),
+                                          verbose = c(type = FALSE))) - 1))
+
+res_simu3 <- tibble(x = simu3, 
+  x_bin = round(x / 20000) * 20000,
+  lower = quantile(x, probs = 0.025),
+  upper = quantile(x, probs = 0.975),
+  filled = factor(if_else(x > lower & x < upper, "in", "out")))
+```
+
+```{r plot simu3, fig.height=6, fig.width=6, cache=TRUE}
+ggplot(res_simu3) +
+  aes(x = x_bin, fill = filled) +
+  geom_bar() +
+  geom_vline(xintercept = sum(data_rangers$staff_rangers, na.rm = TRUE), colour = "red", size = 1) +
+  coord_cartesian(xlim = c(80000, 1000000)) +
+  scale_x_continuous(breaks = seq(0, 1e6, by = 100000), labels = seq(0, 1e6, by = 100000), minor_breaks = NULL) +
+  scale_y_continuous(labels = NULL, breaks = NULL) +
+  scale_fill_manual(values = c("darkgreen", "orange")) +
+  labs(fill = "Within 95%", x = "Total number of rangers across observed countries", y = "Density") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90))
+```
+
+We now proceeds to predict the non-observed number of rangers:
+
+```{r simu4, cache=TRUE}
+set.seed(1)
+simu4 <- replicate(1000, sum(exp(simulate(fit_allometry2_spaMM, newdata = data.frame(PA_area = PA_area_for_pred),
+                                          type = "predVar", variances = list(linPred = TRUE, disp = TRUE),
+                                          verbose = c(type = FALSE))) - 1))
+
+res_simu4 <- tibble(x = simu4, 
+  x_bin = round(x / 2000) * 2000,
+  lower = quantile(x, probs = 0.025),
+  upper = quantile(x, probs = 0.975),
+  filled = factor(if_else(x > lower & x < upper, "in", "out")))
+```
+
+```{r plot simu4, fig.height=6, fig.width=6, cache=TRUE}
+ggplot(res_simu4) +
+  aes(x = x_bin, fill = filled) +
+  geom_bar() +
+  coord_cartesian(xlim = c(1000, 100000)) +
+  scale_fill_manual(values = c("darkgreen", "orange")) +
+  scale_x_continuous(breaks = seq(0, 1e6, by = 10000), labels = seq(0, 1e6, by = 10000), minor_breaks = NULL) +
+  scale_y_continuous(labels = NULL, breaks = NULL) +
+  labs(fill = "Within 95%", x = "Total number of rangers across non-observed countries", y = "Density") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90))
+```
+
+Summing this last series of predictions to the total observed, we obtain the following estimation of the total number of rangers on the planet (nb: those numbers do include Greenland):
+
+```{r total_rangers2}
+tibble(mean = round(mean(simu4) + sum(data_rangers$staff_rangers, na.rm = TRUE)),
+       lower = round(quantile(simu4, probs = 0.025) + sum(data_rangers$staff_rangers, na.rm = TRUE)),
+       upper = round(quantile(simu4, probs = 0.975) + sum(data_rangers$staff_rangers, na.rm = TRUE))) %>%
+  pivot_longer(everything(), names_to = "estimate") %>%
+  gt()
+```
+
+Note to self: why are the result so different... Need to check what uncertainty is carried on with `simulate.HLfit`.
+
+#### Using a GLM
+
+We now try to use an heteroscedastic Generalised Linear Model (GLM) with a Gaussian family and a log link.
+This is similar to the LM approach from above, except that the residuals of such a model are computed on the original scale instead of being computed on the log scale. This model does not fit the data very well (despite the consideration of heteroscedasticity which does improves the situation a little), so I would not trust its predictions very much. Yet it is useful to see how sensitive our predictions are with respect to this particular modelling assumption.
+
+As before, we start by predicting the number of rangers for the countries for which we know it to check that things are OK:
+
+```{r glm}
+fit_allometry3_spaMM <- fitme(I(staff_rangers + 1) ~  log(PA_area) - 1,
+                              resid.model = ~ log(PA_area),
+                              data = data_rangers_clean_noG, family = gaussian(link = "log"))
+```
+
+```{r simu5, cache=TRUE}
+set.seed(1)
+simu5 <- replicate(1000, sum(simulate(fit_allometry3_spaMM,
+                                          newdata = data.frame(PA_area = data_rangers_clean_noG$PA_area[!is.na(data_rangers_clean_noG$staff_rangers)]),
+                                          type = "predVar", variances = list(linPred = TRUE, disp = TRUE),
+                                          verbose = c(type = FALSE)) - 1))
+
+res_simu5 <- tibble(x = simu5, 
+  x_bin = round(x / 20000) * 20000,
+  lower = quantile(x, probs = 0.025),
+  upper = quantile(x, probs = 0.975),
+  filled = factor(if_else(x > lower & x < upper, "in", "out")))
+```
+
+```{r plot simu5, fig.height=6, fig.width=6, cache=TRUE}
+ggplot(res_simu5) +
+  aes(x = x_bin, fill = filled) +
+  geom_bar() +
+  geom_vline(xintercept = sum(data_rangers$staff_rangers, na.rm = TRUE), colour = "red", size = 1) +
+  coord_cartesian(xlim = c(80000, 1000000)) +
+  scale_x_continuous(breaks = seq(0, 1e6, by = 100000), labels = seq(0, 1e6, by = 100000), minor_breaks = NULL) +
+  scale_y_continuous(labels = NULL, breaks = NULL) +
+  scale_fill_manual(values = c("darkgreen", "orange")) +
+  labs(fill = "Within 95%", x = "Total number of rangers across observed countries", y = "Density") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90))
+```
+
+We now proceeds to predict the non-observed number of rangers:
+
+```{r simu6, cache=TRUE}
+set.seed(1)
+simu6 <- replicate(1000, sum(simulate(fit_allometry3_spaMM, newdata = data.frame(PA_area = PA_area_for_pred),
+                                          type = "predVar", variances = list(linPred = TRUE, disp = TRUE),
+                                          verbose = c(type = FALSE)) - 1))
+
+res_simu6 <- tibble(x = simu6, 
+  x_bin = round(x / 2000) * 2000,
+  lower = quantile(x, probs = 0.025),
+  upper = quantile(x, probs = 0.975),
+  filled = factor(if_else(x > lower & x < upper, "in", "out")))
+```
+
+```{r plot simu6, fig.height=6, fig.width=6, cache=TRUE}
+ggplot(res_simu6) +
+  aes(x = x_bin, fill = filled) +
+  geom_bar() +
+  coord_cartesian(xlim = c(1000, 100000)) +
+  scale_fill_manual(values = c("darkgreen", "orange")) +
+  scale_x_continuous(breaks = seq(0, 1e6, by = 10000), labels = seq(0, 1e6, by = 10000), minor_breaks = NULL) +
+  scale_y_continuous(labels = NULL, breaks = NULL) +
+  labs(fill = "Within 95%", x = "Total number of rangers across non-observed countries", y = "Density") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90))
+```
+
+Summing this last series of predictions to the total observed, we obtain the following estimation of the total number of rangers on the planet (nb: those numbers do include Greenland):
+
+```{r total_rangers3}
+tibble(mean = round(mean(simu6) + sum(data_rangers$staff_rangers, na.rm = TRUE)),
+       lower = round(quantile(simu6, probs = 0.025) + sum(data_rangers$staff_rangers, na.rm = TRUE)),
+       upper = round(quantile(simu6, probs = 0.975) + sum(data_rangers$staff_rangers, na.rm = TRUE))) %>%
+  pivot_longer(everything(), names_to = "estimate") %>%
+  gt()
+```
+
+
+
+
+
+
+
