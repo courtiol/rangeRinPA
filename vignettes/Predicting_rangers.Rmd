@@ -42,6 +42,7 @@ library(ggplot2)
 library(broom)
 library(gt)
 library(spaMM)
+library(rnaturalearth)
 ```
 
 ## Using only the total area of terrestrial PAs in the country as predictor
@@ -49,13 +50,38 @@ library(spaMM)
 At the level of countries, the *total area of terrestrial PAs in the country* (**PA_area** for short) is a very good predictor for the number of rangers (**staff_rangers** for short).
 I will first characterise the relationship between PA_area and staff_rangers before using it to predict the number of rangers in countries for which we don't have it.
 
-### Data used
+### Data preparation
+
+We first need to modify a little bit our data.
 
 ```{r data prep, warning=FALSE}
 rm(data_rangers) # delete existing one if any, to make sure we use the one of the package
+
+## for private analysis only, TODO: remove before release
+data_rangers$countryname_iso[data_rangers$countryname_eng == "W African Country"] <- "SEN"
+
 data_rangers %>%
   mutate(PA_area = if_else(!is.na(area_PA_total), area_PA_total, area_PA_WDPA)) -> data_rangers_clean
 
+## Adding latitude and longitude
+world_sf <- ne_countries(scale = "large", returnclass = "sf")
+world_sf$iso_a3_eh[world_sf$admin == "Norway"] <- "NOR"
+#world_sf$admin[unlist(sapply(world_sf$admin, function(x) grepl("Gu.*", x)))] ## to search for typos
+
+world_sf$center <- sf::st_centroid(world_sf$geometry, of_largest_polygon = TRUE)
+data_rangers_clean %>%
+  left_join(world_sf %>% select(center, iso_a3_eh), by = c("countryname_iso" = "iso_a3_eh")) -> data_rangers_clean
+
+data_rangers_clean %>%
+  unnest_wider(center) %>%
+  rename(long = `...1`, lat = `...2`) -> data_rangers_clean
+
+## Adding flags
+data_rangers_clean %>%
+  mutate(flag = countrycode::countrycode(sourcevar = countryname_iso, "iso3c", "unicode.symbol"),
+         country = paste(countryname_eng, flag)) -> data_rangers_clean
+
+## Adding row names
 rownames(data_rangers_clean) <- data_rangers_clean$countryname_iso
 ```
 
@@ -667,9 +693,6 @@ Let's first check for which country/territories we have no knowledge of the numb
 ```{r pop density, rows.print=40}
 data_rangers_clean %>%
   filter(is.na(pop_density), !is.na(staff_rangers)) %>%
-  mutate(
-    flag = countrycode::countrycode(sourcevar = countryname_iso, "iso3c", "unicode.symbol"),
-    country = paste(countryname_eng, flag)) %>%
   select(country, PA_area) %>%
   arrange(desc(PA_area)) %>%
   gt()
@@ -705,8 +728,6 @@ But, let us look at the problematic countries (i.e those corresponding to extrap
 
 ```{r pb countries}
 data_rangers_clean %>%
-  mutate(flag = countrycode::countrycode(sourcevar = countryname_iso, "iso3c", "unicode.symbol"),
-         country = paste(countryname_eng, flag)) %>%
   filter(is.na(staff_rangers),
          pop_density > max(data_rangers_clean %>%
                              filter(!is.na(staff_rangers)) %>%
@@ -802,6 +823,158 @@ So we have reduced the uncertainty, although not by a huge amount
 
 ### Accounting for spatial autocorrelation
 
-To come
+We will now consider the case of spatial autocorrelation.
+Its consideration may help predict the number of rangers.
 
+First we need to get the latitudes and longitudes for the different countries/territories.
+I did this above in the step called "Data preparation" using the package **{rnaturalearth}**.
 
+Since the package gives polygons defining the countries/territories, I chose to pick the centroid of the largest polygons.
+
+That failed for the following countries/territories:
+
+```{r getting coordinates, messsage=FALSE}
+data_rangers_clean %>% 
+  filter(is.na(long) | is.na(lat)) %>%
+  select(country, PA_area, staff_rangers) %>%
+  gt()
+```
+
+We could fix this, but for now I will stick to what we have.
+
+(Note to self: I have already fixed one country whose ISO code was missing (Norway).)
+
+Let us refit the model that does not account for the population density accounting for the spatial autocorrelation.
+
+```{r matern 1, cache=TRUE}
+data_rangers_clean_noG %>%
+  drop_na(staff_rangers, PA_area, long, lat) -> data_for_matern_no_pop
+
+fit_matern_no_pop <- fitme(log(staff_rangers + 1) ~ 0 + log(PA_area) + Matern(1|long + lat), data = data_for_matern_no_pop,
+                           control.dist = list(dist.method = "Earth"))
+fit_no_matern_no_pop <- fitme(log(staff_rangers + 1) ~ 0 + log(PA_area), data = data_for_matern_no_pop,
+                              control.dist = list(dist.method = "Earth"))
+```
+
+The model is better than the one not accounting for the spatial autocorrelation (AIC with autocorrelation = `r round(AIC(fit_matern_no_pop)[2][[1]], digits = 1)`; AIC without = `r round(AIC(fit_no_matern_no_pop)[[1]], digits = 1)`, on the same data!).
+
+We also refit the model that does account for the population density accounting for the spatial autocorrelation.
+
+```{r matern 2, cache=TRUE}
+data_rangers_clean_noG %>%
+  drop_na(staff_rangers, PA_area, long, lat, pop_density) -> data_for_matern_pop
+
+fit_matern_pop <- fitme(log(staff_rangers + 1) ~ 1 + log(PA_area) + log(pop_density) + Matern(1|long + lat), data = data_for_matern_pop,
+                           control.dist = list(dist.method = "Earth"))
+fit_no_matern_pop <- fitme(log(staff_rangers + 1) ~ 1 + log(PA_area) + log(pop_density), data = data_for_matern_pop,
+                              control.dist = list(dist.method = "Earth"))
+```
+
+The model is better than the one not accounting for the spatial autocorrelation (AIC with autocorrelation = `r round(AIC(fit_matern_pop)[2][[1]], digits = 1)`; AIC without = `r round(AIC(fit_no_matern_pop)[[1]], digits = 1)`, on the same data!).
+
+Let's now predict the sum for rangers for the countries for which we know it (as a test that the simulations work) using the model accounting for the population density:
+
+```{r test simu Matern, cache=TRUE}
+set.seed(1)
+simu8 <- replicate(1000, {
+  sum(exp(simulate(fit_no_matern_pop,
+                   newdata = data.frame(PA_area = data_for_matern_pop$PA_area, pop_density = data_for_matern_pop$pop_density),
+                   type = "predVar", variances = list(linPred = TRUE, disp = TRUE),
+                   verbose = c(type = FALSE))) - 1)})
+
+res_simu8 <- tibble(x = simu8, 
+  x_bin = round(simu8 / 20000) * 20000,
+  x_obs = sum(data_for_matern_pop$staff_rangers, na.rm = TRUE),
+  lower = quantile(x, probs = 0.025),
+  upper = quantile(x, probs = 0.975),
+  filled = factor(if_else(x > lower & x < upper, "in", "out")))
+
+ggplot(res_simu8) +
+  aes(x = x_bin, fill = filled) +
+  geom_bar() +
+  geom_vline(xintercept = sum(data_for_matern_pop$staff_rangers, na.rm = TRUE), colour = "red", size = 1) +
+  coord_cartesian(xlim = c(0, 4e5)) +
+  scale_x_continuous(breaks = seq(0, 1e6, by = 100000), labels = seq(0, 1e6, by = 100000), minor_breaks = NULL) +
+  scale_y_continuous(labels = NULL, breaks = NULL) +
+  scale_fill_manual(values = c("darkgreen", "orange")) +
+  labs(fill = "Within 95%", x = "Total number of rangers across observed countries", y = "Density") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90))
+```
+
+This seems to work, so we can now predict the number of rangers using this new models and complexity keeps increasing as we now need to add:
+
+- the number of rangers that are known: `r data_rangers_clean %>% filter(!is.na(staff_rangers)) %>% pull(flag)`
+- the predictions for the number of rangers from the model accounting for PA_area and spatial autocorrelation for the countries for which we have no population density but lat and long: `r data_rangers_clean %>% filter(is.na(staff_rangers), is.na(pop_density), !is.na(lat)) %>% pull(flag)`
+- the predictions for the number of rangers from the model accounting for PA_area and not considering spatial autocorrelation for the countries for which we have no population density, nor lat or long: `r data_rangers_clean %>% filter(is.na(staff_rangers), is.na(pop_density), is.na(lat)) %>% pull(flag)`
+- the predictions for the number of rangers from the model accounting for PA_area, pop_density and spatial autocorrelation for the countries for which we do have population density and lat and long: `r data_rangers_clean %>% filter(is.na(staff_rangers), !is.na(pop_density), !is.na(lat)) %>% pull(flag)`
+- the predictions for the number of rangers from the model accounting for PA_area, pop_density and not considering spatial autocorrelation for the countries for which we do have population density but not lat or long: `r data_rangers_clean %>% filter(is.na(staff_rangers), !is.na(pop_density), is.na(lat)) %>% pull(flag)` (there aren't any in practice)
+
+Here is the result for our estimation of the total number of rangers:
+
+```{r prediction with density pop and Matern, cache=TRUE}
+rangers_known <- sum(data_rangers_clean$staff_rangers, na.rm = TRUE)
+
+data_rangers_clean %>%
+  filter(is.na(staff_rangers),
+         is.na(pop_density),
+         is.na(lat),
+         PA_area > 0) -> data_no_pop_size_no_coord
+
+data_rangers_clean %>%
+  filter(is.na(staff_rangers),
+         is.na(pop_density),
+         !is.na(lat),
+         PA_area > 0) -> data_no_pop_size_coord
+
+# data_rangers_clean %>% # does not happen!
+#   filter(is.na(staff_rangers),
+#          !is.na(pop_density),
+#          is.na(lat),
+#          PA_area > 0) -> data_with_pop_size_no_coord
+
+data_rangers_clean %>%
+  filter(is.na(staff_rangers),
+         !is.na(pop_density),
+         !is.na(lat),
+         PA_area > 0) -> data_with_pop_size_coord
+
+set.seed(1)
+simu9 <- replicate(1000, {
+  rangers_predicted_no_pop_size_no_coord <- sum(exp(simulate(fit_allometry5_spaMM,
+                                                newdata = data.frame(PA_area = data_no_pop_size_no_coord$PA_area),
+                                                type = "predVar", variances = list(linPred = TRUE, disp = TRUE),
+                                                verbose = c(type = FALSE))) - 1)
+  
+  rangers_predicted_no_pop_size_coord <- sum(exp(simulate(fit_matern_no_pop,
+                                                newdata = data.frame(PA_area = data_no_pop_size_coord$PA_area,
+                                                                     lat = data_no_pop_size_coord$lat,
+                                                                     long = data_no_pop_size_coord$long), 
+                                                type = "predVar", variances = list(linPred = TRUE, disp = TRUE),
+                                                verbose = c(type = FALSE))) - 1)
+  
+  rangers_predicted_pop_size_coord <- sum(exp(simulate(fit_matern_pop,
+                                              newdata = data.frame(PA_area =  data_with_pop_size_coord$PA_area,
+                                                                   pop_density = data_with_pop_size_coord$pop_density,
+                                                                   lat = data_with_pop_size_coord$lat,
+                                                                   long = data_with_pop_size_coord$long),
+                                              type = "predVar", variances = list(linPred = TRUE, disp = TRUE),
+                                              verbose = c(type = FALSE))) - 1)
+  
+  rangers_known + rangers_predicted_no_pop_size_no_coord + rangers_predicted_no_pop_size_coord + rangers_predicted_pop_size_coord
+})
+
+res_simu9 <- tibble(x = simu9, 
+  x_bin = round(x / 2000) * 2000,
+  lower = quantile(x, probs = 0.025),
+  upper = quantile(x, probs = 0.975),
+  filled = factor(if_else(x > lower & x < upper, "in", "out")))
+```
+
+```{r total_rangers9, cache=TRUE}
+tibble(mean = round(mean(simu9)),
+       lower = round(quantile(simu9, probs = 0.025)),
+       upper = round(quantile(simu9, probs = 0.975))) %>%
+  pivot_longer(everything(), names_to = "estimate") %>%
+  gt()
+```
