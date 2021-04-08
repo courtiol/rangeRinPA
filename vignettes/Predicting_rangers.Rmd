@@ -54,8 +54,7 @@ I will first characterise the relationship between PA_area and staff_rangers bef
 ```{r data prep, warning=FALSE}
 rm(data_rangers) # delete existing one if any, to make sure we use the one of the package
 data_rangers %>%
-  mutate(PA_area = if_else(!is.na(area_PA_total), area_PA_total, area_PA_WDPA)) %>%
-  select(contains("country"), -area_country, staff_rangers, PA_area) -> data_rangers_clean
+  mutate(PA_area = if_else(!is.na(area_PA_total), area_PA_total, area_PA_WDPA)) -> data_rangers_clean
 
 rownames(data_rangers_clean) <- data_rangers_clean$countryname_iso
 ```
@@ -147,7 +146,7 @@ ggplot(data_rangers_clean_noG) +
 
 The mean of such normal distribution is estimated to `r round(mean(log(data_rangers_clean_noG$staff_rangers + 1) / log(data_rangers_clean_noG$PA_area), na.rm = TRUE), digits = 3)` and its SD to `r round(sd(log(data_rangers_clean_noG$staff_rangers + 1) / log(data_rangers_clean_noG$PA_area), na.rm = TRUE), digits = 3)`.
 
-Therefore, this very crude computation suggests that:
+Therefore, this very crude computation (hereafter called ad-hoc) suggests that:
 
 $\large{\mathrm{staff\_rangers} + 1 = \mathrm{PA\_area}^{`r round(mean(log(data_rangers_clean_noG$staff_rangers + 1) / log(data_rangers_clean_noG$PA_area), na.rm = TRUE), digits = 3)`}}$.
 
@@ -168,7 +167,7 @@ optim(c(0, 0.1), fn = my_logLik, data = data_rangers_clean_noG)
 ```
 
 
-To get for formal, let's fit the allometric relationship using for now a simple linear model:
+To get more formal, let's fit the allometric relationship using a linear model:
 
 $\mathrm{log}(\mathrm{staff\_rangers} + 1) = a \times \mathrm{log}(\mathrm{PA\_area}) + b$ (model 1).
 
@@ -207,66 +206,145 @@ par(mfrow = c(2, 2))
 plot(fit_allometry2)
 ```
 
+Another way of fitting an linear model is to directly fit the ratio: 
+
+$\dfrac{\mathrm{log}(\mathrm{staff\_rangers} + 1)}{\mathrm{log}(\mathrm{PA\_area})} = a$ (model 3).
+
+```{r lm3}
+fit_allometry3 <- lm(log(staff_rangers + 1)/log(PA_area) ~ 1, data = data_rangers_clean_noG)
+tidy(summary(fit_allometry3)) %>%
+  mutate(across(where(is.numeric), .fns = round, digits = 3)) %>%
+  gt()
+```
+
+This retrieves exactly the same coefficient of allometry than the first ad-hoc method (note to self: perfect equivalence in REML but here also true in ML) and the model fit is also very good:
+
+```{r plot lm fit3, fig.height=10, fig.width=10, cache=TRUE}
+par(mfrow = c(2, 2))
+plot(fit_allometry3)
+```
+Note that there is only one fitted value is this model, which makes sense, but leads to strange plots above.
+
+The model 2 & 3 are not strictly equivalent because they impose different structure in terms of the residual variation.
+
+This is because if
+
+$Y/X = \beta_0 + \mathrm{homoscedastic\ residuals}$
+
+then
+
+$Y = \beta_0 \times X + X \times \mathrm{homoscedastic\ residuals}$
+
+or
+
+$Y = \beta_0 \times X + \mathrm{heteroscedastic\ residuals}$
+
+So we can use this result to rewrite the model 3 under a form that is comparable to model 2.
+This is a little technical, but the results show that model 2 is better at fitting the data than model 3.
+Furthermore, since model 3 produces a coefficient of allometry identical to the one produced by the ad-hoc method we first introduced, the fit of model 2 is thus also better than the ad-hoc model. 
+In short, we have good reasons for model 2 to be our base model.
+
+```{r comparing models}
+fit_model2 <- fitme(I(log(staff_rangers + 1)/log(PA_area)) ~ 1, data = data_rangers_clean_noG)
+fit_model3 <- fitme(I(log(staff_rangers + 1)/log(PA_area)) ~ 1, prior.weights = sqrt(1/log(PA_area)), data = data_rangers_clean_noG)
+AIC(fit_model2)
+AIC(fit_model3)
+```
+
+Let's now visualise the fit of model 2 on the raw data:
+
+```{r area_PA_total with PI plot2, fig.height=6, fig.width=6, cache=TRUE}
+x <- 10^(seq(0, 7, length = 1000))
+pred_for_plot <- as.data.frame(predict(fit_allometry2, newdata = data.frame(PA_area = x), interval = "prediction"))
+pred_for_plot$PA_area <- x
+
+CI_for_plot <- as.data.frame(predict(fit_allometry2, newdata = data.frame(PA_area = x), interval = "confidence"))
+CI_for_plot$PA_area <- x
+
+ggplot(data_rangers_clean) +
+  aes(y = staff_rangers, x = PA_area, label = countryname_iso, colour = country_UN_continent) +
+  geom_text() +
+  geom_line(aes(y = exp(fit) - 1, x = PA_area), data = pred_for_plot, inherit.aes = FALSE) +
+  geom_line(aes(y = exp(upr) - 1, x = PA_area), data = pred_for_plot, inherit.aes = FALSE, linetype = "dashed") +
+  geom_line(aes(y = exp(lwr) - 1, x = PA_area), data = pred_for_plot, inherit.aes = FALSE, linetype = "dashed") +
+  geom_line(aes(y = exp(upr) - 1, x = PA_area), data = CI_for_plot, inherit.aes = FALSE, linetype = 6) +
+  geom_line(aes(y = exp(lwr) - 1, x = PA_area), data = CI_for_plot, inherit.aes = FALSE, linetype = 4) +
+  coord_trans(x = "log1p", y = "log1p") +
+  scale_x_continuous(breaks = 10^(0:7), minor_breaks = NULL, limits = c(0, 1e7)) +
+  scale_y_continuous(breaks = 10^(0:7), minor_breaks = NULL, limits = c(0, 1e5)) +
+  scale_colour_discrete(guide = "none") +
+  theme_minimal()
+```
+
+The larger interval is the 95% prediction interval (i.e. where new data may be) and the small one the 95% confidence interval (i.e. where true relationship may be).
+
 
 ### Predictive power
 
 We now turn to the predictive power (on the fitted data). So far, so good:
 
 ```{r plot lm pred, fig.height=6, fig.width=6, cache=TRUE}
-plot(predict(fit_allometry2), fit_allometry2$model$`log(staff_rangers + 1)`, asp = 1, ylab = "Observed log(staff_rangers + 1)", xlab = "Predicted log(staff_rangers + 1)")
-abline(0, 1, lty = 2)
+data_rangers_clean_noG %>%
+  mutate(predicted_rangers = data_rangers_clean_noG$PA_area^coef(fit_allometry2)[[1]] - 1,
+         observed_rangers = data_rangers_clean_noG$staff_rangers) -> data_rangers_clean_noG2
+
+data_rangers_clean_noG2 %>%
+  filter(!is.na(observed_rangers)) -> data_rangers_clean_noG2_obs
+
+data_rangers_clean_noG2 %>%
+  filter(is.na(observed_rangers)) -> data_rangers_clean_noG2_notobs
+
+
+ggplot(data_rangers_clean_noG2_obs) +
+  aes(y = observed_rangers, x = predicted_rangers, label = countryname_iso, colour = country_UN_continent) +
+  geom_text() +
+  geom_abline(slope = 1) +
+  coord_trans(x = "log1p", y = "log1p") +
+  scale_x_continuous(breaks = 10^(0:7), minor_breaks = NULL, limits = c(1, 1e5)) +
+  scale_y_continuous(breaks = 10^(0:7), minor_breaks = NULL, limits = c(1, 1e5)) +
+  labs(y = "Observed staff_rangers", x = "Predicted staff_rangers") +
+  scale_colour_discrete(guide = "none") +
+  theme_minimal()
 ```
 
-The Pearson correlation between the predicted and the observed `log(staff_rangers + 1)` is actually pretty high: r = `r round(cor(predict(fit_allometry2), fit_allometry2$model$"log(staff_rangers + 1)"), digits = 2)`.
+The Pearson correlation between the predicted and the observed `log(staff_rangers + 1)` is actually pretty high: r = `r round(cor(log(data_rangers_clean_noG2_obs$predicted_rangers + 1), log(data_rangers_clean_noG2_obs$observed_rangers + 1)), digits = 2)`.
 
 This is good, very good, but also a little misleading since being a little off on a log scale can mean a lot.
 
-Let's express this predictive power differently by computing the departure from observation as the percentage of the observed number of rangers:
-
-```{r predictive power pct}
-data_rangers_clean_noG %>%
-  filter(!is.na(staff_rangers)) %>%
-  mutate(predicted_rangers = exp(predict(fit_allometry2)),
-         relative_discrepancy = 100 * (predicted_rangers - staff_rangers + 1) / (staff_rangers + 1)) -> pred
-
-ggplot(pred) +
-  aes(y = relative_discrepancy, x = staff_rangers, label = countryname_iso, colour = country_UN_continent) + 
-  geom_text() +
-  coord_trans(x = "log1p") +
-  scale_colour_discrete(guide = "none") +
-  scale_x_continuous(breaks = 10^(0:7), minor_breaks = NULL, limits = c(1, 1e7)) +
-  theme_minimal()
-```
-
-A few countries are very badly predicted, but most (i.e `r sum(pred$relative_discrepancy > -100 & pred$relative_discrepancy  < 100)` out of `r nrow(pred)`) fall within +/- 100%:
-
-```{r predictive power pct 2}
-ggplot(pred) +
-  aes(y = relative_discrepancy, x = staff_rangers, label = countryname_iso, colour = country_UN_continent) + 
-  geom_text() +
-  coord_trans(x = "log1p", ylim = c(-100, 100)) +
-  scale_colour_discrete(guide = "none") +
-  scale_x_continuous(breaks = 10^(0:7), minor_breaks = NULL, limits = c(1, 1e7)) +
-  theme_minimal()
-```
-
+The Pearson correlation between the predicted and the observed number of rangers (not logged) is lower due to the non-linearity: r = `r round(cor(data_rangers_clean_noG2_obs$predicted_rangers, data_rangers_clean_noG2_obs$observed_rangers), digits = 2)`.
+A non-parametric correlation retrieves a high value: rho (Spearman) = `r round(cor(data_rangers_clean_noG2_obs$predicted_rangers, data_rangers_clean_noG2_obs$observed_rangers, method = "spearman"), digits = 2)`.
 
 Another way to look at the predictive power on the original scale is to compute the sum of rangers for the country for which we know it and compare that to the observations (nb: those numbers do not include Greenland):
 
 ```{r predictive sum}
-gt(tibble(total_predicted = sum(pred$predicted_rangers - 1), total_observed = sum(pred$staff_rangers)))
+gt(tibble(total_predicted = sum(data_rangers_clean_noG2_obs$predicted_rangers),
+          total_observed = sum(data_rangers_clean_noG2_obs$observed_rangers)))
 ```
 
-That means that we predict `r round(100*sum(pred$predicted_rangers - 1) / sum(pred$staff_rangers), digits = 1)` % of the observed sum.
-The reason why it is a little lower is that the prediction underestimate the countries with the largest number of rangers. For example, in India alone, the model predicts `r round(pred[pred$countryname_iso == "IND", "predicted_rangers", drop = TRUE])` instead of `r format(pred[pred$countryname_iso == "IND", "staff_rangers", drop = TRUE], scientific = FALSE)`.
+That means that we predict `r round(100* sum(data_rangers_clean_noG2_obs$predicted_rangers) /  sum(data_rangers_clean_noG2_obs$observed_rangers), digits = 1)` % of the observed sum.
+The reason why it is a little lower is that the prediction underestimate the countries with the largest number of rangers. For example, in India alone, the model predicts `r round(data_rangers_clean_noG2_obs[data_rangers_clean_noG2_obs$countryname_iso == "IND", "predicted_rangers", drop = TRUE])` instead of `r format(data_rangers_clean_noG2_obs[data_rangers_clean_noG2_obs$countryname_iso == "IND", "staff_rangers", drop = TRUE], scientific = FALSE)`.
 
-So, is this model good or not? The results I just showed you are quite scary, but this is because I did not yet consider the uncertainty on the parameter estimate and the residual variance. In particular, I used the same value for the coefficient of allometry for predicting all countries, but I did show you above that there is quite a lot of uncertainty around this coefficient. For example, on the real data, India does not have a ratio of `r round(coef(fit_allometry2)[[1]], digits = 3)` but of `r round(data_rangers_clean %>% filter(countryname_iso == "IND") %>% mutate(ratio = log(staff_rangers + 1)/log(PA_area)) %>% pull(ratio), digits = 3)`, which is quite different!
-
-There are also other methods we could use to estimate the coefficient of allometry which would lead to different values.
+So, is this model good or not? The result on the sum is quite scary, but this is because I did not yet consider the uncertainty on the predictions. In particular, I used the same value for the coefficient of allometry for predicting all countries, but I did show you above that there is quite a lot of uncertainty around this coefficient. For example, on the real data, India does not have a ratio of `r round(coef(fit_allometry3)[[1]], digits = 3)` but of `r round(data_rangers_clean %>% filter(countryname_iso == "IND") %>% mutate(ratio = log(staff_rangers + 1)/log(PA_area)) %>% pull(ratio), digits = 3)`, which is quite different!
 
 ### Predictions
 
-There many ways to compute predicitions and we will perform several of them.
+There many ways to compute predictions and we will perform several of them.
+
+Before we do so however, it is important to check where countries with no rangers information are compared to countries with information in view of PA_area:
+
+```{r PA_area explo, fig.height=6, fig.width=6, cache=TRUE}
+data_rangers_clean %>%
+  mutate(rangers_known = !is.na(staff_rangers)) %>%
+  ggplot() +
+    aes(y = PA_area, x = rangers_known) +
+    ggbeeswarm::geom_quasirandom() +
+    coord_trans(y = "log1p") +
+    scale_y_continuous(breaks = 10^(0:7), minor_breaks = NULL) +
+    theme_minimal()
+```
+
+That is quite a good situation since no country with a huge PA_area has an unknown number of rangers.
+We do miss rangers info for countries with very little PA_area so predictions for those countries will not be reliable, but based on the relationship we characterised such countries will have a negligible contribution to the total, so that is not an issue.
 
 #### Using the distribution of the ratio
 
@@ -351,19 +429,23 @@ We will use other methods to produce predictions, but this gives us a first benc
 
 We thus have an uncertainty of around `r format(round(quantile(simu2, probs = 0.975)[[1]] - quantile(simu2, probs = 0.025)[[1]]), scientific = FALSE)` rangers. Notice however that the interval for our prediction is not centred around the mean prediction, which implies that there is less uncertainty about the lowest possible number of rangers than about the highest possible one. Indeed, 50% of the simulation give a number of unknown rangers between 0 and `r format(round(quantile(simu2, probs = 0.5)[[1]]), scientific = FALSE)` while there is a long tail on the right of the distribution.
 
-#### Using the simple linear model
+#### Using the linear model #3
 
-Another way to simulate the non-observed number of rangers is to use the linear model we fitted to simulate new data.
+Another way to simulate the non-observed number of rangers is to use the linear models we fitted to simulate new data.
+
+We start with the model called *model 3* above.
 
 As before, we start by predicting the number of rangers for the countries for which we know it to check that things are OK:
 
 ```{r simu3, cache=TRUE}
-fit_allometry2_spaMM <- fitme(log(staff_rangers + 1) ~  log(PA_area) - 1, data = data_rangers_clean_noG)
+fit_allometry3_spaMM <- fitme(log(staff_rangers + 1) /  log(PA_area) ~ 1, data = data_rangers_clean_noG)
+PA_are_for_pred <- data_rangers_clean_noG$PA_area[!is.na(data_rangers_clean_noG$staff_rangers)]
+
 set.seed(1)
-simu3 <- replicate(1000, sum(exp(simulate(fit_allometry2_spaMM,
-                                          newdata = data.frame(PA_area = data_rangers_clean_noG$PA_area[!is.na(data_rangers_clean_noG$staff_rangers)]),
+simu3 <- replicate(1000, sum(exp(simulate(fit_allometry3_spaMM,
+                                          newdata = data.frame(PA_area = PA_are_for_pred),
                                           type = "predVar", variances = list(linPred = TRUE, disp = TRUE),
-                                          verbose = c(type = FALSE))) - 1))
+                                          verbose = c(type = FALSE)) * log(PA_are_for_pred)) - 1))
 
 res_simu3 <- tibble(x = simu3, 
   x_bin = round(x / 20000) * 20000,
@@ -389,10 +471,12 @@ ggplot(res_simu3) +
 We now proceeds to predict the non-observed number of rangers:
 
 ```{r simu4, cache=TRUE}
+PA_are_for_pred_nonobs <- data_rangers_clean_noG$PA_area[is.na(data_rangers_clean_noG$staff_rangers) & data_rangers_clean_noG$PA_area > 0]
+
 set.seed(1)
-simu4 <- replicate(1000, sum(exp(simulate(fit_allometry2_spaMM, newdata = data.frame(PA_area = PA_area_for_pred),
+simu4 <- replicate(1000, sum(exp(simulate(fit_allometry3_spaMM, newdata = data.frame(PA_area = PA_are_for_pred_nonobs),
                                           type = "predVar", variances = list(linPred = TRUE, disp = TRUE),
-                                          verbose = c(type = FALSE))) - 1))
+                                          verbose = c(type = FALSE)) * log(PA_are_for_pred_nonobs)) - 1))
 
 res_simu4 <- tibble(x = simu4, 
   x_bin = round(x / 2000) * 2000,
@@ -424,27 +508,22 @@ tibble(mean = round(mean(simu4) + sum(data_rangers$staff_rangers, na.rm = TRUE))
   gt()
 ```
 
-Note to self: why are the result so different... Need to check what uncertainty is carried on with `simulate.HLfit`.
+**Conclusion**: the LM approach (using model 3) and the ad-hoc approach are equivalent.
 
-#### Using a GLM
+#### Using the simple linear model #2
 
-We now try to use an heteroscedastic Generalised Linear Model (GLM) with a Gaussian family and a log link.
-This is similar to the LM approach from above, except that the residuals of such a model are computed on the original scale instead of being computed on the log scale. This model does not fit the data very well (despite the consideration of heteroscedasticity which does improves the situation a little), so I would not trust its predictions very much. Yet it is useful to see how sensitive our predictions are with respect to this particular modelling assumption.
+We now turn to the model called *model 2* above (i.e our best model so far).
 
 As before, we start by predicting the number of rangers for the countries for which we know it to check that things are OK:
 
-```{r glm}
-fit_allometry3_spaMM <- fitme(I(staff_rangers + 1) ~  log(PA_area) - 1,
-                              resid.model = ~ log(PA_area),
-                              data = data_rangers_clean_noG, family = gaussian(link = "log"))
-```
-
 ```{r simu5, cache=TRUE}
+fit_allometry5_spaMM <- fitme(log(staff_rangers + 1)  ~ log(PA_area) - 1, data = data_rangers_clean_noG)
+
 set.seed(1)
-simu5 <- replicate(1000, sum(simulate(fit_allometry3_spaMM,
-                                          newdata = data.frame(PA_area = data_rangers_clean_noG$PA_area[!is.na(data_rangers_clean_noG$staff_rangers)]),
+simu5 <- replicate(1000, sum(exp(simulate(fit_allometry5_spaMM,
+                                          newdata = data.frame(PA_area = PA_are_for_pred),
                                           type = "predVar", variances = list(linPred = TRUE, disp = TRUE),
-                                          verbose = c(type = FALSE)) - 1))
+                                          verbose = c(type = FALSE))) - 1))
 
 res_simu5 <- tibble(x = simu5, 
   x_bin = round(x / 20000) * 20000,
@@ -471,9 +550,9 @@ We now proceeds to predict the non-observed number of rangers:
 
 ```{r simu6, cache=TRUE}
 set.seed(1)
-simu6 <- replicate(1000, sum(simulate(fit_allometry3_spaMM, newdata = data.frame(PA_area = PA_area_for_pred),
+simu6 <- replicate(1000, sum(exp(simulate(fit_allometry5_spaMM, newdata = data.frame(PA_area = PA_are_for_pred_nonobs),
                                           type = "predVar", variances = list(linPred = TRUE, disp = TRUE),
-                                          verbose = c(type = FALSE)) - 1))
+                                          verbose = c(type = FALSE))) - 1))
 
 res_simu6 <- tibble(x = simu6, 
   x_bin = round(x / 2000) * 2000,
@@ -505,9 +584,224 @@ tibble(mean = round(mean(simu6) + sum(data_rangers$staff_rangers, na.rm = TRUE))
   gt()
 ```
 
+**Conclusion**: the LM approach using *model 2* produces estimates considerably narrower than the first 2 approaches we attempted. This is logical since it is our best model.
+
+**Open question**: should fits be REML fits? (seems to enlarge distribution very slightly)
 
 
+## Using additional predictors
+
+A possible way to check if additional predictors may help is to see how they may shape the main relationship documented above.
+
+For example, the population density look promising as you can see a positive relationship between our ratio and the predictor:
+
+```{r popdensity_PA_total plot4, fig.height=6, fig.width=6, cache=TRUE}
+ggplot(data_rangers_clean_noG) +
+  aes(y = log(staff_rangers + 1) / log(PA_area), x = pop_density, label = countryname_iso, colour = country_UN_continent) +
+  geom_text() +
+  coord_trans(x = "log") +
+  scale_x_continuous(breaks = 10^(0:7), minor_breaks = NULL) +
+  scale_y_continuous(breaks = seq(0, 1, by = 0.1), minor_breaks = NULL) +
+  scale_colour_discrete(guide = "none") +
+  theme_minimal()
+```
+
+In contrast the national GDP does not seem to exert any particular influence:
+
+```{r GDP_PA_total plot4, fig.height=6, fig.width=6, cache=TRUE}
+ggplot(data_rangers_clean_noG) +
+  aes(y = log(staff_rangers + 1) / log(PA_area), x = GDP_2019, label = countryname_iso, colour = country_UN_continent) +
+  geom_text() +
+  coord_trans(x = "log") +
+  scale_x_continuous(breaks = 10^(0:7), minor_breaks = NULL) +
+  scale_y_continuous(breaks = seq(0, 1, by = 0.1), minor_breaks = NULL) +
+  scale_colour_discrete(guide = "none") +
+  theme_minimal()
+```
+
+Nor does the GDP per capita:
+
+```{r GDP_cap_PA_total plot4, fig.height=6, fig.width=6, cache=TRUE}
+ggplot(data_rangers_clean_noG) +
+  aes(y = log(staff_rangers + 1) / log(PA_area), x = GDP_capita, label = countryname_iso, colour = country_UN_continent) +
+  geom_text() +
+  coord_trans(x = "log") +
+  scale_x_continuous(breaks = 10^(0:7), minor_breaks = NULL) +
+  scale_y_continuous(breaks = seq(0, 1, by = 0.1), minor_breaks = NULL) +
+  scale_colour_discrete(guide = "none") +
+  theme_minimal()
+```
+
+Or any of the ecological indices:
+
+```{r EVI_PA_total plot4, fig.height=6, fig.width=6, cache=TRUE}
+ggplot(data_rangers_clean_noG) +
+  aes(y = log(staff_rangers + 1) / log(PA_area), x = EVI, label = countryname_iso, colour = country_UN_continent) +
+  geom_text() +
+  scale_y_continuous(breaks = seq(0, 1, by = 0.1), minor_breaks = NULL) +
+  scale_colour_discrete(guide = "none") +
+  theme_minimal()
+```
+
+```{r SPI_PA_total plot4, fig.height=6, fig.width=6, cache=TRUE}
+ggplot(data_rangers_clean_noG) +
+  aes(y = log(staff_rangers + 1) / log(PA_area), x = SPI, label = countryname_iso, colour = country_UN_continent) +
+  geom_text() +
+  scale_y_continuous(breaks = seq(0, 1, by = 0.1), minor_breaks = NULL) +
+  scale_colour_discrete(guide = "none") +
+  theme_minimal()
+```
+
+```{r EPI_PA_total plot4, fig.height=6, fig.width=6, cache=TRUE}
+ggplot(data_rangers_clean_noG) +
+  aes(y = log(staff_rangers + 1) / log(PA_area), x = EPI_2020, label = countryname_iso, colour = country_UN_continent) +
+  geom_text() +
+  scale_y_continuous(breaks = seq(0, 1, by = 0.1), minor_breaks = NULL) +
+  scale_colour_discrete(guide = "none") +
+  theme_minimal()
+```
+
+### Using population density
+
+Let's first check for which country/territories we have no knowledge of the number of rangers and no estimate for the population density:
+```{r pop density, rows.print=40}
+data_rangers_clean %>%
+  filter(is.na(pop_density), !is.na(staff_rangers)) %>%
+  mutate(
+    flag = countrycode::countrycode(sourcevar = countryname_iso, "iso3c", "unicode.symbol"),
+    country = paste(countryname_eng, flag)) %>%
+  select(country, PA_area) %>%
+  arrange(desc(PA_area)) %>%
+  gt()
+```
+
+I think that the top 3 should be our priority since they have large area and "Svalbard and Jan Mayen" probably has very low density.
+
+Let's also check where countries with no rangers information are compared to countries with information in view of population density:
+
+```{r pop density explo, fig.height=6, fig.width=6, cache=TRUE}
+# data_rangers_clean %>%
+#   filter(!is.na(staff_rangers)) %>%
+#   ggplot() +
+#     aes(x = pop_density) +
+#     stat_bin(binwidth = 100, geom = "bar", fill = NA, colour = "black") +
+#     geom_rug(data = data_rangers_clean %>% filter(is.na(staff_rangers)), colour = "orange") +
+#     theme_minimal()
+
+data_rangers_clean %>%
+  mutate(rangers_known = !is.na(staff_rangers)) %>%
+  ggplot() +
+    aes(y = pop_density, x = rangers_known) +
+    ggbeeswarm::geom_quasirandom() +
+    coord_trans(y = "log") +
+    scale_y_continuous(breaks = 10^(0:7), minor_breaks = NULL) +
+    theme_minimal()
+```
+
+That does not look very good because extreme population densities are only found in countries for which we have no ranger info.
+In other words, predicting rangers for such countries will correspond to extrapolation.
+
+But, let us look at the problematic countries (i.e those corresponding to extrapolation):
+
+```{r pb countries}
+data_rangers_clean %>%
+  mutate(flag = countrycode::countrycode(sourcevar = countryname_iso, "iso3c", "unicode.symbol"),
+         country = paste(countryname_eng, flag)) %>%
+  filter(is.na(staff_rangers),
+         pop_density > max(data_rangers_clean %>%
+                             filter(!is.na(staff_rangers)) %>%
+                             pull(pop_density), na.rm = TRUE)) %>%
+  arrange(desc(pop_density)) %>%
+  select(country, pop_density, PA_area) %>%
+  gt()
+```
+
+OK, they contain very few PA area so that should not be an issue!
+
+Let's fit the following model to include the population density:
+
+$\mathrm{log}(\mathrm{staff\_rangers} + 1) = a \times \mathrm{log}(\mathrm{PA\_area}) + b \times \mathrm{log}(\mathrm{pop\_density}) + c$
+
+```{r lm pop density}
+fit_pop <- lm(log(staff_rangers + 1) ~ log(PA_area) + log(pop_density), data = data_rangers_clean_noG)
+tidy(summary(fit_pop)) %>%
+  mutate(across(where(is.numeric), .fns = round, digits = 3)) %>%
+  gt()
+```
+
+Again, you can see a allometry coefficient lower than one, which implies that the number of rangers increases less quickly than population density.
+
+Let's check if the assumption for linear modelling are fulfilled:
+
+```{r plot fit_pop fit, fig.height=10, fig.width=10, cache=TRUE}
+par(mfrow = c(2, 2))
+plot(fit_pop)
+```
 
 
+```{r lm pop density vs model 2}
+refit_model2 <- lm(log(staff_rangers + 1) ~ log(PA_area) - 1, data = data_rangers_clean_noG[!is.na(data_rangers_clean_noG$pop_density), ])
+```
+
+This looks very good. The AIC of this new model (`r round(AIC(fit_pop), digits = 1)`) is also considerably better than the AIC of our model 2 refitted on the same data (`r round(AIC(refit_model2), digits = 1)`), so accounting for population density is a considerable improvement!
+
+We can now predict the number of rangers using this new model and here it gets a little bit more complex than before because we have to add:
+
+- the number of rangers that are known
+- the predictions for the number of rangers from model 2 for the countries for which we have no population density
+- the predictions for the number of rangers from the new model for the countries for which we do have population density
+
+Here is the result for our estimation of the total number of rangers:
+
+```{r prediction with density pop, cache=TRUE}
+fit_allometry6_spaMM <- fitme(log(staff_rangers + 1) ~ log(PA_area) + log(pop_density), data = data_rangers_clean_noG)
+
+rangers_known <- sum(data_rangers_clean$staff_rangers, na.rm = TRUE)
+
+data_rangers_clean %>%
+  filter(is.na(staff_rangers),
+         is.na(pop_density),
+         PA_area > 0) -> data_no_pop_size
+
+data_rangers_clean %>%
+  filter(is.na(staff_rangers),
+         !is.na(pop_density),
+         PA_area > 0) -> data_with_pop_size
+
+set.seed(1)
+simu7 <- replicate(1000, {
+  rangers_predicted_no_pop_size <- sum(exp(simulate(fit_allometry5_spaMM,
+                                                newdata = data.frame(PA_area = data_no_pop_size$PA_area),
+                                                type = "predVar", variances = list(linPred = TRUE, disp = TRUE),
+                                                verbose = c(type = FALSE))) - 1)
+  
+  rangers_predicted_with_pop_size <- sum(exp(simulate(fit_allometry6_spaMM,
+                                                  newdata = data.frame(PA_area =  data_with_pop_size$PA_area,
+                                                                       pop_density = data_with_pop_size$pop_density),
+                                                type = "predVar", variances = list(linPred = TRUE, disp = TRUE),
+                                                verbose = c(type = FALSE))) - 1)
+  rangers_known + rangers_predicted_no_pop_size + rangers_predicted_with_pop_size
+})
+
+res_simu7 <- tibble(x = simu7, 
+  x_bin = round(x / 2000) * 2000,
+  lower = quantile(x, probs = 0.025),
+  upper = quantile(x, probs = 0.975),
+  filled = factor(if_else(x > lower & x < upper, "in", "out")))
+```
+
+```{r total_rangers4, cache=TRUE}
+tibble(mean = round(mean(simu7)),
+       lower = round(quantile(simu7, probs = 0.025)),
+       upper = round(quantile(simu7, probs = 0.975))) %>%
+  pivot_longer(everything(), names_to = "estimate") %>%
+  gt()
+```
+
+So we have reduced the uncertainty, although not by a huge amount
+
+### Accounting for spatial autocorrelation
+
+To come
 
 
