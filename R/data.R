@@ -113,6 +113,10 @@ fetch_data_rangers <- function() {
                     .data$country_UN_subcontinent == "61" ~ "Polynesia"),
                   country_UN_subcontinent = as.character(.data$country_UN_subcontinent)) -> d
 
+
+  ## Temporary fix for Croatia:
+  d[d$countryname_iso == "HRV", "area_country"] <- 56594 # from wikipedia
+
   d
 }
 
