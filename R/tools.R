@@ -13,7 +13,7 @@
 check_losses <- function(vars, data, resp_var = "staff_rangers_log", PA_var = "PA_area_log", PA_invlink = exp) {
 
   data %>%
-    select(-resp_var) -> data
+    dplyr::select(-resp_var) -> data
 
   nrow_ini <- nrow(data)
   PA_area_ini <- sum(PA_invlink(data[, PA_var, drop = TRUE]), na.rm = TRUE)
