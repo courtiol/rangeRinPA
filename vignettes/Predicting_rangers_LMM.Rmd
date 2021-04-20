@@ -1,5 +1,5 @@
 ---
-title: "Predicting the number of rangers"
+title: "Predicting the number of rangers using LMM"
 output:
   rmarkdown::html_document:
     df_print: paged
@@ -7,7 +7,7 @@ output:
     toc_depth: 4
     code_folding: hide
 vignette: >
-  %\VignetteIndexEntry{Number_rangers}
+  %\VignetteIndexEntry{Number_rangers_LMM}
   %\VignetteEncoding{UTF-8}
   %\VignetteEngine{knitr::rmarkdown}
 editor_options:
@@ -28,8 +28,8 @@ knitr::opts_chunk$set(
   error = TRUE,
   comment = "#>",
   cache = FALSE, # don't put TRUE as inline chunk make R CMD check to crash
-  cache.path = "cache/cache_vignette_predicting_rangers/",
-  fig.path = "figs/fig_vignette_predicting_rangers/",
+  cache.path = "cache/cache_vignette_predicting_rangers_LMM/",
+  fig.path = "figs/fig_vignette_predicting_rangers_LMM/",
   fig.align = 'center'
 )
 ```
@@ -43,7 +43,6 @@ library(broom)
 library(gt)
 library(spaMM)
 library(rnaturalearth)
-library(ranger)
 ```
 
 ## Using only the total area of terrestrial PAs in the country as predictor
@@ -537,7 +536,7 @@ tibble(mean = round(mean(simu4) + sum(data_rangers$staff_rangers, na.rm = TRUE))
 
 **Conclusion**: the LM approach (using model 3) and the ad-hoc approach are equivalent.
 
-#### Using the simple linear model #2
+#### Using the linear model #2
 
 We now turn to the model called *model 2* above (i.e our best model so far).
 
@@ -822,7 +821,7 @@ tibble(mean = round(mean(simu7)),
 
 So we have reduced the uncertainty, although not by a huge amount
 
-### Accounting for spatial autocorrelation
+### Using spatial coordinates (spatial autocorrelation)
 
 We will now consider the case of spatial autocorrelation.
 Its consideration may help predict the number of rangers.
