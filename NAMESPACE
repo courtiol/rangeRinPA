@@ -3,4 +3,5 @@
 export("%>%")
 export(check_losses)
 export(fetch_data_rangers)
+export(prepare_data)
 importFrom(magrittr,"%>%")
