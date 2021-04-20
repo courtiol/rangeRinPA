@@ -78,4 +78,21 @@ prepare_data <- function(formula, data, test_prop = 0) {
 }
 
 
+#' Tool function to identify variables available for focal countries
+#'
+#' @param country a vector of ISO code(s) of the focal country or countries
+#' @param data the complete dataset
+#' @export
+#'
+#' @examples
+#' prepare_vars(country = "VUT", data = data_rangers)
+#'
+prepare_vars <- function(country, data) {
+  data %>%
+    dplyr::filter(.data$countryname_iso %in% country) %>%
+    dplyr::select(where(~ !any(is.na(.x)))) %>%
+    colnames()
+}
+
+globalVariables("where") ## since not properly exported from tidyselect...
 
