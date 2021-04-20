@@ -157,7 +157,7 @@ data_rangers %>%
   summarise(total_rangers_known = sum(staff_rangers, na.rm = TRUE),
             n_missing_countries_pct = 100 * sum(is.na(staff_rangers)) / n(),
             PA_area_missing_pct = 100 * sum(area_PA_WDPA[is.na(staff_rangers)]) / sum(area_PA_WDPA),
-            area_country_missing_pct = 100 * sum(area_country[is.na(staff_rangers)]) / sum(area_country)) %>%
+            area_country_missing_pct = 100 * sum(area_country[is.na(staff_rangers)], na.rm = TRUE) / sum(area_country, na.rm = TRUE)) %>%
   arrange(PA_area_missing_pct) %>%
   bind_rows(
     data_rangers %>%
