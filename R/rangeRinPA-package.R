@@ -5,8 +5,8 @@
 #' In the examples below, we provide the workflow leading the results presented
 #' in the paper.
 #'
-#' @name rangeR-package
-#' @aliases rangeR-package rangeR
+#' @name rangeRinPA-package
+#' @aliases rangeRinPA-package rangeR
 #' @docType package
 #'
 #' @references

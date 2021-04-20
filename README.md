@@ -1,7 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# rangeR
+# rangeRinPA
 
 <!-- badges: start -->
 
@@ -11,15 +11,19 @@ experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](h
 status](https://www.r-pkg.org/badges/version/rangeR)](https://CRAN.R-project.org/package=rangeR)
 <!-- badges: end -->
 
-The goal of rangeR is to provide data about the total number of people
-working in Protected Areas (PAs) on the planet, as well as identifying
-what contributes to variation in the workforce between PAs.
+The goal of rangeRinPA is to provide data about the total number of
+people working in Protected Areas (PAs) on the planet, as well as
+identifying what contributes to variation in the workforce between PAs.
+
+Note: this package was previously called rangeR but we changed the name
+since rangeRinPA is now using another package called ranger (to run
+random forests) with which it conflicted due to the similar name.
 
 ## Installation
 
 ### Option 1
 
-You can install the development version of rangeR from
+You can install the development version of rangeRinPA from
 [GitHub](https://github.com/) by clicking on the green button above with
 the label **“Code”** and then on **Download ZIP** (do not unzip it!).
 
@@ -35,7 +39,7 @@ that you just have downloaded.
 
 ### Option 2
 
-You can also install the development version of rangeR with:
+You can also install the development version of rangeRinPA with:
 
 ``` r
 # install.packages("remotes")
@@ -70,7 +74,7 @@ To view such vignettes, simply install the package (see above) and then
 type:
 
 ``` r
-browseVignettes("rangeR")
+browseVignettes("rangeRinPA")
 ```
 
 Note: if the vignettes are not found, it is probably because you did not
@@ -87,7 +91,7 @@ R.
 Here is a simple example:
 
 ``` r
-library(rangeR)
+library(rangeRinPA)
 
 sum(data_rangers$staff_total, na.rm = TRUE)
 #> [1] 369059

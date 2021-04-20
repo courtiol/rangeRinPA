@@ -33,7 +33,7 @@ knitr::opts_chunk$set(
   fig.align = 'center'
 )
 
-library(rangeR)
+library(rangeRinPA)
 
 # set how to represent countries in plots:
 #data_rangers$countryname <- countrycode(sourcevar = data_rangers$countryname_iso, "iso3c", "unicode.symbol")
