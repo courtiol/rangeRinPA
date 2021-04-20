@@ -158,42 +158,8 @@ ggplot(data_rangers_clean_noG) +
 As you can see, the ratio of the log no longer depend on PA_area.
 (In case you wonder, the $+1$ is there so that to avoid log(0) which are not defined).
 
-### Fitting the allometric relationship
 
-An interesting observation is that the ratio between the logs is approximatively normally distributed. Here is the QQ plot:
-
-```{r gaussian, fig.height=6, fig.width=6, cache=TRUE}
-ggplot(data_rangers_clean_noG) +
-  aes(sample = log(staff_rangers + 1) / log(PA_area)) +
-  geom_qq(colour = "blue") + 
-  geom_qq_line() +
-  theme_minimal()
-```
-
-The mean of such normal distribution is estimated to `r round(mean(log(data_rangers_clean_noG$staff_rangers + 1) / log(data_rangers_clean_noG$PA_area), na.rm = TRUE), digits = 3)` and its SD to `r round(sd(log(data_rangers_clean_noG$staff_rangers + 1) / log(data_rangers_clean_noG$PA_area), na.rm = TRUE), digits = 3)`.
-
-Therefore, this very crude computation (hereafter called ad-hoc) suggests that:
-
-$\large{\mathrm{staff\_rangers} + 1 = \mathrm{PA\_area}^{`r round(mean(log(data_rangers_clean_noG$staff_rangers + 1) / log(data_rangers_clean_noG$PA_area), na.rm = TRUE), digits = 3)`}}$.
-
-That the coefficient of allometry is positive implies that staff_rangers increases with PA_area.
-
-That the coefficient of allometry is lower than 1 implies that *the increase in staff_rangers with PA_area* decreases with PA_area
-
-(Note to self: a non linear maximum likelihood fit gives very similar results.)
-```{r nlm, warning=FALSE, cache=TRUE}
-my_logLik <- function(par, data, scale = -1) {
-  coef <- par[1]
-  sd <- par[2]
-  scale * sum(dnorm(log(data$staff_rangers + 1)/log(data$PA_area) - coef, mean = 0, sd = sd, log = TRUE), na.rm = TRUE)
-  }
-
-set.seed(1)
-optim(c(0, 0.1), fn = my_logLik, data = data_rangers_clean_noG)
-```
-
-
-To get more formal, let's fit the allometric relationship using a linear model:
+Let's now fit the allometric relationship using a linear model:
 
 $\mathrm{log}(\mathrm{staff\_rangers} + 1) = a \times \mathrm{log}(\mathrm{PA\_area}) + b$ (model 1).
 
@@ -221,7 +187,7 @@ tidy(summary(fit_allometry2)) %>%
 
 Dropping the intercept is more rigorously justified by the fact that doing so improves the predictive ability of the model (AIC model 1 = `r round(AIC(fit_allometry), digits = 1)`; AIC model 2 = `r round(AIC(fit_allometry2), digits = 1)`).
 
-Fitting simple LM thus confirms that we do not need to consider an intercept and it leads a relationship virtually identical to the one we established earlier:
+Fitting simple LM thus confirms that we do not need to consider an intercept and it leads to the following relationship:
 
 $\large{\mathrm{staff\_rangers} + 1 = \mathrm{PA\_area}^{`r round(coef(fit_allometry2)[[1]], digits = 3)`}}$.
 
@@ -243,14 +209,6 @@ tidy(summary(fit_allometry3)) %>%
   gt()
 ```
 
-This retrieves exactly the same coefficient of allometry than the first ad-hoc method (note to self: perfect equivalence in REML but here also true in ML) and the model fit is also very good:
-
-```{r plot lm fit3, fig.height=10, fig.width=10, cache=TRUE}
-par(mfrow = c(2, 2))
-plot(fit_allometry3)
-```
-Note that there is only one fitted value is this model, which makes sense, but leads to strange plots above.
-
 The model 2 & 3 are not strictly equivalent because they impose different structure in terms of the residual variation.
 
 This is because if
@@ -265,17 +223,14 @@ or
 
 $Y = \beta_0 \times X + \mathrm{heteroscedastic\ residuals}$
 
-So we can use this result to rewrite the model 3 under a form that is comparable to model 2.
-This is a little technical, but the results show that model 2 is better at fitting the data than model 3.
-Furthermore, since model 3 produces a coefficient of allometry identical to the one produced by the ad-hoc method we first introduced, the fit of model 2 is thus also better than the ad-hoc model. 
-In short, we have good reasons for model 2 to be our base model.
+We can use this result to rewrite the model 3 under a form that is comparable to model 2, and compare the 2 models
 
 ```{r comparing models}
 fit_model2 <- fitme(I(log(staff_rangers + 1)/log(PA_area)) ~ 1, data = data_rangers_clean_noG)
 fit_model3 <- fitme(I(log(staff_rangers + 1)/log(PA_area)) ~ 1, prior.weights = sqrt(1/log(PA_area)), data = data_rangers_clean_noG)
-AIC(fit_model2)
-AIC(fit_model3)
 ```
+
+The AIC of the model 2 expressed in such a way is `r round(AIC(fit_model2))` and that of the model 3 is `r round(AIC(fit_model3))`, hence the model 2 is much better and we will use it as a basis for our analyses.
 
 Let's now visualise the fit of model 2 on the raw data:
 
@@ -372,175 +327,8 @@ data_rangers_clean %>%
 That is quite a good situation since no country with a huge PA_area has an unknown number of rangers.
 We do miss rangers info for countries with very little PA_area so predictions for those countries will not be reliable, but based on the relationship we characterised such countries will have a negligible contribution to the total, so that is not an issue.
 
-#### Using the distribution of the ratio
 
-We have estimated before that the ratio which yields the coefficient of allometry can be considered as drawn from a normal distribution with a certain mean and variance.
-
-A first simple methods to predict the number of rangers is thus to use such property to compute predictions for the number of rangers in the countries we did observe:
-
-```{r simu1}
-draw_rangers_from_raw_allo <- function(PA_area) {
-  allo <- rnorm(n = length(PA_area),
-        mean = mean(log(data_rangers_clean_noG$staff_rangers + 1) / log(data_rangers_clean_noG$PA_area), na.rm = TRUE),
-        sd = sd(log(data_rangers_clean_noG$staff_rangers + 1) / log(data_rangers_clean_noG$PA_area), na.rm = TRUE))
-  exp(allo * log(PA_area)) - 1
-}
-```
-
-```{r plot simu1, fig.height=6, fig.width=6, cache=TRUE}
-set.seed(1)
-simu1 <- replicate(10000, sum(draw_rangers_from_raw_allo(data_rangers_clean_noG$PA_area[!is.na(data_rangers_clean_noG$staff_rangers)])))
-
-res_simu1 <- tibble(x = simu1, 
-  x_bin = round(simu1 / 20000) * 20000,
-  x_obs = sum(data_rangers$staff_rangers, na.rm = TRUE),
-  lower = quantile(x, probs = 0.025),
-  upper = quantile(x, probs = 0.975),
-  filled = factor(if_else(x > lower & x < upper, "in", "out")))
-
-ggplot(res_simu1) +
-  aes(x = x_bin, fill = filled) +
-  geom_bar() +
-  geom_vline(xintercept = sum(data_rangers$staff_rangers, na.rm = TRUE), colour = "red", size = 1) +
-  coord_cartesian(xlim = c(80000, 1000000)) +
-  scale_x_continuous(breaks = seq(0, 1e6, by = 100000), labels = seq(0, 1e6, by = 100000), minor_breaks = NULL) +
-  scale_y_continuous(labels = NULL, breaks = NULL) +
-  scale_fill_manual(values = c("darkgreen", "orange")) +
-  labs(fill = "Within 95%", x = "Total number of rangers across observed countries", y = "Density") +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 90))
-```
-
-As you can see the distribution encompasses well the observed sum (in red).
-
-We can then do the same to predict the sum of rangers across the countries we did not observe (PS: I am assuming that countries with a null PA_area won't have any ranger):
-
-```{r plot simu2, fig.height=6, fig.width=6, cache=TRUE}
-data_rangers_clean_noG %>%
-  filter(is.na(staff_rangers) & PA_area > 0) %>%
-  pull(PA_area) -> PA_area_for_pred
-
-set.seed(1)
-simu2 <- replicate(10000, sum(draw_rangers_from_raw_allo(PA_area_for_pred)))
-
-res_simu2 <- tibble(x = simu2, 
-  x_bin = round(x / 2000) * 2000,
-  lower = quantile(x, probs = 0.025),
-  upper = quantile(x, probs = 0.975),
-  filled = factor(if_else(x > lower & x < upper, "in", "out")))
-
-ggplot(res_simu2) +
-  aes(x = x_bin, fill = filled) +
-  geom_bar() +
-  coord_cartesian(xlim = c(1000, 100000)) +
-  scale_fill_manual(values = c("darkgreen", "orange")) +
-  scale_x_continuous(breaks = seq(0, 1e6, by = 10000), labels = seq(0, 1e6, by = 10000), minor_breaks = NULL) +
-  scale_y_continuous(labels = NULL, breaks = NULL) +
-  labs(fill = "Within 95%", x = "Total number of rangers across non-observed countries", y = "Density") +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 90))
-```
-
-Summing this last series of predictions to the total observed, we obtain the following estimation of the total number of rangers on the planet (nb: those numbers do include Greenland):
-
-```{r total_rangers1}
-tibble(mean = round(mean(simu2) + sum(data_rangers$staff_rangers, na.rm = TRUE)),
-       lower = round(quantile(simu2, probs = 0.025) + sum(data_rangers$staff_rangers, na.rm = TRUE)),
-       upper = round(quantile(simu2, probs = 0.975) + sum(data_rangers$staff_rangers, na.rm = TRUE))) %>%
-  pivot_longer(everything(), names_to = "estimate") %>%
-  gt()
-```
-
-We will use other methods to produce predictions, but this gives us a first benchmark.
-
-We thus have an uncertainty of around `r format(round(quantile(simu2, probs = 0.975)[[1]] - quantile(simu2, probs = 0.025)[[1]]), scientific = FALSE)` rangers. Notice however that the interval for our prediction is not centred around the mean prediction, which implies that there is less uncertainty about the lowest possible number of rangers than about the highest possible one. Indeed, 50% of the simulation give a number of unknown rangers between 0 and `r format(round(quantile(simu2, probs = 0.5)[[1]]), scientific = FALSE)` while there is a long tail on the right of the distribution.
-
-#### Using the linear model #3
-
-Another way to simulate the non-observed number of rangers is to use the linear models we fitted to simulate new data.
-
-We start with the model called *model 3* above.
-
-As before, we start by predicting the number of rangers for the countries for which we know it to check that things are OK:
-
-```{r simu3, cache=TRUE}
-fit_allometry3_spaMM <- fitme(log(staff_rangers + 1) /  log(PA_area) ~ 1, data = data_rangers_clean_noG)
-PA_are_for_pred <- data_rangers_clean_noG$PA_area[!is.na(data_rangers_clean_noG$staff_rangers)]
-
-set.seed(1)
-simu3 <- replicate(1000, sum(exp(simulate(fit_allometry3_spaMM,
-                                          newdata = data.frame(PA_area = PA_are_for_pred),
-                                          type = "predVar", variances = list(linPred = TRUE, disp = TRUE),
-                                          verbose = c(type = FALSE)) * log(PA_are_for_pred)) - 1))
-
-res_simu3 <- tibble(x = simu3, 
-  x_bin = round(x / 20000) * 20000,
-  lower = quantile(x, probs = 0.025),
-  upper = quantile(x, probs = 0.975),
-  filled = factor(if_else(x > lower & x < upper, "in", "out")))
-```
-
-```{r plot simu3, fig.height=6, fig.width=6, cache=TRUE}
-ggplot(res_simu3) +
-  aes(x = x_bin, fill = filled) +
-  geom_bar() +
-  geom_vline(xintercept = sum(data_rangers$staff_rangers, na.rm = TRUE), colour = "red", size = 1) +
-  coord_cartesian(xlim = c(80000, 1000000)) +
-  scale_x_continuous(breaks = seq(0, 1e6, by = 100000), labels = seq(0, 1e6, by = 100000), minor_breaks = NULL) +
-  scale_y_continuous(labels = NULL, breaks = NULL) +
-  scale_fill_manual(values = c("darkgreen", "orange")) +
-  labs(fill = "Within 95%", x = "Total number of rangers across observed countries", y = "Density") +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 90))
-```
-
-We now proceeds to predict the non-observed number of rangers:
-
-```{r simu4, cache=TRUE}
-PA_are_for_pred_nonobs <- data_rangers_clean_noG$PA_area[is.na(data_rangers_clean_noG$staff_rangers) & data_rangers_clean_noG$PA_area > 0]
-
-set.seed(1)
-simu4 <- replicate(1000, sum(exp(simulate(fit_allometry3_spaMM, newdata = data.frame(PA_area = PA_are_for_pred_nonobs),
-                                          type = "predVar", variances = list(linPred = TRUE, disp = TRUE),
-                                          verbose = c(type = FALSE)) * log(PA_are_for_pred_nonobs)) - 1))
-
-res_simu4 <- tibble(x = simu4, 
-  x_bin = round(x / 2000) * 2000,
-  lower = quantile(x, probs = 0.025),
-  upper = quantile(x, probs = 0.975),
-  filled = factor(if_else(x > lower & x < upper, "in", "out")))
-```
-
-```{r plot simu4, fig.height=6, fig.width=6, cache=TRUE}
-ggplot(res_simu4) +
-  aes(x = x_bin, fill = filled) +
-  geom_bar() +
-  coord_cartesian(xlim = c(1000, 100000)) +
-  scale_fill_manual(values = c("darkgreen", "orange")) +
-  scale_x_continuous(breaks = seq(0, 1e6, by = 10000), labels = seq(0, 1e6, by = 10000), minor_breaks = NULL) +
-  scale_y_continuous(labels = NULL, breaks = NULL) +
-  labs(fill = "Within 95%", x = "Total number of rangers across non-observed countries", y = "Density") +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 90))
-```
-
-Summing this last series of predictions to the total observed, we obtain the following estimation of the total number of rangers on the planet (nb: those numbers do include Greenland):
-
-```{r total_rangers2}
-tibble(mean = round(mean(simu4) + sum(data_rangers$staff_rangers, na.rm = TRUE)),
-       lower = round(quantile(simu4, probs = 0.025) + sum(data_rangers$staff_rangers, na.rm = TRUE)),
-       upper = round(quantile(simu4, probs = 0.975) + sum(data_rangers$staff_rangers, na.rm = TRUE))) %>%
-  pivot_longer(everything(), names_to = "estimate") %>%
-  gt()
-```
-
-**Conclusion**: the LM approach (using model 3) and the ad-hoc approach are equivalent.
-
-#### Using the linear model #2
-
-We now turn to the model called *model 2* above (i.e our best model so far).
-
-As before, we start by predicting the number of rangers for the countries for which we know it to check that things are OK:
+We start by predicting the number of rangers for the countries for which we know it to check that things are OK:
 
 ```{r simu5, cache=TRUE}
 fit_allometry5_spaMM <- fitme(log(staff_rangers + 1)  ~ log(PA_area) - 1, data = data_rangers_clean_noG)
@@ -609,8 +397,6 @@ tibble(mean = round(mean(simu6) + sum(data_rangers$staff_rangers, na.rm = TRUE))
   pivot_longer(everything(), names_to = "estimate") %>%
   gt()
 ```
-
-**Conclusion**: the LM approach using *model 2* produces estimates considerably narrower than the first 2 approaches we attempted. This is logical since it is our best model.
 
 **Open question**: should fits be REML fits? (seems to enlarge distribution very slightly)
 
@@ -978,3 +764,115 @@ tibble(mean = round(mean(simu9)),
   pivot_longer(everything(), names_to = "estimate") %>%
   gt()
 ```
+
+### What about GDP?
+
+The GDP seems to help:
+```{r GDP spaMM, cache=TRUE}
+d <- data_for_matern_pop[!is.na(data_for_matern_pop$GDP_2019) & !is.na(data_for_matern_pop$area_country), ]
+fit_matern_pop_noarea_GDP <- fitme(log(staff_rangers + 1) ~ 1 + log(PA_area) + log(pop_density) + log(GDP_2019) + Matern(1|long + lat),
+                            data = d, control.dist = list(dist.method = "Earth"))
+fit_matern_pop_noarea_noGDP <- fitme(log(staff_rangers + 1) ~ 1 + log(PA_area) + log(pop_density) + Matern(1|long + lat),
+                            data = d, control.dist = list(dist.method = "Earth"))
+anova(fit_matern_pop_noarea_GDP, fit_matern_pop_noarea_noGDP)
+```
+
+but once we add the country area, it no longer does:
+```{r country area GDP spaMM, cache=TRUE}
+fit_matern_pop_area_GDP <- fitme(log(staff_rangers + 1) ~ 1 + log(PA_area) + log(pop_density) + log(GDP_2019) + log(area_country) + Matern(1|long + lat),
+                                 data = d, control.dist = list(dist.method = "Earth"))
+fit_matern_pop_area_noGDP <- fitme(log(staff_rangers + 1) ~ 1 + log(PA_area) + log(pop_density) + log(area_country) + Matern(1|long + lat),
+                                   data = d, control.dist = list(dist.method = "Earth"))
+anova(fit_matern_pop_area_GDP, fit_matern_pop_area_noGDP)
+```
+
+The area of the country seems to help:
+```{r area spaMM}
+anova(fit_matern_pop_area_noGDP, fit_matern_pop_noarea_noGDP)
+```
+
+and once we add the GDP, it still does:
+```{r country area GDP 2 spaMM}
+anova(fit_matern_pop_area_GDP, fit_matern_pop_noarea_GDP)
+```
+
+Here are the AIC of the 4 models:
+```{r AIC area GDP}
+print(AIC(fit_matern_pop_noarea_noGDP))
+print(AIC(fit_matern_pop_noarea_GDP))
+print(AIC(fit_matern_pop_area_noGDP))
+print(AIC(fit_matern_pop_area_GDP))
+```
+
+So the best model does include both the GDP and the area of the country, but once the area is considered the improvement stemming for GDP is negligible.
+One additional limitation however is that the GDP values are missing for a large number of territories (n = `r sum(is.na(data_rangers$GDP_2019))`), while we have all country areas.
+
+I thus propose to consider the country area and not the GPD.
+
+
+### Adding the country area
+
+Let's simulate again the numbers adding the country area in our computations:
+
+```{r refit with country area, cache=TRUE}
+fit_no_pop_size_no_coord_area <- fitme(log(staff_rangers + 1)  ~ 0 +  log(PA_area) + log(area_country), data = data_rangers_clean_noG)
+
+fit_matern_no_pop_area <- fitme(log(staff_rangers + 1) ~ 1 + log(PA_area) + log(area_country) + Matern(1|long + lat),
+                                data = data_for_matern_pop,
+                                control.dist = list(dist.method = "Earth"))
+
+fit_matern_pop_area <- fitme(log(staff_rangers + 1) ~ 1 + log(PA_area) + log(pop_density) + log(area_country),
+                             data = data_for_matern_pop,
+                             control.dist = list(dist.method = "Earth"))
+```
+
+
+```{r simu10, cache=TRUE}
+set.seed(1)
+simu10 <- replicate(1000, {
+  rangers_predicted_no_pop_size_no_coord_area <- sum(exp(simulate(fit_no_pop_size_no_coord_area,
+                                                     newdata = data.frame(PA_area = data_no_pop_size_no_coord$PA_area,
+                                                                          area_country = data_no_pop_size_no_coord$area_country),
+                                                     type = "predVar", variances = list(linPred = TRUE, disp = TRUE),
+                                                     verbose = c(type = FALSE))) - 1)
+  
+  rangers_predicted_no_pop_size_coord_area <- sum(exp(simulate(fit_matern_no_pop_area,
+                                                  newdata = data.frame(PA_area = data_no_pop_size_coord$PA_area,
+                                                                       lat = data_no_pop_size_coord$lat,
+                                                                       long = data_no_pop_size_coord$long,
+                                                                       area_country = data_no_pop_size_coord$area_country), 
+                                                  type = "predVar", variances = list(linPred = TRUE, disp = TRUE),
+                                                  verbose = c(type = FALSE))) - 1)
+  
+  rangers_predicted_pop_size_coord_area <- sum(exp(simulate(fit_matern_pop_area,
+                                               newdata = data.frame(PA_area =  data_with_pop_size_coord$PA_area,
+                                                                    pop_density = data_with_pop_size_coord$pop_density,
+                                                                    lat = data_with_pop_size_coord$lat,
+                                                                    long = data_with_pop_size_coord$long,
+                                                                    area_country = data_with_pop_size_coord$area_country),
+                                               type = "predVar", variances = list(linPred = TRUE, disp = TRUE),
+                                               verbose = c(type = FALSE))) - 1)
+  
+  rangers_known + rangers_predicted_no_pop_size_no_coord_area + rangers_predicted_no_pop_size_coord_area + rangers_predicted_pop_size_coord_area
+})
+
+res_simu10 <- tibble(x = simu10, 
+  x_bin = round(x / 2000) * 2000,
+  lower = quantile(x, probs = 0.025),
+  upper = quantile(x, probs = 0.975),
+  filled = factor(if_else(x > lower & x < upper, "in", "out")))
+```
+
+```{r total_rangers10}
+tibble(mean = round(mean(simu10)),
+       lower = round(quantile(simu10, probs = 0.025)),
+       upper = round(quantile(simu10, probs = 0.975))) %>%
+  pivot_longer(everything(), names_to = "estimate") %>%
+  gt()
+```
+
+
+Humm, that did not really help narrowing down the prediction interval.
+
+Did it improve the accuracy? For this I need to code a proper way to assess the RMSE.
+
