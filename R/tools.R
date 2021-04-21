@@ -103,3 +103,14 @@ prepare_vars <- function(country, data) {
 
 globalVariables("where") ## since not properly exported from tidyselect...
 
+
+#' Compute root mean square error
+#'
+#' @param pred a vector of predictions
+#' @param obs a vector of observations
+#'
+#' @export
+#'
+RMSE <- function(pred, obs) {
+  sqrt(sum((pred - obs)^2))
+  }
