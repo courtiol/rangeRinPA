@@ -17,6 +17,7 @@ prepare_data(formula, data, test_prop = 0)
 Tool function to compute train and test datasets given a formula
 }
 \examples{
-prepare_data(log(staff_rangers + 1) ~ log(GDP_2019) + Matern(1|lat + long), data = data_rangers, test_prop = 0.1)
+prepare_data(log(staff_rangers + 1) ~ log(GDP_2019) + Matern(1|lat + long),
+             data = data_rangers, test_prop = 0.1)
 
 }
