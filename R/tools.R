@@ -69,7 +69,11 @@ prepare_data <- function(formula, data, test_prop = 0) {
   data <- data[, vars]
   omit_obj <- stats::na.omit(data)
   row_to_drop <- as.numeric(attr(omit_obj, "na.action"))
-  data_train <- data[-row_to_drop, ]
+  if (length(row_to_drop) > 0) {
+    data_train <- data[-row_to_drop, ]
+  } else {
+    data_train <- data
+  }
   data_test <- tibble::tibble()
   if (test_prop > 0) {
     nrow_test <- ceiling(nrow(data_train)*test_prop)
