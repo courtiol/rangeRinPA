@@ -117,10 +117,40 @@ fetch_data_rangers <- function() {
   ## Temporary fix for Croatia:
   d[d$countryname_iso == "HRV", "area_country"] <- 56594 # from wikipedia
 
+  ## Temporary patch for private analysis only, TODO: remove before release
+  d$countryname_iso[d$countryname_eng == "W African Country"] <- "SEN"
+
+  ## Make a really clean column for PA area:
+  d %>%
+    dplyr::mutate(PA_area = dplyr::if_else(!is.na(.data$area_PA_total), .data$area_PA_total, .data$area_PA_WDPA)) -> d
+
+  ## Adding latitude and longitude automatically:
+  world_sf <- rnaturalearth::ne_countries(scale = "large", returnclass = "sf")
+  world_sf$iso_a3_eh[world_sf$admin == "Norway"] <- "NOR" ## manual fix
+  #world_sf$admin[unlist(sapply(world_sf$admin, function(x) grepl("Gu.*", x)))] ## to search for typos
+  world_sf$center <- sf::st_centroid(world_sf$geometry, of_largest_polygon = TRUE)
+
+  d %>%
+    dplyr::left_join(world_sf %>% dplyr::select(.data$center, .data$iso_a3_eh), by = c("countryname_iso" = "iso_a3_eh")) -> d
+
+  d %>%
+    tidyr::unnest_wider(col = .data$center, names_sep = "") %>%
+    dplyr::rename(long = .data$center1, lat = .data$center2) %>%
+    dplyr::select(-.data$geometry) -> d
+
+  ## Adding flags
+  d %>%
+    dplyr::mutate(flag = countrycode::countrycode(sourcevar = .data$countryname_iso, "iso3c", "unicode.symbol"),
+                  country = paste(.data$countryname_eng, .data$flag)) -> d
+
+  ## Adding row names
+  rownames(d) <- d$countryname_iso
+
   d
 }
 
 globalVariables(".data")
+
 
 #' Ranger data
 #'
