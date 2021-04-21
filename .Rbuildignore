@@ -9,3 +9,4 @@ vignettes/figs
 vignettes/Simple\_modelling.Rmd
 vignettes/Predicting\_rangers\_RF.Rmd
 ^local$
+^scripts$
