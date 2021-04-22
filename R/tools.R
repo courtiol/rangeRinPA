@@ -53,13 +53,14 @@ check_losses <- function(vars, data, resp_var = "staff_rangers_log", PA_var = "P
 #' @param formula the formula for the LMM or RF
 #' @param data the complete dataset
 #' @param test_prop the amount of rows to keep in the test dataset (default = 0)
+#' @param seed an optional seed for the RNG
 #' @export
 #'
 #' @examples
 #' prepare_data(log(staff_rangers + 1) ~ log(GDP_2019) + Matern(1|lat + long),
 #'              data = data_rangers, test_prop = 0.1)
 #'
-prepare_data <- function(formula, data, test_prop = 0) {
+prepare_data <- function(formula, data, test_prop = 0, seed = NULL) {
   if (test_prop < 0 | test_prop > 1) stop("test_prop must be between 0 and 1")
   vars <- all.vars(formula)
   if (any(vars == ".")) {
@@ -77,6 +78,9 @@ prepare_data <- function(formula, data, test_prop = 0) {
   data_test <- tibble::tibble()
   if (test_prop > 0) {
     nrow_test <- ceiling(nrow(data_train)*test_prop)
+    if (!is.null(seed)) {
+      set.seed(seed)
+    }
     row_test <- sample(seq_len(nrow(data_train)), size = nrow_test, replace = FALSE)
     data_test <- data_train[row_test, ]
     data_train <- data_train[-row_test, ]

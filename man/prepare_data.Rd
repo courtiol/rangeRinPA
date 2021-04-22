@@ -4,7 +4,7 @@
 \alias{prepare_data}
 \title{Tool function to compute train and test datasets given a formula}
 \usage{
-prepare_data(formula, data, test_prop = 0)
+prepare_data(formula, data, test_prop = 0, seed = NULL)
 }
 \arguments{
 \item{formula}{the formula for the LMM or RF}
@@ -12,6 +12,8 @@ prepare_data(formula, data, test_prop = 0)
 \item{data}{the complete dataset}
 
 \item{test_prop}{the amount of rows to keep in the test dataset (default = 0)}
+
+\item{seed}{an optional seed for the RNG}
 }
 \description{
 Tool function to compute train and test datasets given a formula
