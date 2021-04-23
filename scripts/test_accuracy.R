@@ -60,6 +60,31 @@ compute_rmse_rf <- function(formula, data, rep = 10, Ncpu = 1, target = "staff_r
 }
 
 
+## function to compute RMSE on test set for LMM_RF
+compute_rmse_lmm_rf <- function(formula_lmm, formula_RF, data, rep = 10, Ncpu = 1, target = "staff_rangers_log", spatial, args_spaMM = list(), args_RF = list()) {
+  if (spatial == "Matern") {
+    formula_lmm <- update.formula(formula_lmm, . ~ . + Matern(1 |lat + long))
+  } else stopifnot(!spatial)
+  seed <- 123 # we make sure all dataset are the same across comparisons
+  rmse <- parallel::mclapply(seq_len(rep), function(i) {
+    data_list <- prepare_data(formula = formula_lmm, data = data, test_prop = 0.1, seed = seed + i)
+    args_spaMM$formula <- formula_lmm
+    args_spaMM$data <- data_list$data_train
+    newfit_LMM <- do.call(spaMM::fitme, args_spaMM)
+    data_list$data_train$pred_spaMM <- predict(newfit_LMM, newdata = data_list$data_train)[, 1]
+    formula_RF <- update.formula(formula_RF, . ~ . + pred_spaMM)
+    args_RF$formula <- formula_RF
+    args_RF$data <- data_list$data_train
+    args_RF$num.threads <- 1
+    newfit_RF <- do.call(ranger::ranger, args_RF)
+    data_list$data_test$pred_spaMM <- predict(newfit_LMM, newdata = data_list$data_test)[, 1]
+    RMSE(predict(newfit_RF, data = data_list$data_test, num.threads = 1)$predictions, data_list$data_test[, target, drop = TRUE])
+  }, mc.cores = Ncpu)
+  unlist(rmse)
+}
+
+
+
 ## data for test
 data_rangers %>%
   filter(countryname_eng != "Greenland") %>% # Greenland is a clear outlier, so we drop this country
@@ -181,6 +206,9 @@ test_RF  <- lapply(formls, function(f) compute_rmse_rf(formula = f, data = data_
 test_RF_latlong  <- lapply(formls, function(f) compute_rmse_rf(formula = f, data = data_test, rep = n_tests, Ncpu = Ncpu, spatial = "latlong"))
 test_RF_dist  <- lapply(formls, function(f) compute_rmse_rf(formula = f, data = data_test, rep = n_tests, Ncpu = Ncpu, spatial = "dist"))
 
+test_LMM_RF <- lapply(formls, function(f) compute_rmse_lmm_rf(formula_lmm = f, formula_RF = f, data = data_test, rep = n_tests, Ncpu = Ncpu, spatial = "Matern",
+                                                              args_spaMM = list(control.dist = list(dist.method = "Earth"), method = "REML")))
+
 # test_RF_mtry3_alwaysPA     <- lapply(formls, function(f) {
 #                                       mtry_fn <- function(nv) { # mtry argument can take a function but the value needs to "work" (i.e. never be too large or too small)
 #                                         cannot_do <- ifelse(grepl("PA_area_log", as.character(f)[3]), 1, 0)
@@ -201,7 +229,8 @@ rbind(cbind(do.call("cbind", test_LM), method = "LM" ),
       cbind(do.call("cbind", test_LMM), method = "LMM" ),
       cbind(do.call("cbind", test_RF), method = "RF" ),
       cbind(do.call("cbind", test_RF_latlong), method = "RF_latlong"),
-      cbind(do.call("cbind", test_RF_dist), method = "RF_dist")
+      cbind(do.call("cbind", test_RF_dist), method = "RF_dist"),
+      cbind(do.call("cbind", test_LMM_RF), method = "LMM_RF")
       ) %>%
       as.data.frame() %>%
       pivot_longer(cols = -method, names_to = "model", values_to = "rmse") %>%
