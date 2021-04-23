@@ -72,17 +72,42 @@ compute_rmse_lmm_rf <- function(formula_lmm, formula_RF, data, rep = 10, Ncpu = 
     args_spaMM$data <- data_list$data_train
     newfit_LMM <- do.call(spaMM::fitme, args_spaMM)
     data_list$data_train$pred_spaMM <- predict(newfit_LMM, newdata = data_list$data_train)[, 1]
+    data_list$data_test$pred_spaMM <- predict(newfit_LMM, newdata = data_list$data_test)[, 1]
     formula_RF <- update.formula(formula_RF, . ~ . + pred_spaMM)
     args_RF$formula <- formula_RF
     args_RF$data <- data_list$data_train
     args_RF$num.threads <- 1
     newfit_RF <- do.call(ranger::ranger, args_RF)
-    data_list$data_test$pred_spaMM <- predict(newfit_LMM, newdata = data_list$data_test)[, 1]
     RMSE(predict(newfit_RF, data = data_list$data_test, num.threads = 1)$predictions, data_list$data_test[, target, drop = TRUE])
   }, mc.cores = Ncpu)
   unlist(rmse)
 }
 
+
+## function to compute RMSE on test set for RF_LMM
+compute_rmse_rf_lmm <- function(formula_lmm, formula_RF, data, rep = 10, Ncpu = 1, target = "staff_rangers_log", spatial, args_spaMM = list(), args_RF = list()) {
+  formula_data <- formula_RF
+  if (spatial == "Matern") {
+    formula_lmm <- update.formula(formula_lmm, . ~ . + Matern(1 |lat + long))
+    formula_data <- update.formula(formula_RF, . ~ . + lat + long)
+  } else stopifnot(!spatial)
+  seed <- 123 # we make sure all dataset are the same across comparisons
+  rmse <- parallel::mclapply(seq_len(rep), function(i) {
+    data_list <- prepare_data(formula = formula_data, data = data, test_prop = 0.1, seed = seed + i)
+    args_RF$formula <- formula_RF
+    args_RF$data <- data_list$data_train
+    args_RF$num.threads <- 1
+    newfit_RF <- do.call(ranger::ranger, args_RF)
+    data_list$data_train$pred_RF <- predict(newfit_RF, data = data_list$data_train, num.threads = 1)$predictions
+    data_list$data_test$pred_RF <- predict(newfit_RF, data = data_list$data_test, num.threads = 1)$predictions
+    formula_lmm <- update.formula(formula_lmm, . ~ . + offset(pred_RF))
+    args_spaMM$formula <- formula_lmm
+    args_spaMM$data <- data_list$data_train
+    newfit_LMM <- do.call(spaMM::fitme, args_spaMM)
+    RMSE(predict(newfit_LMM, newdata = data_list$data_test)[, 1], data_list$data_test[, target, drop = TRUE])
+  }, mc.cores = Ncpu)
+  unlist(rmse)
+}
 
 
 ## data for test
@@ -208,6 +233,8 @@ test_RF_dist  <- lapply(formls, function(f) compute_rmse_rf(formula = f, data = 
 
 test_LMM_RF <- lapply(formls, function(f) compute_rmse_lmm_rf(formula_lmm = f, formula_RF = f, data = data_test, rep = n_tests, Ncpu = Ncpu, spatial = "Matern",
                                                               args_spaMM = list(control.dist = list(dist.method = "Earth"), method = "REML")))
+test_RF_LMM <- lapply(formls, function(f) compute_rmse_rf_lmm(formula_lmm = staff_rangers_log ~ 0, formula_RF = f, data = data_test, rep = n_tests, Ncpu = Ncpu, spatial = "Matern",
+                                                              args_spaMM = list(control.dist = list(dist.method = "Earth"), method = "REML")))
 
 # test_RF_mtry3_alwaysPA     <- lapply(formls, function(f) {
 #                                       mtry_fn <- function(nv) { # mtry argument can take a function but the value needs to "work" (i.e. never be too large or too small)
@@ -230,7 +257,8 @@ rbind(cbind(do.call("cbind", test_LM), method = "LM" ),
       cbind(do.call("cbind", test_RF), method = "RF" ),
       cbind(do.call("cbind", test_RF_latlong), method = "RF_latlong"),
       cbind(do.call("cbind", test_RF_dist), method = "RF_dist"),
-      cbind(do.call("cbind", test_LMM_RF), method = "LMM_RF")
+      cbind(do.call("cbind", test_LMM_RF), method = "LMM_RF"),
+      cbind(do.call("cbind", test_RF_LMM), method = "RF_LMM")
       ) %>%
       as.data.frame() %>%
       pivot_longer(cols = -method, names_to = "model", values_to = "rmse") %>%
@@ -327,3 +355,6 @@ test_samplefraction
 # more trees imply to reduce the MCMC variance, but
 # after reaching some number, increasing the number of trees has little effect but consuming CPU and memory.
 #
+
+
+
