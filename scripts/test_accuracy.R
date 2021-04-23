@@ -35,7 +35,7 @@ add_dist_predictors_to_formula <- function(formula, data) {
 #add_dist_predictors_to_formula(test ~ bla, add_dist_predictors_to_data(data_test))
 
 ## function to compute RMSE on test set for RF (using Cross Validation or Out Of Bag obs)
-compute_rmse_rf <- function(formula, data, rep = 10, Ncpu = 1, target = "staff_rangers_log", spatial, add_noise = FALSE, method = "CV", ...) {
+compute_rmse_rf <- function(formula, data, rep = 10, Ncpu = 1, target = "staff_rangers_log", spatial, method = "CV", ...) {
   if (spatial == "latlong") {
       formula <- update.formula(formula, . ~ . + lat + long)
     } else if (spatial == "dist") {
@@ -48,10 +48,6 @@ compute_rmse_rf <- function(formula, data, rep = 10, Ncpu = 1, target = "staff_r
   rmse <- parallel::mclapply(seq_len(rep), function(i) {
     if (method == "CV") {
       data_list <- prepare_data(formula = formula, data = data, test_prop = 0.1, seed = seed + i)
-      if (add_noise) {
-        data_list$data_train[, target] <- data_list$data_train[, target, drop = TRUE] +
-          rnorm(length(data_list$data_train[, target, drop = TRUE]), mean = 0, sd = sd(data_list$data_train[, target, , drop = TRUE]))
-      }
       newfit <- ranger::ranger(formula = formula, data = data_list$data_train, num.threads = 1, ...)
       RMSE(predict(newfit, data = data_list$data_test, num.threads = 1)$predictions, data_list$data_test[, target, drop = TRUE])
       #NOTE: num.threads = 1 is an attempt not to use multiple threads since we do parallelisation at a higher level, but does not seem to work :-(
