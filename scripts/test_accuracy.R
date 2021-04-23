@@ -8,7 +8,10 @@ library(ranger)
 rm(list = ls())
 
 ## function to compute RMSE on test set for LMM
-compute_rmse_lmm <- function(formula, data, rep = 10, Ncpu = 1, target = "staff_rangers_log", ...) {
+compute_rmse_lmm <- function(formula, data, rep = 10, Ncpu = 1, target = "staff_rangers_log", spatial, ...) {
+  if (spatial == "Matern") {
+    formula <- update.formula(formula, . ~ . + Matern(1 |lat + long))
+    } else stopifnot(!spatial)
   seed <- 123 # we make sure all dataset are the same across comparisons
   rmse <- parallel::mclapply(seq_len(rep), function(i) {
     data_list <- prepare_data(formula = formula, data = data, test_prop = 0.1, seed = seed + i)
@@ -18,19 +21,44 @@ compute_rmse_lmm <- function(formula, data, rep = 10, Ncpu = 1, target = "staff_
   unlist(rmse)
 }
 
+add_dist_predictors_to_data <- function(data) {
+  df <- as.data.frame(spaMM::make_scaled_dist(data[, c("lat", "long")], rho = 1, dist.method = "Earth", return_matrix = TRUE))
+  colnames(df) <- paste0("dist_", 1:ncol(df))
+  dplyr::bind_cols(data, df)
+}
+#add_dist_predictors_to_data(data_test)
 
-## function to compute RMSE on test set for RF
-compute_rmse_rf <- function(formula, data, rep = 10, Ncpu = 1, target = "staff_rangers_log", add_noise = FALSE, ...) {
+add_dist_predictors_to_formula <- function(formula, data) {
+  dist_vars <- colnames(data)[grep("dist_", colnames(data))]
+  as.formula(paste(formula[[2]], paste(c(formula[[3]], dist_vars), collapse = "+"), sep = " ~ "))
+}
+#add_dist_predictors_to_formula(test ~ bla, add_dist_predictors_to_data(data_test))
+
+## function to compute RMSE on test set for RF (using Cross Validation or Out Of Bag obs)
+compute_rmse_rf <- function(formula, data, rep = 10, Ncpu = 1, target = "staff_rangers_log", spatial, add_noise = FALSE, method = "CV", ...) {
+  if (spatial == "latlong") {
+      formula <- update.formula(formula, . ~ . + lat + long)
+    } else if (spatial == "dist") {
+      data <- add_dist_predictors_to_data(data)
+      formula <- add_dist_predictors_to_formula(formula = formula, data = data)
+    } else if (spatial != FALSE) {
+      stop("Spatial method not found")
+    }
   seed <- 123 # we make sure all dataset are the same across comparisons
   rmse <- parallel::mclapply(seq_len(rep), function(i) {
-    data_list <- prepare_data(formula = formula, data = data, test_prop = 0.1, seed = seed + i)
-    if (add_noise) {
-      data_list$data_train[, target] <- data_list$data_train[, target, drop = TRUE] +
-        rnorm(length(data_list$data_train[, target, drop = TRUE]), mean = 0, sd = sd(data_list$data_train[, target, , drop = TRUE]))
-    }
-    newfit <- ranger::ranger(formula = formula, data = data_list$data_train, num.threads = 1, ...)
-    RMSE(predict(newfit, data = data_list$data_test, num.threads = 1)$predictions, data_list$data_test[, target, drop = TRUE])
-    #NOTE: num.threads = 1 is an attempt not to use multiple threads since we do parallelisation at a higher level, but does not seem to work :-(
+    if (method == "CV") {
+      data_list <- prepare_data(formula = formula, data = data, test_prop = 0.1, seed = seed + i)
+      if (add_noise) {
+        data_list$data_train[, target] <- data_list$data_train[, target, drop = TRUE] +
+          rnorm(length(data_list$data_train[, target, drop = TRUE]), mean = 0, sd = sd(data_list$data_train[, target, , drop = TRUE]))
+      }
+      newfit <- ranger::ranger(formula = formula, data = data_list$data_train, num.threads = 1, ...)
+      RMSE(predict(newfit, data = data_list$data_test, num.threads = 1)$predictions, data_list$data_test[, target, drop = TRUE])
+      #NOTE: num.threads = 1 is an attempt not to use multiple threads since we do parallelisation at a higher level, but does not seem to work :-(
+    } else if (method == "OOB") {
+      newfit <- ranger::ranger(formula = formula, data = data, num.threads = 1, ...)
+      sqrt(newfit$prediction.error)
+    } else stop("method unknown")
   }, mc.cores = Ncpu)
   unlist(rmse)
 }
@@ -67,7 +95,7 @@ data_test_pca <- as.data.frame(cbind(staff_rangers_log = data_test$staff_rangers
 
 
 ## interlude to check the importance of variables
-# same on PCA
+# on PCA
 forest <- ranger(staff_rangers_log ~ . , data = data_test_pca, importance = "permutation")
 tibble::as_tibble_row(importance(forest)) %>%
   pivot_longer(everything(), names_to = "Predictor", values_to = "Importance") %>%
@@ -78,8 +106,8 @@ tibble::as_tibble_row(importance(forest)) %>%
   geom_col(width = 0.2) +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45))
-# NOTE: since only PC2 seems really important, let's add it to data_test
 
+# NOTE: since only PC2 seems really important, let's add it to data_test
 data_test$PC2 <- data_test_pca$PC2
 
 forest2 <- ranger(staff_rangers_log ~ . , data = data_test, importance = "permutation")
@@ -123,130 +151,62 @@ as.data.frame(round(cor_obj, 2), row.names = rownames(cor_obj)) %>%
   arrange(desc(abs(value)))
 
 
-## let's define the formula
-formls_LMM <- list(
-  forml_coord                 = staff_rangers_log ~ 1 + Matern(1|long + lat),
-  forml_PA                    = staff_rangers_log ~ 1 + PA_area_log,
-  forml_pop                   = staff_rangers_log ~ 1 + pop_density_log,
-  forml_PC2                   = staff_rangers_log ~ 1 + PC2,
-  forml_area                  = staff_rangers_log ~ 1 + area_country_log,
-  forml_GDP                   = staff_rangers_log ~ 1 + GDP_2019_log,
-  forml_PA_coord              = staff_rangers_log ~ 1 + PA_area_log + Matern(1|long + lat),
-  forml_pop_coord             = staff_rangers_log ~ 1 + pop_density_log + Matern(1|long + lat),
-  forml_PC2_coord             = staff_rangers_log ~ 1 + PC2 + Matern(1|long + lat),
-  forml_area_coord            = staff_rangers_log ~ 1 + area_country_log + Matern(1|long + lat),
-  forml_GDP_coord             = staff_rangers_log ~ 1 + GDP_2019_log + Matern(1|long + lat),
-  forml_PA_pop                = staff_rangers_log ~ 1 + PA_area_log + pop_density_log,
-  forml_PA_pop_coord          = staff_rangers_log ~ 1 + PA_area_log + pop_density_log + Matern(1|long + lat),
-  forml_PA_pop_PC2            = staff_rangers_log ~ 1 + PA_area_log + pop_density_log + PC2,
-  forml_PA_pop_PC2_coord      = staff_rangers_log ~ 1 + PA_area_log + pop_density_log + PC2 + Matern(1|long + lat),
-  forml_PA_pop_area           = staff_rangers_log ~ 1 + PA_area_log + pop_density_log + area_country_log,
-  forml_PA_pop_area_coord     = staff_rangers_log ~ 1 + PA_area_log + pop_density_log + area_country_log +  Matern(1|long + lat),
-  forml_PA_pop_GDP            = staff_rangers_log ~ 1 + PA_area_log + pop_density_log + GDP_2019_log,
-  forml_PA_pop_GDP_coord      = staff_rangers_log ~ 1 + PA_area_log + pop_density_log + GDP_2019_log +  Matern(1|long + lat),
-  forml_PA_pop_area_GDP       = staff_rangers_log ~ 1 + PA_area_log + pop_density_log + area_country_log + GDP_2019_log,
-  forml_PA_pop_area_GDP_coord = staff_rangers_log ~ 1 + PA_area_log + pop_density_log + area_country_log + GDP_2019_log + Matern(1|long + lat),
-  forml_PA_pop_PC2_area_GDP   = staff_rangers_log ~ 1 + PA_area_log + pop_density_log + PC2 + area_country_log + GDP_2019_log,
-  forml_PA_pop_PC2_area_GDP_coord = staff_rangers_log ~ 1 + PA_area_log + pop_density_log + PC2 + area_country_log + GDP_2019_log + Matern(1|long + lat),
+## let's define the formulas
+formls <- list(
+  # forml_PA                    = staff_rangers_log ~ PA_area_log,
+  # forml_pop                   = staff_rangers_log ~ pop_density_log,
+  # forml_PC2                   = staff_rangers_log ~ PC2,
+  # forml_area                  = staff_rangers_log ~ area_country_log,
+  # forml_GDP                   = staff_rangers_log ~ GDP_2019_log,
+  forml_PA_pop                = staff_rangers_log ~ PA_area_log + pop_density_log,
+  forml_PA_pop_PC2            = staff_rangers_log ~ PA_area_log + pop_density_log + PC2,
+  forml_PA_pop_area           = staff_rangers_log ~ PA_area_log + pop_density_log + area_country_log,
+  forml_PA_pop_GDP            = staff_rangers_log ~ PA_area_log + pop_density_log + GDP_2019_log,
+  forml_PA_pop_area_GDP       = staff_rangers_log ~ PA_area_log + pop_density_log + area_country_log + GDP_2019_log,
+  forml_PA_pop_PC2_area_GDP   = staff_rangers_log ~ PA_area_log + pop_density_log + PC2 + area_country_log + GDP_2019_log,
   forml_all                   = staff_rangers_log ~ pop_density_log +
-                                                    lat + long +
                                                     PA_area_log + area_country_log + area_forest_pct +
                                                     GDP_2019_log + GDP_capita_log + GDP_growth + unemployment_log +
                                                     EVI + SPI + EPI_2020 +
-                                                    IUCN_1_4_prop + IUCN_1_2_prop +
-                                                    Matern(1|long + lat)
-  )
+                                                    IUCN_1_4_prop + IUCN_1_2_prop)
 
-formls_RF <- list(
-  forml_coord                 = staff_rangers_log ~ 1 + lat + long,
-  forml_PA                    = staff_rangers_log ~ 1 + PA_area_log,
-  forml_pop                   = staff_rangers_log ~ 1 + pop_density_log,
-  forml_PC2                   = staff_rangers_log ~ 1 + PC2,
-  forml_area                  = staff_rangers_log ~ 1 + area_country_log,
-  forml_GDP                   = staff_rangers_log ~ 1 + GDP_2019_log,
-  forml_PA_coord              = staff_rangers_log ~ 1 + PA_area_log + lat + long,
-  forml_pop_coord             = staff_rangers_log ~ 1 + pop_density_log + lat + long,
-  forml_PC2_coord             = staff_rangers_log ~ 1 + PC2 + lat + long,
-  forml_area_coord            = staff_rangers_log ~ 1 + area_country_log + lat + long,
-  forml_GDP_coord             = staff_rangers_log ~ 1 + GDP_2019_log + lat + long,
-  forml_PA_pop                = staff_rangers_log ~ 1 + PA_area_log + pop_density_log,
-  forml_PA_pop_coord          = staff_rangers_log ~ 1 + PA_area_log + pop_density_log + lat + long,
-  forml_PA_pop_PC2            = staff_rangers_log ~ 1 + PA_area_log + pop_density_log + PC2,
-  forml_PA_pop_PC2_coord      = staff_rangers_log ~ 1 + PA_area_log + pop_density_log + PC2 + lat + long,
-  forml_PA_pop_area           = staff_rangers_log ~ 1 + PA_area_log + pop_density_log + area_country_log,
-  forml_PA_pop_area_coord     = staff_rangers_log ~ 1 + PA_area_log + pop_density_log + area_country_log +  lat + long,
-  forml_PA_pop_GDP            = staff_rangers_log ~ 1 + PA_area_log + pop_density_log + GDP_2019_log,
-  forml_PA_pop_GDP_coord      = staff_rangers_log ~ 1 + PA_area_log + pop_density_log + GDP_2019_log +  lat + long,
-  forml_PA_pop_area_GDP       = staff_rangers_log ~ 1 + PA_area_log + pop_density_log + area_country_log + GDP_2019_log,
-  forml_PA_pop_area_GDP_coord = staff_rangers_log ~ 1 + PA_area_log + pop_density_log + area_country_log + GDP_2019_log + lat + long,
-  forml_PA_pop_PC2_area_GDP   = staff_rangers_log ~ 1 + PA_area_log + pop_density_log + PC2 + area_country_log + GDP_2019_log,
-  forml_PA_pop_PC2_area_GDP_coord = staff_rangers_log ~ 1 + PA_area_log + pop_density_log + PC2 + area_country_log + GDP_2019_log + lat + long,
-  forml_all                   = staff_rangers_log ~ . # same as fixed effects in formls_LMM$forml_all
-)
 
 
 ## compute RMSE on test sets
 n_tests <- 1000
 Ncpu <- 100
 
-# NOTES:
-# We compare ML & REML predictions
-#
-test_REML                  <- lapply(formls_LMM, function(f) compute_rmse_lmm(formula = f, data = data_test, rep = n_tests, Ncpu = Ncpu,
-                                                                              control.dist = list(dist.method = "Earth"), method = "REML"))
-test_ML                    <- lapply(formls_LMM, function(f) compute_rmse_lmm(formula = f, data = data_test, rep = n_tests, Ncpu = Ncpu,
-                                                                              control.dist = list(dist.method = "Earth"), method = "ML"))
+test_LM  <- lapply(formls, function(f) compute_rmse_lmm(formula = f, data = data_test, rep = n_tests, Ncpu = Ncpu, spatial = FALSE, method = "ML"))
 
-# NOTES:
-# 1. we try different values for mtry
-# mtry defines the number of predictors to be used in each tree,
-# in theory increasing mtry increases the correlation between trees which decreases the accuracy,
-# but at the same time increasing mtry increases the so-called strength of each tree.
-# So, there may be a best mtry. although it does not always have a large effect
-#
-# 2. we try increasing the number of trees,
-# more trees imply to reduce the MCMC variance, but
-# after reaching some number, increasing the number of trees has no effect but consuming CPU and memory.
-# The default (500) may be enough.
-#
-# 3. we try adding noise to the response.
-# Breiman showed that this can help in some case, he recommended a gaussian noise of 1 SD
-#
-# Many more things could be changed... (how to sample, how to split, how to aggregate...)
-#
-test_RF_mtry1              <- lapply(formls_RF, function(f) compute_rmse_rf(formula = f, data = data_test, rep = n_tests, Ncpu = Ncpu,
-                                                                            mtry = 1))
-test_RF_mtry1_noised       <- lapply(formls_RF, function(f) compute_rmse_rf(formula = f, data = data_test, rep = n_tests, Ncpu = Ncpu,
-                                                                            add_noise = TRUE,
-                                                                            mtry = 1))
-test_RF_mtry1_20xmoretrees <- lapply(formls_RF, function(f) compute_rmse_rf(formula = f, data = data_test, rep = n_tests, Ncpu = Ncpu,
-                                                                            mtry = 1, num.trees = 10000))
-test_RF_mtry3              <- lapply(formls_RF, function(f) compute_rmse_rf(formula = f, data = data_test, rep = n_tests, Ncpu = Ncpu,
-                                                                            mtry = function(nv) min(c(nv, 3))))
-test_RF_mtry3_alwaysPA     <- lapply(formls_RF, function(f) {
-                                      mtry_fn <- function(nv) { # mtry argument can take a function but the value needs to "work" (i.e. never be too large or too small)
-                                        cannot_do <- ifelse(grepl("PA_area_log", as.character(f)[3]), 1, 0)
-                                        max(c(1, min(c(nv - cannot_do, 3 - cannot_do))))
-                                      }
-                                      split <- ifelse(grepl("PA_area_log", as.character(f)[3]) & length(all.vars(f)) > 2, "PA_area_log", NA) # same here: cannot impose split if not in formula
-                                      if (is.na(split)) split <- NULL
-                                      compute_rmse_rf(formula = f, data = data_test, rep = n_tests, Ncpu = Ncpu,
-                                                                            mtry = mtry_fn,
-                                                                            always.split.variables = split)
-                                      })
-test_RF_mtryMAX            <- lapply(formls_RF, function(f) compute_rmse_rf(formula = f, data = data_test, rep = n_tests, Ncpu = Ncpu,
-                                                                            mtry = function(nv) nv))
+test_LMM <- lapply(formls, function(f) compute_rmse_lmm(formula = f, data = data_test, rep = n_tests, Ncpu = Ncpu, spatial = "Matern",
+                                                        control.dist = list(dist.method = "Earth"), method = "REML"))
+
+test_RF  <- lapply(formls, function(f) compute_rmse_rf(formula = f, data = data_test, rep = n_tests, Ncpu = Ncpu, spatial = FALSE))
+test_RF_latlong  <- lapply(formls, function(f) compute_rmse_rf(formula = f, data = data_test, rep = n_tests, Ncpu = Ncpu, spatial = "latlong"))
+test_RF_dist  <- lapply(formls, function(f) compute_rmse_rf(formula = f, data = data_test, rep = n_tests, Ncpu = Ncpu, spatial = "dist"))
+
+# test_RF_mtry3_alwaysPA     <- lapply(formls, function(f) {
+#                                       mtry_fn <- function(nv) { # mtry argument can take a function but the value needs to "work" (i.e. never be too large or too small)
+#                                         cannot_do <- ifelse(grepl("PA_area_log", as.character(f)[3]), 1, 0)
+#                                         max(c(1, min(c(nv - cannot_do, 3 - cannot_do))))
+#                                       }
+#                                       split <- ifelse(grepl("PA_area_log", as.character(f)[3]) & length(all.vars(f)) > 2, "PA_area_log", NA) # same here: cannot impose split if not in formula
+#                                       if (is.na(split)) split <- NULL
+#                                       compute_rmse_rf(formula = f, data = data_test, rep = n_tests, Ncpu = Ncpu,
+#                                                                             mtry = mtry_fn,
+#                                                                             always.split.variables = split)
+#                                       })
+# test_RF_mtryMAX            <- lapply(formls, function(f) compute_rmse_rf(formula = f, data = data_test, rep = n_tests, Ncpu = Ncpu,
+#                                                                             mtry = function(nv) nv))
 
 
 ## let's reformat the results into a long data frame
-rbind(cbind(do.call("cbind", test_REML), method = "spaMM_REML" ),
-      cbind(do.call("cbind", test_ML), method = "spaMM_ML" ),
-      cbind(do.call("cbind", test_RF_mtry1), method = "RF_mtry1" ),
-      cbind(do.call("cbind", test_RF_mtry1_noised), method = "RF_mtry1_noised" ),
-      cbind(do.call("cbind", test_RF_mtry1_20xmoretrees), method = "RF_mtry1_20xmoretrees" ),
-      cbind(do.call("cbind", test_RF_mtry3), method = "RF_mtry3" ),
-      cbind(do.call("cbind", test_RF_mtry3_alwaysPA), method = "RF_mtry3_alwaysPA" ),
-      cbind(do.call("cbind", test_RF_mtryMAX), method = "RF_mtryMAX")) %>%
+rbind(cbind(do.call("cbind", test_LM), method = "LM" ),
+      cbind(do.call("cbind", test_LMM), method = "LMM" ),
+      cbind(do.call("cbind", test_RF), method = "RF" ),
+      cbind(do.call("cbind", test_RF_latlong), method = "RF_latlong"),
+      cbind(do.call("cbind", test_RF_dist), method = "RF_dist")
+      ) %>%
       as.data.frame() %>%
       pivot_longer(cols = -method, names_to = "model", values_to = "rmse") %>%
       mutate(model = sub(pattern = "forml_", replacement = "", model),
@@ -262,34 +222,16 @@ test_results %>%
             var = var(rmse)) %>%
   ungroup() -> test_results_summary
 
-bind_rows(test_results_summary %>% arrange(mean) %>% slice(1:5),
-          test_results_summary %>% arrange(median) %>% slice(1:5),
-          test_results_summary %>% arrange(var) %>% slice(1:5)) %>%
+bind_rows(test_results_summary %>% arrange(mean) %>% slice(1:10),
+          test_results_summary %>% arrange(median) %>% slice(1:10),
+          test_results_summary %>% arrange(var) %>% slice(1:10)) %>%
   distinct()
 
 
-# let's plot the results
+## let's plot the results
 pdf("result_accuracy.pdf", width = 20, height = 10)
 ggplot(test_results) +
-  aes(y = rmse, x = model, colour = method) +
-  geom_boxplot(width = 0.3, position = position_dodge(width = 0.5)) +
-  labs(y = "RMSE (on log + 1 response)", x = "Model", title = "Accuracy on test sets (10% of data)") +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45))
-dev.off()
-
-pdf("result_accuracy2.pdf", width = 20, height = 10)
-ggplot(test_results) +
-  aes(y = rmse, x = method, colour = model) +
-  geom_boxplot(width = 0.3, position = position_dodge(width = 0.5)) +
-  labs(y = "RMSE (on log + 1 response)", x = "Model", title = "Accuracy on test sets (10% of data)") +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45))
-dev.off()
-
-pdf("result_accuracy_spaMM_ML.pdf", width = 20, height = 10)
-ggplot(test_results %>% filter(method == "spaMM_ML")) +
-  aes(y = rmse, x = forcats::fct_reorder(model, rmse)) +
+  aes(y = rmse, x = forcats::fct_reorder(model, rmse, .fun = mean), colour = method) +
   geom_boxplot(width = 0.3, position = position_dodge(width = 0.5)) +
   stat_summary(fun = ~ mean(.x),
                fun.max = ~ mean(.x) + 2*sd(.x)/sqrt(length(.x)),
@@ -301,16 +243,62 @@ ggplot(test_results %>% filter(method == "spaMM_ML")) +
   theme(axis.text.x = element_text(angle = 45))
 dev.off()
 
-pdf("result_accuracy_RF_mtry1.pdf", width = 20, height = 10)
-ggplot(test_results %>% filter(method == "RF_mtry1")) +
-  aes(y = rmse, x = forcats::fct_reorder(model, rmse)) +
-  geom_boxplot(width = 0.3, position = position_dodge(width = 0.5)) +
-  stat_summary(fun = ~ mean(.x),
-               fun.max = ~ mean(.x) + 2*sd(.x)/sqrt(length(.x)),
-               fun.min = ~ mean(.x) - 2*sd(.x)/sqrt(length(.x)),
-               colour = "red", shape = 1) +
-  scale_y_continuous(minor_breaks = seq(0, 10, 0.1), breaks = 0:10) +
-  labs(y = "RMSE (on log + 1 response)", x = "Model", title = "Accuracy on test sets (10% of data)") +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45))
-dev.off()
+
+## Fine tuning the parameters for the RF
+
+### let's define a custom function allowing for fine tuning any parameter (one at a time):
+fine_tune_param <- function(values_to_try, param_to_tune, formula, data, rep = 1000, Ncpu = 1, target = "staff_rangers_log", fn = mean, ...) {
+
+  call_OOB  <- paste("sapply(values_to_try, function(i) fn(compute_rmse_rf(formula = formula, data = data,
+                      rep = rep, Ncpu = Ncpu, target = target, method = 'OOB',", deparse1(substitute(param_to_tune)), " = i, ...)))")
+
+  call_CV  <- paste("sapply(values_to_try, function(i) fn(compute_rmse_rf(formula = formula, data = data,
+                      rep = rep, Ncpu = Ncpu, target = target, method = 'CV',", deparse1(substitute(param_to_tune)), " = i, ...)))")
+
+  test_OOB <- eval(parse(text = call_OOB))
+  test_CV <- eval(parse(text = call_CV))
+
+  data.frame(param = c(values_to_try, values_to_try),
+             RMSE = c(test_OOB, test_CV),
+             test = c(rep("OOB", length(values_to_try)),
+                      rep("CV", length(values_to_try)))) %>%
+    group_by(test) %>%
+    mutate(RMSE_rel = RMSE - min(RMSE)) %>%
+    ungroup() -> output
+
+  ggplot(output) +
+    aes(y = RMSE_rel, x = param, colour = test) +
+    geom_line() +
+    scale_x_continuous(breaks = values_to_try) +
+    labs(y = "RMSE - min(RMSE)",
+         x = "Parameter values",
+         title = paste0("Effect of ", deparse1(substitute(param_to_tune)))) +
+    theme_minimal() -> plot
+
+  list(output = output, plot = plot)
+}
+
+### Testing effect of min.node.size in RF
+test_nodesize <- fine_tune_param(values_to_try = 1:20, param_to_tune = min.node.size,
+                                 formula = formls_RF$forml_PA_pop_area, data = data_test, rep = 1000, Ncpu = 100, mtry = 1)
+test_nodesize
+
+### Testing effect of num.trees in RF
+test_numtree <- fine_tune_param(values_to_try = 2^(7:15), param_to_tune = num.trees,
+                                formula = formls_RF$forml_PA_pop_area, data = data_test, rep = 1000, Ncpu = 100, mtry = 1)
+test_numtree$plot + coord_trans(x = "sqrt")
+
+### Testing effect of sample.fraction in RF
+test_samplefraction <- fine_tune_param(values_to_try = seq(0.5, 1, by = 0.05), param_to_tune = sample.fraction,
+                                       formula = formls_RF$forml_PA_pop_area, data = data_test, rep = 1000, Ncpu = 100, mtry = 1)
+test_samplefraction
+
+# NOTES:
+# mtry defines the number of predictors to be used in each tree,
+# in theory increasing mtry increases the correlation between trees which decreases the accuracy,
+# but at the same time increasing mtry increases the so-called strength of each tree.
+# So, there may be a best mtry. although it does not always have a large effect
+#
+# more trees imply to reduce the MCMC variance, but
+# after reaching some number, increasing the number of trees has little effect but consuming CPU and memory.
+#
