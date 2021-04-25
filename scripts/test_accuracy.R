@@ -4,6 +4,7 @@ library(tidyr)
 library(ggplot2)
 library(spaMM)
 library(ranger)
+library(randomForestExplainer)
 
 rm(list = ls())
 
@@ -228,13 +229,19 @@ test_LMM <- lapply(formls, function(f) compute_rmse_lmm(formula = f, data = data
                                                         control.dist = list(dist.method = "Earth"), method = "REML"))
 
 test_RF  <- lapply(formls, function(f) compute_rmse_rf(formula = f, data = data_test, rep = n_tests, Ncpu = Ncpu, spatial = FALSE))
+test_ERF  <- lapply(formls, function(f) compute_rmse_rf(formula = f, data = data_test, rep = n_tests, Ncpu = Ncpu, spatial = FALSE, splitrule = "extratrees"))
+
 test_RF_latlong  <- lapply(formls, function(f) compute_rmse_rf(formula = f, data = data_test, rep = n_tests, Ncpu = Ncpu, spatial = "latlong"))
 test_RF_dist  <- lapply(formls, function(f) compute_rmse_rf(formula = f, data = data_test, rep = n_tests, Ncpu = Ncpu, spatial = "dist"))
+
+
 
 test_LMM_RF <- lapply(formls, function(f) compute_rmse_lmm_rf(formula_lmm = f, formula_RF = f, data = data_test, rep = n_tests, Ncpu = Ncpu, spatial = "Matern",
                                                               args_spaMM = list(control.dist = list(dist.method = "Earth"), method = "REML")))
 test_RF_LMM <- lapply(formls, function(f) compute_rmse_rf_lmm(formula_lmm = staff_rangers_log ~ 0, formula_RF = f, data = data_test, rep = n_tests, Ncpu = Ncpu, spatial = "Matern",
                                                               args_spaMM = list(control.dist = list(dist.method = "Earth"), method = "REML")))
+
+
 
 # test_RF_mtry3_alwaysPA     <- lapply(formls, function(f) {
 #                                       mtry_fn <- function(nv) { # mtry argument can take a function but the value needs to "work" (i.e. never be too large or too small)
@@ -255,6 +262,7 @@ test_RF_LMM <- lapply(formls, function(f) compute_rmse_rf_lmm(formula_lmm = staf
 rbind(cbind(do.call("cbind", test_LM), method = "LM" ),
       cbind(do.call("cbind", test_LMM), method = "LMM" ),
       cbind(do.call("cbind", test_RF), method = "RF" ),
+      cbind(do.call("cbind", test_ERF), method = "ERF" ),
       cbind(do.call("cbind", test_RF_latlong), method = "RF_latlong"),
       cbind(do.call("cbind", test_RF_dist), method = "RF_dist"),
       cbind(do.call("cbind", test_LMM_RF), method = "LMM_RF"),
@@ -355,6 +363,13 @@ test_samplefraction
 # more trees imply to reduce the MCMC variance, but
 # after reaching some number, increasing the number of trees has little effect but consuming CPU and memory.
 #
+
+
+## Fits on full data_test (no CV) for exploration
+fit_rf <- ranger(formula = staff_rangers_log ~ PA_area_log + pop_density_log + area_country_log,
+  data = data_test, splitrule = "extratrees",
+  num.random.splits = 4, sample.fraction = 0.6, mtry = 2, num.trees = 2000, max.depth = 7)
+plot_predict_interaction(fit_rf, data_test, "PA_area_log", "pop_density_log")
 
 
 
