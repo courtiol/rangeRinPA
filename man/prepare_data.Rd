@@ -2,9 +2,9 @@
 % Please edit documentation in R/tools.R
 \name{prepare_data}
 \alias{prepare_data}
-\title{Tool function to compute train and test datasets given a formula}
+\title{Create train and test datasets given a formula and data}
 \usage{
-prepare_data(formula, data, test_prop = 0, seed = NULL)
+prepare_data(formula, data, test_prop = 0, keep.var = NULL, seed = NULL)
 }
 \arguments{
 \item{formula}{the formula for the LMM or RF}
@@ -13,10 +13,12 @@ prepare_data(formula, data, test_prop = 0, seed = NULL)
 
 \item{test_prop}{the amount of rows to keep in the test dataset (default = 0)}
 
+\item{keep.var}{a vector of character strings indicating which variables to keep in the dataset on top of those defined by the formula}
+
 \item{seed}{an optional seed for the RNG}
 }
 \description{
-Tool function to compute train and test datasets given a formula
+Create train and test datasets given a formula and data
 }
 \examples{
 prepare_data(log(staff_rangers + 1) ~ log(GDP_2019) + Matern(1|lat + long),

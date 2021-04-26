@@ -2,7 +2,7 @@
 % Please edit documentation in R/tools.R
 \name{check_losses}
 \alias{check_losses}
-\title{Tool function to compute missing values and missing PA}
+\title{Count missing values and missing PA}
 \usage{
 check_losses(
   vars,
@@ -27,5 +27,5 @@ check_losses(
 a tibble
 }
 \description{
-Tool function to compute missing values and missing PA
+Count missing values and missing PA
 }

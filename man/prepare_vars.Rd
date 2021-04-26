@@ -2,7 +2,7 @@
 % Please edit documentation in R/tools.R
 \name{prepare_vars}
 \alias{prepare_vars}
-\title{Tool function to identify variables available for focal countries}
+\title{Identify variables available for focal countries}
 \usage{
 prepare_vars(country, data)
 }
@@ -12,7 +12,7 @@ prepare_vars(country, data)
 \item{data}{the complete dataset}
 }
 \description{
-Tool function to identify variables available for focal countries
+Identify variables available for focal countries
 }
 \examples{
 prepare_vars(country = "VUT", data = data_rangers)

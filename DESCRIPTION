@@ -11,6 +11,7 @@ Authors@R:
 Description: What the package does (one paragraph).
 License: CC BY 4.0 + file LICENSE
 Imports:
+    ape,
     dplyr,
     ggplot2,
     sf,
