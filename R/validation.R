@@ -76,7 +76,6 @@ validate_RF <- function(formula, data, rep = 10, Ncpu = 1, target = "staff_range
       formula <- stats::as.formula(paste(formula[[2]], paste(c(formula[[3]], dist_vars), collapse = "+"), sep = " ~ "))
   } else if (spatial == "hybrid") {
     formula_lmm <- stats::update.formula(formula, . ~ . + Matern(1 |long + lat))
-    formula <- stats::update.formula(formula, . ~ . + pred_spaMM)
   } else if (spatial != FALSE) {
     stop("Spatial method not found")
   }
@@ -85,6 +84,7 @@ validate_RF <- function(formula, data, rep = 10, Ncpu = 1, target = "staff_range
       data_list <- prepare_data(formula = formula, data = data, test_prop = 0.1,
                                 keep.var =  c("long", "lat"), seed = seed + i)
       if (spatial == "hybrid") {
+        formula <- stats::update.formula(formula, . ~ . + pred_spaMM) ## this call should not be moved up before call to prepare_data()!
         newfit_lmm <- spaMM::fitme(formula_lmm, data =  data_list$data_train)
         data_list$data_train$pred_spaMM <- spaMM::predict.HLfit(newfit_lmm, newdata = data_list$data_train)[, 1]
         data_list$data_test$pred_spaMM  <- spaMM::predict.HLfit(newfit_lmm, newdata = data_list$data_test)[, 1]
@@ -107,6 +107,7 @@ validate_RF <- function(formula, data, rep = 10, Ncpu = 1, target = "staff_range
         warning("Argument rep ignore when method = 'OOB', you can influence repetitions using the argument num.tress passed to ranger() instead")
       }
       if (spatial == "hybrid") {
+        formula <- stats::update.formula(formula, . ~ . + pred_spaMM) ## this call should not be moved up before call to prepare_data()!
         newfit_lmm <- spaMM::fitme(formula_lmm, data =  data, method = "ML")
         data$pred_spaMM <- spaMM::predict.HLfit(newfit_lmm)[, 1]
       }
