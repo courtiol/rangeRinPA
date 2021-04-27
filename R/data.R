@@ -156,9 +156,66 @@ globalVariables(".data")
 #'
 #' This object contain the data about rangers and other staffs members working in protected areas.
 #'
-#' @seealso `fetch_data_rangers()` for the function used to create such a dataset
+#' @seealso [`fetch_data_rangers()`] for the function used to create such a dataset
 #'
 #' @examples
 #' data_rangers
 #'
 "data_rangers"
+
+
+
+#' Build the test dataset
+#'
+#' This function creates a subset of the dataset [`data_rangers`] and log-transform (+1) some of its columns.
+#' It contains no missing data.
+#'
+#' @param data the dataset with the ranger data
+#'
+#' @return a tibble
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' ## Here is how we created the data stored in this package:
+#' data_test <- build_data_test(data_rangers)
+#' if (require(usethis)) {
+#'   usethis::use_data(data_test, overwrite = TRUE)
+#' }
+#' }
+#'
+build_data_test <- function(data) {
+  data %>%
+    dplyr::filter(.data$countryname_eng != "Greenland") %>% # Greenland is a clear outlier, so we drop this country
+    tidyr::drop_na(.data$staff_rangers,
+                   .data$pop_density,
+                   .data$lat, .data$long, .data$country_UN_subcontinent,
+                   .data$PA_area, .data$area_country, .data$area_forest_pct,
+                   .data$GDP_2019, .data$GDP_capita, .data$GDP_growth, .data$unemployment,
+                   .data$EVI, .data$SPI, .data$EPI_2020, .data$IUCN_1_4_prop, .data$IUCN_1_2_prop) %>%
+    dplyr::mutate(dplyr::across(c(.data$staff_rangers,
+                                  .data$PA_area, .data$area_country,
+                                  .data$pop_density,
+                                  .data$GDP_2019, .data$GDP_capita, .data$unemployment), # we log transform to get hump-shaped distributions
+                  ~ log(.x + 1), .names = "{col}_log")) %>%
+    dplyr::select(.data$staff_rangers_log, # the number of rangers (log)
+                  .data$pop_density_log,   # the density of the population
+                  .data$lat, .data$long, .data$country_UN_subcontinent, # the coordinate of the centroid of the largest polygon associated with a country/territory + subcontinent
+                  .data$PA_area_log, .data$area_country_log, .data$area_forest_pct, # areas of Protected area, country and pct of forest
+                  .data$GDP_2019_log, .data$GDP_capita_log, .data$GDP_growth, .data$unemployment_log, # economic indices
+                  .data$EVI, .data$SPI, .data$EPI_2020, .data$IUCN_1_4_prop, .data$IUCN_1_2_prop # ecological indices
+    )
+}
+
+
+#' Test data
+#'
+#' This object contain a subset with the data about rangers and other staffs members working in protected areas.
+#'
+#' @seealso [`build_data_test()`] for the function used to create such a dataset
+#'
+#' @examples
+#' data_test
+#'
+"data_test"
+

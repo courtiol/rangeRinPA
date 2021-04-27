@@ -18,6 +18,6 @@ data_rangers
 
 }
 \seealso{
-\code{fetch_data_rangers()} for the function used to create such a dataset
+\code{\link[=fetch_data_rangers]{fetch_data_rangers()}} for the function used to create such a dataset
 }
 \keyword{datasets}
