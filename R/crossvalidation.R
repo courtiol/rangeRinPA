@@ -91,7 +91,7 @@ crossvalidate_RF <- function(formula, data, rep = 10, Ncpu = 1, target = "staff_
       if (rep > 1) {
         warning("Argument rep ignore when method = 'OOB', you can influence repetitions using the argument num.tress passed to ranger() instead")
       }
-      newfit <- ranger::ranger(formula = formula, data = data, num.threads = 1, keep.inbag = TRUE, ...)
+      newfit <- ranger::ranger(formula = formula, data = data, num.threads = 1, keep.inbag = TRUE, seed = seed, ...)
       inbag <- do.call(cbind, newfit$inbag.counts)
       preds <- stats::predict(newfit, data = data, predict.all = TRUE, num.threads = 1)$predictions
       preds <- preds * ifelse(inbag == 0, NA, 1)
