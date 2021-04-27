@@ -189,7 +189,7 @@ aggregate_metrics <- function(metrics_df, fn = mean) {
 #' @param lat a vector of latitudes
 #' @param inv whether to return the inverse of the distance (default = FALSE)
 #'
-#' @return a square data frame
+#' @return a square data frame (if inv = FALSE) or matrix (if inv = TRUE)
 #' @export
 #'
 #' @examples
@@ -201,14 +201,17 @@ compute_distance <- function(long, lat, inv = FALSE) {
   dist <- spaMM::make_scaled_dist(data.frame(long = long, lat = lat),
                                   rho = 1, dist.method = "Earth",
                                   return_matrix = TRUE)
+
+  colnames(dist) <- paste0("loc_", seq_len(ncol(dist)))
+  rownames(dist) <- paste0("loc_", seq_len(ncol(dist)))
+
   if (inv) {
     dist <- 1/dist
     diag(dist) <- 0
+  } else {
+    ## note: inv distance only used in ape::Moran.I call which is very slow if fed with a df instead of a matrix
+    dist <- as.data.frame(dist)
   }
-
-  dist <- as.data.frame(dist)
-  colnames(dist) <- paste0("loc_", seq_len(ncol(dist)))
-  rownames(dist) <- paste0("loc_", seq_len(ncol(dist)))
 
   dist
 }

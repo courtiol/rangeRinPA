@@ -14,7 +14,7 @@ compute_distance(long, lat, inv = FALSE)
 \item{inv}{whether to return the inverse of the distance (default = FALSE)}
 }
 \value{
-a square data frame
+a square data frame (if inv = FALSE) or matrix (if inv = TRUE)
 }
 \description{
 Compute the distance (or inverse distance) between locations
