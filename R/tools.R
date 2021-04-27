@@ -66,9 +66,12 @@ prepare_data <- function(formula, data, test_prop = 0, keep.var = NULL, seed = N
   if (any(vars == ".")) {
     vars <- colnames(data)
   }
-  #mf <- stats::model.frame(formula = formula, data = data) ## cannot handle random effects so we do differently
   if (!is.null(keep.var)) {
     vars <- unique(c(vars, keep.var))
+    if (any(!keep.var %in% colnames(data))) {
+      warning("Some variables in keep.var are not found in data")
+      vars <- vars[vars %in% colnames(data)]
+    }
   }
   data <- data[, vars]
   omit_obj <- stats::na.omit(data)
