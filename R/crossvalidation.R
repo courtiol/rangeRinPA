@@ -16,9 +16,9 @@
 #' @seealso [`compute_metrics()`] for details on the function computing the values outputted here
 #'
 #' @examples
-#' crossvalidate_LMM(staff_rangers_log ~ PA_area_log, data = data_test)
+#' validate_LMM(staff_rangers_log ~ PA_area_log, data = data_test)
 #'
-crossvalidate_LMM <- function(formula, data, rep = 10, Ncpu = 1, target = "staff_rangers_log", spatial = FALSE, seed = 123, ...) {
+validate_LMM <- function(formula, data, rep = 10, Ncpu = 1, target = "staff_rangers_log", spatial = FALSE, seed = 123, ...) {
   if (spatial == "Matern") {
     formula <- stats::update.formula(formula, . ~ . + Matern(1 |long + lat))
   } else stopifnot(!spatial)
@@ -43,7 +43,7 @@ crossvalidate_LMM <- function(formula, data, rep = 10, Ncpu = 1, target = "staff
 
 #' Compute accuracy metrics on test set for RF
 #'
-#' @inheritParams crossvalidate_LMM
+#' @inheritParams validate_LMM
 #' @param spatial either FALSE (default) or "dist" (to use matrix of distances as predictor) or "coord" (to use long & lat as predictors)
 #' @param method either "CV" for cross-validation or "OOB" for directly using the out-of-bag observations generated when growing the forest
 #' @param ... additional parameters to be passed to [`ranger::ranger()`]
@@ -54,12 +54,12 @@ crossvalidate_LMM <- function(formula, data, rep = 10, Ncpu = 1, target = "staff
 #' @seealso [`compute_metrics()`] for details on the function computing the values outputted here
 #'
 #' @examples
-#' crossvalidate_RF(staff_rangers_log ~ PA_area_log, data = data_test, method = "CV")
-#' crossvalidate_RF(staff_rangers_log ~ PA_area_log, data = data_test,
+#' validate_RF(staff_rangers_log ~ PA_area_log, data = data_test, method = "CV")
+#' validate_RF(staff_rangers_log ~ PA_area_log, data = data_test,
 #'                  rep = 1, num.trees = 10, method = "OOB")
 #'
 #'
-crossvalidate_RF <- function(formula, data, rep = 10, Ncpu = 1, target = "staff_rangers_log", spatial = FALSE, seed = 123, method = "CV", ...) {
+validate_RF <- function(formula, data, rep = 10, Ncpu = 1, target = "staff_rangers_log", spatial = FALSE, seed = 123, method = "CV", ...) {
 
   if (spatial == "coord") {
     formula <- stats::update.formula(formula, . ~ . + lat + long)
