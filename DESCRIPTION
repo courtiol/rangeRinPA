@@ -17,6 +17,7 @@ Imports:
     sf,
     googlesheets4,
     magrittr,
+    ranger,
     rnaturalearth
 Suggests:
     broom,
