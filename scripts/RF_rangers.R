@@ -143,5 +143,8 @@ test_nodesize <- fine_tune_RF(values_to_try = 1:20, param_to_tune = "min.node.si
                               formula = staff_rangers_log ~ area_country_log + PA_area_log + pop_density_log,
                               data = data_test, rep = n_tests, Ncpu = Ncpu,
                               splitrule = "extratrees", replace = FALSE, sample.fraction = 1, mtry = function(n) n)
-test_nodesize
+
+pdf("./figs/FT_nodesize.pdf", width = 10, height = 10)
+test_nodesize$plot
+dev.off()
 
