@@ -14,20 +14,27 @@ fine_tune_RF <- function(values_to_try, param_to_tune, formula, data, rep = 10, 
 
   call_CV  <- paste("lapply(values_to_try, function(i) {
                     validate_RF(formula = formula, data = data, rep = rep, Ncpu = Ncpu, target = target, method = 'CV'," , deparse1(substitute(param_to_tune)), " = i, ...)
-                    #aggregate_metrics(res, fn =", deparse1(substitute(fn)),")
                     })")
 
   test_CV <- eval(parse(text = call_CV))
 
-  output <- cbind(param_to_tune = param_to_tune, value = values_to_try, do.call("rbind", lapply(test_CV, aggregate_metrics, fn = fn)))
+  output_point <- cbind(param_to_tune = param_to_tune, value = values_to_try, do.call("rbind", lapply(test_CV, aggregate_metrics, fn = fn)))
+  output_SD <- cbind(param_to_tune = param_to_tune, value = values_to_try, do.call("rbind", lapply(test_CV, aggregate_metrics, fn = sd)))
 
-  output %>%
+  output_point %>%
     tidyr::pivot_longer(cols = c(-.data$param_to_tune, -.data$value, -.data$type, -.data$rep), values_to = "metric_value", names_to = "metric") %>%
-    dplyr::mutate(metric = forcats::fct_inorder(.data$metric)) -> output_long
+    dplyr::mutate(metric = forcats::fct_inorder(.data$metric)) -> output_point_long
+
+  output_SD %>%
+    tidyr::pivot_longer(cols = c(-.data$param_to_tune, -.data$value, -.data$type, -.data$rep), values_to = "metric_value_sd", names_to = "metric") %>%
+    dplyr::mutate(metric = forcats::fct_inorder(.data$metric)) -> output_SD_long
+
+  output_long <- dplyr::full_join(output_point_long, output_SD_long, by = c("param_to_tune", "value", "type", "rep", "metric"))
 
   ggplot2::ggplot(output_long) +
-    ggplot2::aes(y = .data$metric_value, x = .data$value) +
+    ggplot2::aes(y = .data$metric_value, x = .data$value, ymin = .data$metric_value - .data$metric_value_sd, ymax = .data$metric_value + .data$metric_value_sd) +
     ggplot2::geom_line() +
+    ggplot2::geom_linerange() +
     ggplot2::scale_x_continuous(breaks = values_to_try) +
     ggplot2::labs(y = "Metric value",
                   x = "Parameter values",
@@ -35,5 +42,5 @@ fine_tune_RF <- function(values_to_try, param_to_tune, formula, data, rep = 10, 
     ggplot2::facet_wrap(~ .data$metric, scales = "free") +
     ggplot2::theme_minimal() -> plot
 
-  list(output = output, plot = plot)
+  list(output = output_long, plot = plot)
 }
