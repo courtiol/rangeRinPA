@@ -163,6 +163,26 @@ compute_metrics <- function(pred, obs, inv.dist = NULL) {
 }
 
 
+#' Aggregate the accuracy metrics
+#'
+#' @param metrics_df a data frame with metrics produced by [`compute_metrics()`]
+#' @param fn the function for aggregating all metrics but p-values
+#'
+#' @return a data frame
+#' @export
+#'
+#'
+aggregate_metrics <- function(metrics_df, fn = mean) {
+  type <- ifelse(any(colnames(metrics_df) == "OOB_test"), "OOB", "CV")
+  n <- nrow(metrics_df)
+  metrics_df <- metrics_df[, !grepl("_test", colnames(metrics_df))]
+  Moran_pv <- metrics_df[, "MoranI_pv", drop = TRUE]
+  metrics_df <- metrics_df[, !grepl("MoranI_pv", colnames(metrics_df))]
+  metrics_aggregated <- as.data.frame(t(apply(metrics_df, 2, fn)))
+  cbind(type = type, rep = n, metrics_aggregated, Moran_pv_freq = mean(Moran_pv < 0.05))
+}
+
+
 #' Compute the distance (or inverse distance) between locations
 #'
 #' @param long a vector of longitudes
