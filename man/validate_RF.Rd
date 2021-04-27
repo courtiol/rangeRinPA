@@ -28,7 +28,7 @@ validate_RF(
 
 \item{target}{the quoted name of the response variable (default = "staff_rangers_log")}
 
-\item{spatial}{either FALSE (default) or "dist" (to use matrix of distances as predictor) or "coord" (to use long & lat as predictors)}
+\item{spatial}{either FALSE (default), "dist" (to use matrix of distances as predictor), "coord" (to use long & lat as predictors) or "hybrid" (to use predicts from spaMM as predictors)}
 
 \item{seed}{the seed used to control the reproducibility of the cross validation}
 
