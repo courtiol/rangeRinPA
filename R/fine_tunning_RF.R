@@ -34,7 +34,7 @@ fine_tune_RF <- function(values_to_try, param_to_tune, formula, data, rep = 10, 
 
   ggplot2::ggplot(output_long) +
     ggplot2::aes(y = .data$metric_value, x = .data$value, ymin = .data$metric_value - .data$metric_value_se, ymax = .data$metric_value + .data$metric_value_se) +
-    ggplot2::geom_errorbar(width = 0.2, colour = "lightgrey") +
+    ggplot2::geom_errorbar(width = 0.25*((max(values_to_try) - min(values_to_try)) / length(values_to_try)), colour = "lightgrey") +
     ggplot2::geom_line() +
     ggplot2::scale_x_continuous(breaks = values_to_try) +
     ggplot2::labs(y = "Metric value (+/- SE)",
