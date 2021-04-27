@@ -156,7 +156,8 @@ compute_metrics <- function(pred, obs, inv.dist = NULL) {
 
   if (!is.null(inv.dist)) {
     MoranI <- unlist(ape::Moran.I(resid, inv.dist))
-    names(MoranI) <- paste0("MoranI_", names(MoranI))
+    MoranI <- MoranI[c("observed", "p.value")]
+    names(MoranI) <- c("MoranI", "MoranI_pv")
   }
   c(c(RMSE = RMSE, ME = ME, MAE = MAE, R2 = R2, RRSE = RRSE, CCC = CCC), MoranI)
 }
