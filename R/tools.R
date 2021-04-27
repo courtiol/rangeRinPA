@@ -179,7 +179,7 @@ aggregate_metrics <- function(metrics_df, fn = mean) {
   Moran_pv <- metrics_df[, "MoranI_pv", drop = TRUE]
   metrics_df <- metrics_df[, !grepl("MoranI_pv", colnames(metrics_df))]
   metrics_aggregated <- as.data.frame(t(apply(metrics_df, 2, fn)))
-  cbind(type = type, rep = n, metrics_aggregated, Moran_pv_freq = mean(Moran_pv < 0.05))
+  cbind(type = type, rep = n, metrics_aggregated, Moran_pv_freq = fn(Moran_pv < 0.05))
 }
 
 
