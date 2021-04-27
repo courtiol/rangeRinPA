@@ -19,6 +19,24 @@ forest_full <- ranger(staff_rangers_log ~ . , data = data_test, importance = "im
                       splitrule = "extratrees", replace = FALSE, sample.fraction = 1, mtry = function(n) n, seed = 123)
 ## Note: I used the recommended default settings from Geurts et al. 2006 extremely randomized trees
 forest_full
+
+# Ranger result
+#
+# Call:
+#   ranger(staff_rangers_log ~ ., data = data_test, importance = "impurity",      splitrule = "extratrees", replace = FALSE, sample.fraction = 1,      mtry = function(n) n, seed = 123)
+#
+# Type:                             Regression
+# Number of trees:                  500
+# Sample size:                      120
+# Number of independent variables:  16
+# Mtry:                             16
+# Target node size:                 5
+# Variable importance mode:         impurity
+# Splitrule:                        extratrees
+# Number of random splits:          1
+# OOB prediction error (MSE):       NaN
+# R squared (OOB):                  NaN
+
 tibble::as_tibble_row(importance(forest_full)) %>%
   pivot_longer(everything(), names_to = "Predictor", values_to = "Importance") %>%
   arrange(desc(Importance)) %>%
@@ -135,16 +153,76 @@ p1 + p2
 
 ## Fine tuning the parameters for the RF ---------------------------------------
 
-### let's define a custom function allowing for fine tuning any parameter (one at a time):
+n_tests <- 10000 #
 
+data_rangers %>%
+  select(staff_rangers, area_country, PA_area, pop_density, lat, long) %>%
+  drop_na() %>%
+  mutate(across(c(-lat, -long), ~ log(.x + 1), .names = "{col}_log")) %>%
+  select(staff_rangers_log, area_country_log, PA_area_log, pop_density_log, lat, long) -> data_finetune
 
 ### Testing effect of min.node.size in RF
 test_nodesize <- fine_tune_RF(values_to_try = 1:20, param_to_tune = "min.node.size",
                               formula = staff_rangers_log ~ area_country_log + PA_area_log + pop_density_log,
-                              data = data_test, rep = n_tests, Ncpu = Ncpu,
+                              data = data_finetune, rep = n_tests, Ncpu = Ncpu,
                               splitrule = "extratrees", replace = FALSE, sample.fraction = 1, mtry = function(n) n)
 
-pdf("./figs/FT_nodesize.pdf", width = 10, height = 10)
+pdf("./figs/FT_nodesize.pdf", width = 15, height = 10)
 test_nodesize$plot
+dev.off()
+
+
+### Testing effect of mtry in RF
+test_mtry <- fine_tune_RF(values_to_try = 1:3, param_to_tune = "mtry",
+                          formula = staff_rangers_log ~ area_country_log + PA_area_log + pop_density_log,
+                          data = data_finetune, rep = n_tests, Ncpu = Ncpu,
+                          splitrule = "extratrees", replace = FALSE, sample.fraction = 1)
+
+pdf("./figs/FT_mtry.pdf", width = 15, height = 10)
+test_mtry$plot
+dev.off()
+
+
+### Testing effect of num.random.splits in RF
+test_numsplits <- fine_tune_RF(values_to_try = 1:10, param_to_tune = "num.random.splits",
+                               formula = staff_rangers_log ~ area_country_log + PA_area_log + pop_density_log,
+                               data = data_finetune, rep = n_tests, Ncpu = Ncpu,
+                               splitrule = "extratrees", replace = FALSE, sample.fraction = 1, mtry = function(n) n)
+
+pdf("./figs/FT_numsplit.pdf", width = 15, height = 10)
+test_numsplits$plot
+dev.off()
+
+
+### Testing effect of replacement in RF
+test_replace <- fine_tune_RF(values_to_try = c(0, 1), param_to_tune = "replace",
+                             formula = staff_rangers_log ~ area_country_log + PA_area_log + pop_density_log,
+                             data = data_finetune, rep = n_tests, Ncpu = Ncpu,
+                             splitrule = "extratrees", sample.fraction = 1, mtry = function(n) n)
+
+pdf("./figs/FT_replace.pdf", width = 15, height = 10)
+test_replace$plot
+dev.off()
+
+
+### Testing effect of sample.fraction no replacement in RF
+test_samplefrac <- fine_tune_RF(values_to_try = seq(0.3, 1, 0.05), param_to_tune = "sample.fraction",
+                                formula = staff_rangers_log ~ area_country_log + PA_area_log + pop_density_log,
+                                data = data_finetune, rep = n_tests, Ncpu = Ncpu,
+                                splitrule = "extratrees", replace = FALSE, mtry = function(n) n)
+
+pdf("./figs/FT_samplefrac.pdf", width = 15, height = 10)
+test_samplefrac$plot
+dev.off()
+
+
+### Testing effect of sample.fraction with replacement in RF
+test_samplefrac_replace <- fine_tune_RF(values_to_try = seq(0.3, 1, 0.05), param_to_tune = "sample.fraction",
+                                        formula = staff_rangers_log ~ area_country_log + PA_area_log + pop_density_log,
+                                        data = data_finetune, rep = n_tests, Ncpu = Ncpu,
+                                        splitrule = "extratrees", replace = TRUE, mtry = function(n) n)
+
+pdf("./figs/FT_samplefrac_replace.pdf", width = 15, height = 10)
+test_samplefrac_replace$plot
 dev.off()
 
