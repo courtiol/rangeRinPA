@@ -8,6 +8,7 @@
 #' @param target the quoted name of the response variable (default = "staff_rangers_log")
 #' @param spatial either FALSE (default) or "Matern"
 #' @param seed the seed used to control the reproducibility of the cross validation
+#' @param return_fit whether to return the fit on all the data as attribute (default = FALSE)
 #' @param ... additional parameters to be passed to [`spaMM::fitme()`]
 #'
 #' @return a tibble with the CV replicates in row and accuracy metrics in columns
@@ -18,10 +19,11 @@
 #' @examples
 #' validate_LMM(staff_rangers_log ~ PA_area_log, data = data_test)
 #'
-validate_LMM <- function(formula, data, rep = 10, Ncpu = 1, target = "staff_rangers_log", spatial = FALSE, seed = 123, ...) {
+validate_LMM <- function(formula, data, rep = 10, Ncpu = 1, target = "staff_rangers_log", spatial = FALSE, seed = 123, return_fit = TRUE, ...) {
   if (spatial == "Matern") {
     formula <- stats::update.formula(formula, . ~ . + Matern(1 |long + lat))
   } else stopifnot(!spatial)
+
   metrics <- parallel::mclapply(seq_len(rep), function(i) {
     data_list <- prepare_data(formula = formula, data = data, test_prop = 0.1,
                               keep.var =  c("long", "lat"), seed = seed + i)
@@ -36,7 +38,12 @@ validate_LMM <- function(formula, data, rep = 10, Ncpu = 1, target = "staff_rang
     }
     compute_metrics(predicted, observed, inv.dist = inv.dist)
   }, mc.cores = Ncpu)
-  cbind(CV_test = seq_len(rep), as.data.frame(do.call("rbind", metrics)))
+  out <- cbind(CV_test = seq_len(rep), as.data.frame(do.call("rbind", metrics)))
+  if (return_fit) {
+    fit_fulldata <- spaMM::fitme(formula = formula, data = data, ...)
+    attr(out, "fit_fulldata") <- fit_fulldata
+  }
+  out
 }
 
 
@@ -59,7 +66,7 @@ validate_LMM <- function(formula, data, rep = 10, Ncpu = 1, target = "staff_rang
 #'                  rep = 1, num.trees = 10, method = "OOB")
 #'
 #'
-validate_RF <- function(formula, data, rep = 10, Ncpu = 1, target = "staff_rangers_log", spatial = FALSE, seed = 123, method = "CV", ...) {
+validate_RF <- function(formula, data, rep = 10, Ncpu = 1, target = "staff_rangers_log", spatial = FALSE, seed = 123, method = "CV", return_fit = TRUE, ...) {
 
   if (spatial == "coord") {
     formula <- stats::update.formula(formula, . ~ . + lat + long)
@@ -86,14 +93,14 @@ validate_RF <- function(formula, data, rep = 10, Ncpu = 1, target = "staff_range
       compute_metrics(predicted, observed, inv.dist = inv.dist)
       #NOTE: num.threads = 1 is an attempt not to use multiple threads since we do parallelisation at a higher level, but does not seem to work :-(
     }, mc.cores = Ncpu)
-    return(cbind(CV_test = seq_len(rep), as.data.frame(do.call("rbind", metrics))))
+    out <- cbind(CV_test = seq_len(rep), as.data.frame(do.call("rbind", metrics)))
     } else if (method == "OOB") {
       if (rep > 1) {
         warning("Argument rep ignore when method = 'OOB', you can influence repetitions using the argument num.tress passed to ranger() instead")
       }
-      newfit <- ranger::ranger(formula = formula, data = data, num.threads = 1, keep.inbag = TRUE, seed = seed, ...)
+      newfit <- ranger::ranger(formula = formula, data = data, num.threads = Ncpu, keep.inbag = TRUE, seed = seed, ...)
       inbag <- do.call(cbind, newfit$inbag.counts)
-      preds <- stats::predict(newfit, data = data, predict.all = TRUE, num.threads = 1)$predictions
+      preds <- stats::predict(newfit, data = data, predict.all = TRUE, num.threads = Ncpu)$predictions
       preds <- preds * ifelse(inbag == 0, NA, 1)
       inv.dist_full <- NULL
       if (all(c("long", "lat") %in% colnames(data))) {
@@ -110,6 +117,12 @@ validate_RF <- function(formula, data, rep = 10, Ncpu = 1, target = "staff_range
         }
         compute_metrics(pred = predicted, obs = observed, inv.dist = inv.dist)
       })
-      return(cbind(OOB_test = seq_len(ncol(preds)), as.data.frame(do.call("rbind", metrics))))
+      out <- cbind(OOB_test = seq_len(ncol(preds)), as.data.frame(do.call("rbind", metrics)))
     } else stop("method unknown")
+
+  if (return_fit) {
+    fit_fulldata <- ranger::ranger(formula = formula, data = data, num.threads = Ncpu, keep.inbag = TRUE, seed = seed, ...)
+    attr(out, "fit_fulldata") <- fit_fulldata
+  }
+  out
 }
