@@ -238,6 +238,8 @@ data_rangers %>%
   drop_na(-staff_rangers) %>%
   mutate(across(everything(), ~ log(.x + 1), .names = "{col}_log")) %>%
   select(staff_rangers_log, area_country_log, PA_area_log, pop_density_log) -> data_rangers_clean
+  ## TODO: handle greenland specifically
+  ## TODO: how to handle countries partialy surveyed (see issue #8 on GH)
 
 data_rangers_clean %>%
   filter(is.na(staff_rangers_log)) -> data_rangers_to_predict
@@ -250,7 +252,7 @@ forest_ranger <- ranger(formula = staff_rangers_log ~ area_country_log + PA_area
                         splitrule = "extratrees", replace = FALSE, mtry = 1, min.node.size = 1, sample.fraction = 1, num.trees = 10000, quantreg = TRUE)
 
 set.seed(123)
-pred_rangers <- predict(forest_ranger, data = data_rangers_to_predict, type = "quantiles", quantiles = c(0.5, 0.841, 0.159))
+pred_rangers <- predict(forest_ranger, data = data_rangers_to_predict, type = "quantiles", quantiles = c(0.5, 0.841, 0.159)) # quantiles ~ c(median, pnorm(1), pnorm(-1))
 
 pred_rangers$predictions %>%
   as.data.frame() %>%
