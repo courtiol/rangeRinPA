@@ -261,5 +261,6 @@ set.seed(123)
 simu <- replicate(1000, sum(exp(rnorm(n = nrow(data_rangers_to_predict), mean = preds$median, sd = preds$sigma)) - 1))
 sum(exp(data_rangers_to_train$staff_rangers_log) - 1) + quantile(simu, c(0.025, 0.975))
 
+# NOTE: since the fitting and predictions steps are stochastic, perhaps we should redo that many times and average
 
 
