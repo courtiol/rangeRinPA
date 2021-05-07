@@ -120,9 +120,10 @@ fetch_data_rangers <- function() {
   ## Temporary patch for private analysis only, TODO: remove before release
   d$countryname_iso[d$countryname_eng == "W African Country"] <- "SEN"
 
-  ## Make a really clean column for PA area:
+  ## Make clean columns for PA areas:
   d %>%
-    dplyr::mutate(PA_area = dplyr::if_else(!is.na(.data$area_PA_total), .data$area_PA_total, .data$area_PA_WDPA)) -> d
+    dplyr::mutate(PA_area_unsurveyed = .data$area_PA_total - .data$area_PA_surveyed, .after = .data$area_PA_total) %>%
+    dplyr::rename(PA_area_surveyed = .data$area_PA_surveyed) -> d
 
   ## Adding latitude and longitude automatically:
   world_sf <- rnaturalearth::ne_countries(scale = "large", returnclass = "sf")
@@ -171,6 +172,7 @@ globalVariables(".data")
 #' It contains no missing data.
 #'
 #' @param data the dataset with the ranger data
+#' @param surveyed_only TRUE for PA_area to equal PA_area_surveyed, FALSE for PA_area to equal area_PA_total
 #'
 #' @return a tibble
 #' @export
@@ -182,9 +184,22 @@ globalVariables(".data")
 #' if (require(usethis)) {
 #'   usethis::use_data(data_test, overwrite = TRUE)
 #' }
+#' data_test_surveyed <- build_data_test(data_rangers, surveyed_only = TRUE)
+#' if (require(usethis)) {
+#'   usethis::use_data(data_test_surveyed, overwrite = TRUE)
+#' }
 #' }
 #'
-build_data_test <- function(data) {
+build_data_test <- function(data, surveyed_only = FALSE) {
+
+  if (surveyed_only) {
+    data %>%
+      dplyr::mutate(PA_area = .data$PA_area_surveyed) -> data
+  } else {
+    data %>%
+      dplyr::mutate(PA_area = dplyr::if_else(!is.na(.data$area_PA_total), .data$area_PA_total, .data$area_PA_WDPA)) -> data
+  }
+
   data %>%
     dplyr::filter(.data$countryname_eng != "Greenland") %>% # Greenland is a clear outlier, so we drop this country
     tidyr::drop_na(.data$staff_rangers,
@@ -219,3 +234,14 @@ build_data_test <- function(data) {
 #'
 "data_test"
 
+
+#' Test data (surveyed area only)
+#'
+#' This object contain a subset with the data about rangers and other staffs members working in protected areas.
+#'
+#' @seealso [`build_data_test()`] for the function used to create such a dataset
+#'
+#' @examples
+#' data_test_surveyed
+#'
+"data_test_surveyed"
