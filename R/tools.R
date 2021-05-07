@@ -147,7 +147,7 @@ compute_metrics <- function(pred, obs, inv.dist = NULL) {
 
   R2 <- 1 - (sum((resid)^2) / sum((obs - mean(obs))^2)) # R2
 
-  RRSE <- sqrt(((sum(pred) - sum(obs))^2) / sum(obs)) # root relative sum error (homemade)
+  RSE <- sqrt(((sum(pred) - sum(obs))^2) / length(obs)) # root sum error (homemade)
 
   CCC <- (2*stats::cor(pred, obs)*stats::sd(pred)*stats::sd(pred))/(stats::var(pred) + stats::var(obs) + (mean(pred) - mean(obs))^2)
   ## Note: CCC = Lin's concordance correlation coef (Steichen & Cox, 2002)
@@ -159,7 +159,7 @@ compute_metrics <- function(pred, obs, inv.dist = NULL) {
     MoranI <- MoranI[c("observed", "p.value")]
     names(MoranI) <- c("MoranI", "MoranI_pv")
   }
-  c(c(RMSE = RMSE, ME = ME, MAE = MAE, R2 = R2, RRSE = RRSE, CCC = CCC), MoranI)
+  c(c(RMSE = RMSE, ME = ME, MAE = MAE, R2 = R2, RSE = RSE, CCC = CCC), MoranI)
 }
 
 
