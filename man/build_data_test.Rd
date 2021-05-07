@@ -4,12 +4,12 @@
 \alias{build_data_test}
 \title{Build the test dataset}
 \usage{
-build_data_test(data, surveyed = NA)
+build_data_test(data, surveyed_only = FALSE)
 }
 \arguments{
 \item{data}{the dataset with the ranger data}
 
-\item{surveyed}{NA for PA_area to equal area_PA_total, TRUE for PA_area to equal PA_area_surveyed (and drop countries not fully surveyed), FALSE for PA_area to equal PA_area_unsurveyed (and drop countries fully surveyed)}
+\item{surveyed_only}{TRUE for PA_area to equal PA_area_surveyed, FALSE for PA_area to equal area_PA_total}
 }
 \value{
 a tibble
@@ -25,13 +25,9 @@ data_test <- build_data_test(data_rangers)
 if (require(usethis)) {
   usethis::use_data(data_test, overwrite = TRUE)
 }
-data_test_surveyed <- build_data_test(data_rangers, surveyed = TRUE)
+data_test_surveyed <- build_data_test(data_rangers, surveyed_only = TRUE)
 if (require(usethis)) {
   usethis::use_data(data_test_surveyed, overwrite = TRUE)
-}
-data_test_unsurveyed <- build_data_test(data_rangers, surveyed = FALSE)
-if (require(usethis)) {
-  usethis::use_data(data_test_unsurveyed, overwrite = TRUE)
 }
 }
 

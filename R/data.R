@@ -125,6 +125,12 @@ fetch_data_rangers <- function() {
     dplyr::mutate(PA_area_unsurveyed = .data$area_PA_total - .data$area_PA_surveyed, .after = .data$area_PA_total) %>%
     dplyr::rename(PA_area_surveyed = .data$area_PA_surveyed) -> d
 
+  ## Dealing with missing data on PA areas:
+  d %>%
+    dplyr::mutate(area_PA_total = dplyr::if_else(is.na(.data$area_PA_total), .data$area_PA_WDPA, .data$area_PA_total),
+                  PA_area_surveyed = dplyr::if_else(is.na(.data$PA_area_surveyed), 0, .data$PA_area_surveyed),
+                  PA_area_unsurveyed = dplyr::if_else(is.na(.data$PA_area_unsurveyed), .data$area_PA_total, .data$PA_area_unsurveyed)) -> d
+
   ## Adding latitude and longitude automatically:
   world_sf <- rnaturalearth::ne_countries(scale = "large", returnclass = "sf")
   world_sf$iso_a3_eh[world_sf$admin == "Norway"] <- "NOR" ## manual fix

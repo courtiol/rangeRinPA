@@ -5,29 +5,19 @@
 \alias{data_test_surveyed}
 \title{Test data (surveyed area only)}
 \format{
-An object of class \code{tbl_df} (inherits from \code{tbl}, \code{data.frame}) with 32 rows and 17 columns.
-
-An object of class \code{tbl_df} (inherits from \code{tbl}, \code{data.frame}) with 32 rows and 17 columns.
+An object of class \code{tbl_df} (inherits from \code{tbl}, \code{data.frame}) with 120 rows and 17 columns.
 }
 \usage{
 data_test_surveyed
-
-data_test_surveyed
 }
 \description{
-This object contain a subset with the data about rangers and other staffs members working in protected areas.
-
 This object contain a subset with the data about rangers and other staffs members working in protected areas.
 }
 \examples{
 data_test_surveyed
 
-data_test_unsurveyed
-
 }
 \seealso{
-\code{\link[=build_data_test]{build_data_test()}} for the function used to create such a dataset
-
 \code{\link[=build_data_test]{build_data_test()}} for the function used to create such a dataset
 }
 \keyword{datasets}
