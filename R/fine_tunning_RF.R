@@ -19,7 +19,7 @@ fine_tune_RF <- function(values_to_try, param_to_tune, formula, data, rep = 10, 
   test_CV <- eval(parse(text = call_CV))
 
   output_point <- cbind(param_to_tune = param_to_tune, value = values_to_try, do.call("rbind", lapply(test_CV, aggregate_metrics, fn = fn)))
-  se <- function(x) sd(x)/sqrt(length(x))
+  se <- function(x) stats::sd(x)/sqrt(length(x))
   output_SE <- cbind(param_to_tune = param_to_tune, value = values_to_try, do.call("rbind", lapply(test_CV, aggregate_metrics, fn = se)))
 
   output_point %>%
