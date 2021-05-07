@@ -123,29 +123,24 @@ cbind(spatial = c("none", "coord", "dist", "hybrid"),
 
 accuracy_extra_trees <- accuracy_forest_no_GDP
 
-accuracy_Breiman1 <- validate_RF(formula = staff_rangers_log ~ area_country_log + PA_area_log + pop_density_log, data = data_test,
-                                 rep = n_tests, Ncpu = Ncpu,  method = "CV", spatial = FALSE, seed = 123,
-                                 mtry = function(n) floor(n/3))
-
-accuracy_Breiman2 <- validate_RF(formula = staff_rangers_log ~ area_country_log + PA_area_log + pop_density_log, data = data_test,
+accuracy_Breiman <- validate_RF(formula = staff_rangers_log ~ area_country_log + PA_area_log + pop_density_log, data = data_test,
                                 rep = n_tests, Ncpu = Ncpu,  method = "CV", spatial = FALSE, seed = 123,
-                                mtry = function(n) n)
+                                mtry = function(n) floor(n/3))
+
 
 cbind(spatial = c("extra_trees", "Breiman1", "Breiman2"),
       rbind(aggregate_metrics(accuracy_extra_trees),
-            aggregate_metrics(accuracy_Breiman1),
-            aggregate_metrics(accuracy_Breiman2)))
+            aggregate_metrics(accuracy_Breiman)))
 
 #       spatial type  rep     RMSE          ME       MAE        R2      RRSE       CCC      MoranI Moran_pv_freq
 # 1 extra_trees   CV 1000 3.480530 0.005961123 0.7871275 0.3995374 0.3585841 0.5125900 -0.07226391         0.066
-# 2    Breiman1   CV 1000 3.572876 0.021856557 0.8126015 0.3595288 0.3642463 0.5190065 -0.07194014         0.067
-# 3    Breiman2   CV 1000 3.479724 0.019608340 0.7909531 0.4071951 0.3551688 0.4662679 -0.06650214         0.070
+# 2     Breiman   CV 1000 3.572876 0.021856557 0.8126015 0.3595288 0.3642463 0.5190065 -0.07194014         0.067
 
 forest_extra_trees <- ranger(staff_rangers_log ~ area_country_log + PA_area_log + pop_density_log, data = data_test,
                              seed = 123, splitrule = "extratrees", replace = FALSE, sample.fraction = 1, mtry = function(n) n)
-forest_Breiman1 <- ranger(staff_rangers_log ~ area_country_log + PA_area_log + pop_density_log, data = data_test, seed = 123, mtry = function(n) floor(n/3))
+forest_Breiman <- ranger(staff_rangers_log ~ area_country_log + PA_area_log + pop_density_log, data = data_test, seed = 123, mtry = function(n) floor(n/3))
 p1 <- plot_predict_interaction(forest_extra_trees, data = data_test, variable1 = "area_country_log", variable2 = "PA_area_log")
-p2 <- plot_predict_interaction(forest_Breiman1, data = data_test, variable1 = "area_country_log", variable2 = "PA_area_log")
+p2 <- plot_predict_interaction(forest_Breiman, data = data_test, variable1 = "area_country_log", variable2 = "PA_area_log")
 p1 + p2
 
 # NOTE: these results justify our approach based on extremely randomized trees!
@@ -256,7 +251,7 @@ pred_rangers <- predict(forest_ranger, data = data_rangers_to_predict, type = "q
 
 pred_rangers$predictions %>%
   as.data.frame() %>%
-  mutate(sigma = (`quantile= 0.841` -  `quantile= 0.159`) / 2) %>%
+  mutate(sigma = (`quantile= 0.841` - `quantile= 0.159`) / 2) %>%
   rename(median = `quantile= 0.5`) -> preds
 
 set.seed(123)
