@@ -37,17 +37,45 @@ formula_top_pred_LMM <- function(fit, k = NULL) {
   stats::as.formula(paste(resp, "~ ", preds))
 }
 
-#' Perform feature selection on LMM
+#' Perform feature selection on LMMs
 #'
 #' @param full_fit a full fitted model
 #' @param metric the metric used for computing prediction accuracy (see [`compute_metrics()`])
 #' @param minimise whether the metric should be minimise (TRUE, default) or maximise (FALSE)
 #' @inheritParams validate_LMM
+#' @name feature_selection_LMM
+#' @aliases feature_selection_LMM, feature_selection_LMM_internal
 #'
-#' @return a list with metrics and best formula
+NULL
+
+#' @describeIn feature_selection_LMM Wrapper function performing the feature selection on LMMs with and without the Matern term
 #' @export
 #'
-feature_selection_LMM <- function(full_fit, data, metric = "RMSE", minimise = TRUE, rep = 10, Ncpu = 1, target = "staff_rangers_log", spatial = "Matern", seed = 123, ...) {
+feature_selection_LMM <- function(full_fit, data, metric = "RMSE", minimise = TRUE, rep = 10, Ncpu = 1, target = "staff_rangers_log", seed = 123, ...) {
+  all_res_matern <- feature_selection_LMM_internal(full_fit = full_fit, data = data, rep = rep, Ncpu = Ncpu, target = target, spatial = "Matern", seed = seed, ...)
+  all_res_matern$Matern <- TRUE
+  full_fit_no_matern <- stats::update(full_fit, . ~ . - Matern(1|long + lat))
+  all_res_no_matern <- feature_selection_LMM_internal(full_fit = full_fit_no_matern, data = data, rep = rep, Ncpu = Ncpu, target = target, spatial = FALSE, seed = seed, ...)
+  all_res_no_matern$Matern <- FALSE
+  all_res <- rbind(all_res_matern, all_res_no_matern)
+  if (minimise) {
+    best_k <- all_res$k[which.min(all_res[, metric])]
+    best_metric <- min(all_res[, metric])
+    decreasing <- FALSE
+  } else {
+    best_k <- all_res$k[which.max(all_res[, metric])]
+    best_metric <- max(all_res[, metric])
+    decreasing <- TRUE
+  }
+  all_res <- all_res[order(all_res[, metric], decreasing = decreasing), ]
+  rownames(all_res) <- NULL
+  list(results = all_res[, c("k", "Matern", metric, "formula", "rep")], best_formula = all_res[1, "formula"], best_metric = best_metric)
+}
+
+#' @describeIn feature_selection_LMM Internal function performing the feature selection on LMMs
+#' @export
+#'
+feature_selection_LMM_internal <- function(full_fit, data, rep = 10, Ncpu = 1, target = "staff_rangers_log", spatial = "Matern", seed = 123, ...) {
   test_k <- function(fit, k) {
     f <- formula_top_pred_LMM(fit, k = k)
     v <- validate_LMM(f, data = data, rep = rep, Ncpu = Ncpu, target = target, spatial = spatial, seed = seed, ...)
@@ -66,17 +94,5 @@ feature_selection_LMM <- function(full_fit, data, metric = "RMSE", minimise = TR
     res[[i]]$formula <- deparse(new_formula, width.cutoff = 500)
     fit <- stats::update(fit, new_formula)
   }
-  all_res <- cbind(k = k_to_do, as.data.frame(do.call("rbind", res)))
-  if (minimise) {
-    best_k <- all_res$k[which.min(all_res[, metric])]
-    best_metric <- min(all_res[, metric])
-    decreasing <- FALSE
-  } else {
-    best_k <- all_res$k[which.max(all_res[, metric])]
-    best_metric <- max(all_res[, metric])
-    decreasing <- TRUE
-  }
-  all_res <- all_res[order(all_res[, metric], decreasing = decreasing), ]
-  rownames(all_res) <- NULL
-  list(results = all_res, best_formula = all_res[1, "formula"], best_metric = best_metric)
+  cbind(k = k_to_do, as.data.frame(do.call("rbind", res)))
 }

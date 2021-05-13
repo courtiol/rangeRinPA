@@ -2,13 +2,25 @@
 % Please edit documentation in R/feature_selection.R
 \name{feature_selection_LMM}
 \alias{feature_selection_LMM}
-\title{Perform feature selection on LMM}
+\alias{feature_selection_LMM,}
+\alias{feature_selection_LMM_internal}
+\title{Perform feature selection on LMMs}
 \usage{
 feature_selection_LMM(
   full_fit,
   data,
   metric = "RMSE",
   minimise = TRUE,
+  rep = 10,
+  Ncpu = 1,
+  target = "staff_rangers_log",
+  seed = 123,
+  ...
+)
+
+feature_selection_LMM_internal(
+  full_fit,
+  data,
   rep = 10,
   Ncpu = 1,
   target = "staff_rangers_log",
@@ -32,15 +44,19 @@ feature_selection_LMM(
 
 \item{target}{the quoted name of the response variable (default = "staff_rangers_log")}
 
-\item{spatial}{either FALSE (default) or "Matern"}
-
 \item{seed}{the seed used to control the reproducibility of the cross validation}
 
 \item{...}{additional parameters to be passed to \code{\link[spaMM:fitme]{spaMM::fitme()}}}
-}
-\value{
-a list with metrics and best formula
+
+\item{spatial}{either FALSE (default) or "Matern"}
 }
 \description{
-Perform feature selection on LMM
+Perform feature selection on LMMs
 }
+\section{Functions}{
+\itemize{
+\item \code{feature_selection_LMM}: Wrapper function performing the feature selection on LMMs with and without the Matern term
+
+\item \code{feature_selection_LMM_internal}: Internal function performing the feature selection on LMMs
+}}
+
