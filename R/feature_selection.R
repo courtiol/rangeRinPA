@@ -97,6 +97,7 @@ feature_selection_LMM_internal <- function(full_fit, rep = 10, Ncpu = 1, target 
     }
     res[[i]]$formula <- deparse(new_formula, width.cutoff = 500)
     fit <- stats::update(fit, new_formula)
+    ##TODO: extract and store AIC (marginal for LM, conditional for LMM)
   }
   cbind(k = k_to_do, as.data.frame(do.call("rbind", res)))
 }
