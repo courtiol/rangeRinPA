@@ -229,24 +229,31 @@ dev.off()
 ## Using the the RF to predict the number of rangers ---------------------------
 
 data_rangers %>%
-  select(staff_rangers, area_country, PA_area, pop_density) %>%
+  mutate(staff_rangers = if_else(PA_area_surveyed == 0, NA_real_, staff_rangers)) %>%
+  filter(countryname_eng != "Greenland") %>%
+  select(staff_rangers, area_country, PA_area = PA_area_surveyed, pop_density) %>%
+  drop_na() %>%
+  mutate(across(everything(), ~ log(.x + 1), .names = "{col}_log")) %>%
+  select(staff_rangers_log, area_country_log, PA_area_log, pop_density_log) -> data_rangers_to_train
+
+data_rangers %>%
+  filter(PA_area_unsurveyed > 0) %>%
+  mutate(staff_rangers = NA) %>%
+  filter(countryname_eng != "Greenland") %>%
+  select(staff_rangers, area_country, PA_area = PA_area_unsurveyed, pop_density) %>%
   drop_na(-staff_rangers) %>%
   mutate(across(everything(), ~ log(.x + 1), .names = "{col}_log")) %>%
-  select(staff_rangers_log, area_country_log, PA_area_log, pop_density_log) -> data_rangers_clean
-  ## TODO: handle greenland specifically
-  ## TODO: how to handle countries partialy surveyed (see issue #8 on GH)
+  select(staff_rangers_log, area_country_log, PA_area_log, pop_density_log) -> data_rangers_to_predict
 
-data_rangers_clean %>%
-  filter(is.na(staff_rangers_log)) -> data_rangers_to_predict
-
-data_rangers_clean %>%
-  filter(!is.na(staff_rangers_log)) -> data_rangers_to_train
+data_rangers %>%
+  filter(countryname_eng == "Greenland") %>%
+  pull(staff_rangers) -> greenland_number
 
 set.seed(123)
-forest_ranger <- ranger(formula = staff_rangers_log ~ area_country_log + PA_area_log + pop_density_log, data = data_rangers_to_train,
+forest_ranger <- ranger(formula = staff_rangers_log ~ area_country_log + PA_area_log + pop_density_log, data = data_rangers_to_train, importance = "impurity",
                         splitrule = "extratrees", replace = FALSE, mtry = 1, min.node.size = 1, sample.fraction = 1, num.trees = 10000, quantreg = TRUE)
+## TODO: rethink min.node.size here?
 
-set.seed(123)
 pred_rangers <- predict(forest_ranger, data = data_rangers_to_predict, type = "quantiles", quantiles = c(0.5, 0.841, 0.159)) # quantiles ~ c(median, pnorm(1), pnorm(-1))
 
 pred_rangers$predictions %>%
@@ -256,8 +263,18 @@ pred_rangers$predictions %>%
 
 set.seed(123)
 simu <- replicate(1000, sum(exp(rnorm(n = nrow(data_rangers_to_predict), mean = preds$median, sd = preds$sigma)) - 1))
-sum(exp(data_rangers_to_train$staff_rangers_log) - 1) + quantile(simu, c(0.025, 0.975))
+sum(exp(data_rangers_to_train$staff_rangers_log) - 1) + quantile(simu, c(0.025, 0.975)) + greenland_number
 
 # NOTE: since the fitting and predictions steps are stochastic, perhaps we should redo that many times and average
 
+## alternative?
+simu_bis <- replicate(100, {
+  pred_rangers <- predict(forest_ranger, data = data_rangers_to_predict, type = "quantiles", quantiles = runif(n = nrow(data_rangers_to_predict)))
+  sum(exp(diag(pred_rangers$predictions) - 1))
+})
+sum(exp(data_rangers_to_train$staff_rangers_log) - 1) + quantile(simu_bis, c(0.025, 0.975)) + greenland_number
 
+
+one <- rnorm(10000, mean = 2, sd = 3)
+two <- qnorm(p = runif(10000), mean = 2, sd = 3)
+plot(one, two, asp = 1)
