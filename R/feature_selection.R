@@ -41,12 +41,13 @@ formula_top_pred_LMM <- function(fit, k = NULL) {
 #'
 #' @param full_fit a full fitted model
 #' @param metric the metric used for computing prediction accuracy (see [`compute_metrics()`])
+#' @param minimise whether the metric should be minimise (TRUE, default) or maximise (FALSE)
 #' @inheritParams validate_LMM
 #'
 #' @return a list with metrics and best formula
 #' @export
 #'
-feature_selection_LMM <- function(full_fit, data, metric = "RMSE", rep = 10, Ncpu = 1, target = "staff_rangers_log", spatial = "Matern", seed = 123, ...) {
+feature_selection_LMM <- function(full_fit, data, metric = "RMSE", minimise = TRUE, rep = 10, Ncpu = 1, target = "staff_rangers_log", spatial = "Matern", seed = 123, ...) {
   test_k <- function(fit, k) {
     f <- formula_top_pred_LMM(fit, k = k)
     v <- validate_LMM(f, data = data, rep = rep, Ncpu = Ncpu, target = target, spatial = spatial, seed = seed, ...)
@@ -65,9 +66,17 @@ feature_selection_LMM <- function(full_fit, data, metric = "RMSE", rep = 10, Ncp
     fit <- stats::update(fit, new_formula)
   }
   all_res <- cbind(k = k_to_do, as.data.frame(do.call("rbind", res)))
-  best_k <- all_res$k[which.min(all_res[, metric])]
+  if (minimise) {
+    best_k <- all_res$k[which.min(all_res[, metric])]
+    best_metric <- min(all_res[, metric])
+    decreasing <- FALSE
+  } else {
+    best_k <- all_res$k[which.max(all_res[, metric])]
+    best_metric <- max(all_res[, metric])
+    decreasing <- TRUE
+  }
   best_form <- formula_top_pred_LMM(full_fit, k = best_k)
-  all_res <- all_res[order(all_res[, metric]), ]
+  all_res <- all_res[order(all_res[, metric], decreasing = decreasing), ]
   rownames(all_res) <- NULL
-  list(metrics = all_res, formula = best_form)
+  list(metrics = all_res, formula = best_form, best_metric = best_metric)
 }
