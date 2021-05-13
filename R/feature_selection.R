@@ -63,6 +63,7 @@ feature_selection_LMM <- function(full_fit, data, metric = "RMSE", minimise = TR
     if (spatial == "Matern") {
       new_formula <- stats::as.formula(paste(as.character(new_formula)[2], "~", as.character(new_formula)[3], "+ Matern(1|long + lat)"))
     }
+    res[[i]]$formula <- deparse(new_formula, width.cutoff = 500)
     fit <- stats::update(fit, new_formula)
   }
   all_res <- cbind(k = k_to_do, as.data.frame(do.call("rbind", res)))
@@ -78,5 +79,5 @@ feature_selection_LMM <- function(full_fit, data, metric = "RMSE", minimise = TR
   best_form <- formula_top_pred_LMM(full_fit, k = best_k)
   all_res <- all_res[order(all_res[, metric], decreasing = decreasing), ]
   rownames(all_res) <- NULL
-  list(metrics = all_res, formula = best_form, best_metric = best_metric)
+  list(results = all_res, best_formula = best_form, best_metric = best_metric)
 }
