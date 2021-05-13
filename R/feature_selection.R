@@ -47,15 +47,23 @@ formula_top_pred_LMM <- function(fit, k = NULL) {
 #' @export
 #'
 feature_selection_LMM <- function(full_fit, data, metric = "RMSE", rep = 10, Ncpu = 1, target = "staff_rangers_log", spatial = "Matern", seed = 123, ...) {
-  test_k <- function(k) {
-    f <- formula_top_pred_LMM(full_fit, k = k)
+  test_k <- function(fit, k) {
+    f <- formula_top_pred_LMM(fit, k = k)
     v <- validate_LMM(f, data = data, rep = rep, Ncpu = Ncpu, target = target, spatial = spatial, seed = seed, ...)
     aggregate_metrics(v)
   }
   k_to_do <- nrow(rank_predictors_LMM(full_fit)):0
-  res <- lapply(k_to_do, function(k) {
-    test_k(k)
-  })
+  fit <- full_fit
+  res <- list()
+  for (i in seq_along(k_to_do)) {
+    k <- k_to_do[i]
+    res[[i]] <- test_k(fit, k = k)
+    new_formula <- formula_top_pred_LMM(fit, k = k)
+    if (spatial == "Matern") {
+      new_formula <- stats::as.formula(paste(as.character(new_formula)[2], "~", as.character(new_formula)[3], "+ Matern(1|long + lat)"))
+    }
+    fit <- stats::update(fit, new_formula)
+  }
   all_res <- cbind(k = k_to_do, as.data.frame(do.call("rbind", res)))
   best_k <- all_res$k[which.min(all_res[, metric])]
   best_form <- formula_top_pred_LMM(full_fit, k = best_k)
