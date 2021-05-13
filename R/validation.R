@@ -47,7 +47,6 @@ validate_LMM <- function(formula, data, rep = 10, Ncpu = 1, target = "staff_rang
 }
 
 
-
 #' Compute accuracy metrics on test set for RF
 #'
 #' @inheritParams validate_LMM
