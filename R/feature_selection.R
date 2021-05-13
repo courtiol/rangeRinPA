@@ -71,7 +71,7 @@ feature_selection_LMM <- function(full_fit, metric = "RMSE", minimise = TRUE, re
   }
   all_res <- all_res[order(all_res[, metric], decreasing = decreasing), ]
   rownames(all_res) <- NULL
-  all_res[[paste0(metric, "_tol")]] <- 100*(abs(all_res[, metric] - extreme(all_res[, metric])))/extreme(all_res[, metric])
+  all_res[[paste0(metric, "_tol")]] <- 100*(abs(all_res[, metric] - extreme(all_res[, metric])))/extreme(all_res[, metric]) #as in caret::pickSizeTolerance
   tibble::as_tibble(all_res[, c("k", "Matern", metric, paste0(metric, "_tol"), "formula", "rep")])
 }
 
