@@ -31,7 +31,10 @@ formula_top_pred_LMM <- function(fit, k = NULL) {
   ranks <- rank_predictors_LMM(fit = fit, k = k)
   resp <- stats::formula(fit)[[2]]
   preds <- paste(ranks$predictor, collapse = "+")
-  stats::as.formula(paste(resp, "~", preds))
+  if (preds == "") {
+    preds <- "1"
+  }
+  stats::as.formula(paste(resp, "~ ", preds))
 }
 
 #' Perform feature selection on LMM
@@ -49,7 +52,7 @@ feature_selection_LMM <- function(full_fit, data, metric = "RMSE", rep = 10, Ncp
     v <- validate_LMM(f, data = data, rep = rep, Ncpu = Ncpu, target = target, spatial = spatial, seed = seed, ...)
     aggregate_metrics(v)
   }
-  k_to_do <- nrow(rank_predictors_LMM(full_fit)):1
+  k_to_do <- nrow(rank_predictors_LMM(full_fit)):0
   res <- lapply(k_to_do, function(k) {
     test_k(k)
   })
