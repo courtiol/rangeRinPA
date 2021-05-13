@@ -2,7 +2,7 @@
 
 export("%>%")
 export(aggregate_metrics)
-export(build_data_test)
+export(build_initial_trainning_data)
 export(check_losses)
 export(compute_distance)
 export(compute_metrics)

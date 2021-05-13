@@ -172,13 +172,19 @@ globalVariables(".data")
 
 
 
-#' Build the test dataset
+#' Build the initial training datasets
 #'
 #' This function creates a subset of the dataset [`data_rangers`] and log-transform (+1) some of its columns.
-#' It contains no missing data.
+#' It contains no missing data for predictors.
 #'
 #' @param data the dataset with the ranger data
-#' @param surveyed_only TRUE for PA_area to equal PA_area_surveyed, FALSE for PA_area to equal area_PA_total
+#' @param response the unquoted name of the response variable
+#' @param survey the criterion used to select rows depending on whether the focal number of staff is:
+#'     - completely unknown ("complete_unknown")
+#'     - completely or partially unknown ("partial_unknown")
+#'     - completely or partially known ("partial_known")
+#'     - completely known ("complete")
+#' according to the choice, the variable PA_area is also adjusted.
 #'
 #' @return a tibble
 #' @export
@@ -186,40 +192,48 @@ globalVariables(".data")
 #' @examples
 #' \dontrun{
 #' ## Here is how we created the data stored in this package:
-#' data_test <- build_data_test(data_rangers)
+#' data_test <- build_initial_trainning_data(data_rangers,
+#'                                           response = staff_rangers,
+#'                                           survey = "partial_known")
+#' data_test <- data_test[!is.na(data_test$staff_rangers_log), ]
 #' if (require(usethis)) {
 #'   usethis::use_data(data_test, overwrite = TRUE)
 #' }
-#' data_test_surveyed <- build_data_test(data_rangers, surveyed_only = TRUE)
-#' if (require(usethis)) {
-#'   usethis::use_data(data_test_surveyed, overwrite = TRUE)
-#' }
 #' }
 #'
-build_data_test <- function(data, surveyed_only = FALSE) {
+build_initial_trainning_data <- function(data, response, survey) {
 
-  if (surveyed_only) {
+  if (survey == "complete_unknown") {
     data %>%
+      dplyr::filter(.data$PA_area_surveyed < 0.1) %>%
+      dplyr::mutate(PA_area = .data$PA_area_unsurveyed) -> data
+  } else if (survey == "partial_unknown") {
+    data %>%
+      dplyr::filter(.data$PA_area_unsurveyed > 0) %>%
+      dplyr::mutate(PA_area = .data$PA_area_unsurveyed) -> data
+  } else if (survey == "complete_known") {
+    data %>%
+      dplyr::filter(.data$PA_area_unsurveyed < 0.1) %>%
       dplyr::mutate(PA_area = .data$PA_area_surveyed) -> data
-  } else {
+  } else if (survey == "partial_known") {
     data %>%
-      dplyr::mutate(PA_area = dplyr::if_else(!is.na(.data$area_PA_total), .data$area_PA_total, .data$area_PA_WDPA)) -> data
-  }
+      dplyr::filter(.data$PA_area_surveyed > 0) %>%
+      dplyr::mutate(PA_area = .data$PA_area_surveyed) -> data
+  } else stop("survey argument invalid")
 
   data %>%
     dplyr::filter(.data$countryname_eng != "Greenland") %>% # Greenland is a clear outlier, so we drop this country
-    tidyr::drop_na(.data$staff_rangers,
-                   .data$pop_density,
+    tidyr::drop_na(.data$pop_density,
                    .data$lat, .data$long, .data$country_UN_subcontinent,
                    .data$PA_area, .data$area_country, .data$area_forest_pct,
                    .data$GDP_2019, .data$GDP_capita, .data$GDP_growth, .data$unemployment,
                    .data$EVI, .data$SPI, .data$EPI_2020, .data$IUCN_1_4_prop, .data$IUCN_1_2_prop) %>%
-    dplyr::mutate(dplyr::across(c(.data$staff_rangers,
+    dplyr::mutate(dplyr::across(c({{response}},
                                   .data$PA_area, .data$area_country,
                                   .data$pop_density,
                                   .data$GDP_2019, .data$GDP_capita, .data$unemployment), # we log transform to get hump-shaped distributions
                   ~ log(.x + 1), .names = "{col}_log")) %>%
-    dplyr::select(.data$staff_rangers_log, # the number of rangers (log)
+    dplyr::select(tidyselect::contains("staff") & tidyselect::contains("log"), # the number of rangers (log)
                   .data$pop_density_log,   # the density of the population
                   .data$lat, .data$long, .data$country_UN_subcontinent, # the coordinate of the centroid of the largest polygon associated with a country/territory + subcontinent
                   .data$PA_area_log, .data$area_country_log, .data$area_forest_pct, # areas of Protected area, country and pct of forest
@@ -233,21 +247,9 @@ build_data_test <- function(data, surveyed_only = FALSE) {
 #'
 #' This object contain a subset with the data about rangers and other staffs members working in protected areas.
 #'
-#' @seealso [`build_data_test()`] for the function used to create such a dataset
+#' @seealso [`build_initial_trainning_data()`] for the function used to create such a dataset
 #'
 #' @examples
 #' data_test
 #'
 "data_test"
-
-
-#' Test data (surveyed area only)
-#'
-#' This object contain a subset with the data about rangers and other staffs members working in protected areas.
-#'
-#' @seealso [`build_data_test()`] for the function used to create such a dataset
-#'
-#' @examples
-#' data_test_surveyed
-#'
-"data_test_surveyed"
