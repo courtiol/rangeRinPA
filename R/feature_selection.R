@@ -76,7 +76,7 @@ feature_selection_LMM <- function(full_fit, data, metric = "RMSE", minimise = TR
     best_metric <- max(all_res[, metric])
     decreasing <- TRUE
   }
-  best_form <- formula_top_pred_LMM(full_fit, k = best_k)
+  best_form <- formula_top_pred_LMM(fit, k = best_k)
   all_res <- all_res[order(all_res[, metric], decreasing = decreasing), ]
   rownames(all_res) <- NULL
   list(results = all_res, best_formula = best_form, best_metric = best_metric)
