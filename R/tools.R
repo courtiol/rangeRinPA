@@ -152,7 +152,7 @@ compute_metrics <- function(pred, obs, inv.dist = NULL) {
   CCC <- (2*stats::cor(pred, obs)*stats::sd(pred)*stats::sd(pred))/(stats::var(pred) + stats::var(obs) + (mean(pred) - mean(obs))^2)
   ## Note: CCC = Lin's concordance correlation coef (Steichen & Cox, 2002)
 
-  MoranI <- c(obs = NA, expected = NA, sd = NA, p.value = NA) # Moran's I
+  MoranI <-  c("MoranI" = NA, "MoranI_pv" = NA) # Moran's I
 
   if (!is.null(inv.dist)) {
     MoranI <- unlist(ape::Moran.I(resid, inv.dist))
