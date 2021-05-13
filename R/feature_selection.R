@@ -48,7 +48,7 @@ formula_top_pred_LMM <- function(fit, k = NULL) {
 #'
 NULL
 
-#' @describeIn feature_selection_LMM Wrapper function performing the feature selection on LMMs with and without the Matern term
+#' @describeIn feature_selection_LMM wrapper function performing the feature selection on LMMs with and without the Matern term
 #' @export
 #'
 feature_selection_LMM <- function(full_fit, metric = "RMSE", minimise = TRUE, rep = 10, Ncpu = 1, target = "staff_rangers_log", seed = 123, ...) {
@@ -62,17 +62,20 @@ feature_selection_LMM <- function(full_fit, metric = "RMSE", minimise = TRUE, re
     best_k <- all_res$k[which.min(all_res[, metric])]
     best_metric <- min(all_res[, metric])
     decreasing <- FALSE
+    extreme <- min
   } else {
     best_k <- all_res$k[which.max(all_res[, metric])]
     best_metric <- max(all_res[, metric])
     decreasing <- TRUE
+    extreme <- max
   }
   all_res <- all_res[order(all_res[, metric], decreasing = decreasing), ]
   rownames(all_res) <- NULL
-  all_res[, c("k", "Matern", metric, "formula", "rep")]
+  all_res[[paste0(metric, "_tol")]] <- 100*(abs(all_res[, metric] - extreme(all_res[, metric])))/extreme(all_res[, metric])
+  tibble::as_tibble(all_res[, c("k", "Matern", metric, paste0(metric, "_tol"), "formula", "rep")])
 }
 
-#' @describeIn feature_selection_LMM Internal function performing the feature selection on LMMs
+#' @describeIn feature_selection_LMM internal function performing the feature selection on LMMs
 #' @export
 #'
 feature_selection_LMM_internal <- function(full_fit, rep = 10, Ncpu = 1, target = "staff_rangers_log", spatial = "Matern", seed = 123, ...) {
