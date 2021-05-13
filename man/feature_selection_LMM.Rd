@@ -44,7 +44,7 @@ feature_selection_LMM_internal(
 
 \item{...}{additional parameters to be passed to \code{\link[spaMM:fitme]{spaMM::fitme()}}}
 
-\item{spatial}{either FALSE (default) or "Matern"}
+\item{spatial}{either FALSE (default) or TRUE (or "Matern" as synonymous)}
 }
 \description{
 Perform feature selection on LMMs
