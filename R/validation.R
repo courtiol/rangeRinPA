@@ -6,7 +6,7 @@
 #' @param rep the number of cross validation replicates (default = 10)
 #' @param Ncpu the number of CPU cores to be used (default = 1)
 #' @param target the quoted name of the response variable (default = "staff_rangers_log")
-#' @param spatial either FALSE (default) or "Matern"
+#' @param spatial either FALSE (default) or TRUE (or "Matern" as synonymous)
 #' @param seed the seed used to control the reproducibility of the cross validation
 #' @param return_fit whether to return the fit on all the data as attribute (default = FALSE)
 #' @param ... additional parameters to be passed to [`spaMM::fitme()`]
@@ -20,7 +20,7 @@
 #' validate_LMM(staff_rangers_log ~ PA_area_log, data = data_test)
 #'
 validate_LMM <- function(formula, data, rep = 10, Ncpu = 1, target = "staff_rangers_log", spatial = FALSE, seed = 123, return_fit = TRUE, ...) {
-  if (spatial == "Matern") {
+  if (spatial || spatial == "Matern") {
     formula <- stats::update.formula(formula, . ~ . + Matern(1 |long + lat))
   } else stopifnot(!spatial)
 
