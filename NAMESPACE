@@ -2,10 +2,12 @@
 
 export("%>%")
 export(aggregate_metrics)
-export(build_initial_trainning_data)
+export(build_final_training_data)
+export(build_initial_training_data)
 export(check_losses)
 export(compute_distance)
 export(compute_metrics)
+export(drop_logs)
 export(feature_selection_LMM)
 export(feature_selection_LMM_internal)
 export(fetch_data_rangers)

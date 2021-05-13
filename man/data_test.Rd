@@ -18,6 +18,6 @@ data_test
 
 }
 \seealso{
-\code{\link[=build_initial_trainning_data]{build_initial_trainning_data()}} for the function used to create such a dataset
+\code{\link[=build_initial_training_data]{build_initial_training_data()}} for the function used to create such a dataset
 }
 \keyword{datasets}

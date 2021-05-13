@@ -215,3 +215,30 @@ compute_distance <- function(long, lat, inv = FALSE) {
 
   dist
 }
+
+
+#' Drop logs from formula
+#'
+#' @param formula a formula
+#'
+#' @return a formula
+#' @export
+#'
+#' @examples
+#' f <- staff_rangers_log ~ pop_density_log + PA_area_log + long + Matern(1|long + lat)
+#' drop_logs(f)
+#'
+drop_logs <- function(formula) {
+  resp <- as.character(formula)[2]
+  if (grepl(pattern = "_log", resp)) {
+    resp <- sub(pattern = "_log", replacement = "", x = resp)
+  }
+  preds <- as.character(formula)[3]
+  if (grepl(pattern = "_log", preds)) {
+    preds <- gsub(pattern = "_log", replacement = "", x = preds)
+  }
+  if (length(preds) == 1 && preds == "") {
+    preds <- "1"
+  }
+  stats::as.formula(paste(resp, "~", preds))
+}

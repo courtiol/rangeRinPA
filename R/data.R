@@ -172,12 +172,11 @@ globalVariables(".data")
 
 
 
-#' Build the initial training datasets
+#' Build the training datasets
 #'
-#' This function creates a subset of the dataset [`data_rangers`] and log-transform (+1) some of its columns.
-#' It contains no missing data for predictors.
+#' These functions create a subset of the dataset [`data_rangers`] and log-transform (+1) some of its columns.
 #'
-#' @param data the dataset with the ranger data
+#' @inheritParams prepare_data
 #' @param response the unquoted name of the response variable
 #' @param survey the criterion used to select rows depending on whether the focal number of staff is:
 #'     - completely unknown ("complete_unknown")
@@ -187,12 +186,13 @@ globalVariables(".data")
 #' according to the choice, the variable PA_area is also adjusted.
 #'
 #' @return a tibble
-#' @export
+#' @name build_training_data
+#' @aliases build_initial_training_data, build_final_training_data
 #'
 #' @examples
 #' \dontrun{
 #' ## Here is how we created the data stored in this package:
-#' data_test <- build_initial_trainning_data(data_rangers,
+#' data_test <- build_initial_training_data(data_rangers,
 #'                                           response = staff_rangers,
 #'                                           survey = "partial_known")
 #' data_test <- data_test[!is.na(data_test$staff_rangers_log), ]
@@ -201,7 +201,13 @@ globalVariables(".data")
 #' }
 #' }
 #'
-build_initial_trainning_data <- function(data, response, survey) {
+NULL
+
+
+#' @describeIn build_training_data build the initial training datasets
+#' @export
+#'
+build_initial_training_data <- function(data, response, survey) {
 
   if (survey == "complete_unknown") {
     data %>%
@@ -243,11 +249,52 @@ build_initial_trainning_data <- function(data, response, survey) {
 }
 
 
+#' @describeIn build_training_data build the final training datasets
+#' @export
+#'
+build_final_training_data <- function(data, formula, survey) {
+
+  data %>%
+    dplyr::filter(.data$countryname_eng != "Greenland") -> data # Greenland is a clear outlier, so we drop this country
+
+  formula <- drop_logs(formula)
+  data <- prepare_data(formula = formula, data = data, test_prop = 0)$data_train
+
+  if (any(colnames(data) == "PA_area")) {
+    if (survey == "complete_unknown") {
+      data %>%
+        dplyr::filter(.data$PA_area_surveyed < 0.1) %>%
+        dplyr::mutate(PA_area = .data$PA_area_unsurveyed) -> data
+    } else if (survey == "partial_unknown") {
+      data %>%
+        dplyr::filter(.data$PA_area_unsurveyed > 0) %>%
+        dplyr::mutate(PA_area = .data$PA_area_unsurveyed) -> data
+    } else if (survey == "complete_known") {
+      data %>%
+        dplyr::filter(.data$PA_area_unsurveyed < 0.1) %>%
+        dplyr::mutate(PA_area = .data$PA_area_surveyed) -> data
+    } else if (survey == "partial_known") {
+      data %>%
+        dplyr::filter(.data$PA_area_surveyed > 0) %>%
+        dplyr::mutate(PA_area = .data$PA_area_surveyed) -> data
+    } else stop("survey argument invalid")
+  }
+
+  for (var in colnames(data)) {
+    if (var %in% c("staff_rangers", "staff_others", "staff_total", "PA_area", "area_country", "pop_density", "GDP_2019", "GDP_capita", "unemployment")) {
+      data[[paste0(var, "_log")]] <- log(data[[var]] + 1)
+      data[[var]] <- NULL
+    }
+  }
+  data
+}
+
+
 #' Test data
 #'
 #' This object contain a subset with the data about rangers and other staffs members working in protected areas.
 #'
-#' @seealso [`build_initial_trainning_data()`] for the function used to create such a dataset
+#' @seealso [`build_initial_training_data()`] for the function used to create such a dataset
 #'
 #' @examples
 #' data_test
