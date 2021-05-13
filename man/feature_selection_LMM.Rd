@@ -8,7 +8,6 @@
 \usage{
 feature_selection_LMM(
   full_fit,
-  data,
   metric = "RMSE",
   minimise = TRUE,
   rep = 10,
@@ -20,7 +19,6 @@ feature_selection_LMM(
 
 feature_selection_LMM_internal(
   full_fit,
-  data,
   rep = 10,
   Ncpu = 1,
   target = "staff_rangers_log",
@@ -31,8 +29,6 @@ feature_selection_LMM_internal(
 }
 \arguments{
 \item{full_fit}{a full fitted model}
-
-\item{data}{the full dataset}
 
 \item{metric}{the metric used for computing prediction accuracy (see \code{\link[=compute_metrics]{compute_metrics()}})}
 

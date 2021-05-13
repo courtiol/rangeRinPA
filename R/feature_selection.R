@@ -51,11 +51,11 @@ NULL
 #' @describeIn feature_selection_LMM Wrapper function performing the feature selection on LMMs with and without the Matern term
 #' @export
 #'
-feature_selection_LMM <- function(full_fit, data, metric = "RMSE", minimise = TRUE, rep = 10, Ncpu = 1, target = "staff_rangers_log", seed = 123, ...) {
-  all_res_matern <- feature_selection_LMM_internal(full_fit = full_fit, data = data, rep = rep, Ncpu = Ncpu, target = target, spatial = "Matern", seed = seed, ...)
+feature_selection_LMM <- function(full_fit, metric = "RMSE", minimise = TRUE, rep = 10, Ncpu = 1, target = "staff_rangers_log", seed = 123, ...) {
+  all_res_matern <- feature_selection_LMM_internal(full_fit = full_fit, rep = rep, Ncpu = Ncpu, target = target, spatial = "Matern", seed = seed, ...)
   all_res_matern$Matern <- TRUE
   full_fit_no_matern <- stats::update(full_fit, . ~ . - Matern(1|long + lat))
-  all_res_no_matern <- feature_selection_LMM_internal(full_fit = full_fit_no_matern, data = data, rep = rep, Ncpu = Ncpu, target = target, spatial = FALSE, seed = seed, ...)
+  all_res_no_matern <- feature_selection_LMM_internal(full_fit = full_fit_no_matern, rep = rep, Ncpu = Ncpu, target = target, spatial = FALSE, seed = seed, ...)
   all_res_no_matern$Matern <- FALSE
   all_res <- rbind(all_res_matern, all_res_no_matern)
   if (minimise) {
@@ -69,13 +69,14 @@ feature_selection_LMM <- function(full_fit, data, metric = "RMSE", minimise = TR
   }
   all_res <- all_res[order(all_res[, metric], decreasing = decreasing), ]
   rownames(all_res) <- NULL
-  list(results = all_res[, c("k", "Matern", metric, "formula", "rep")], best_formula = all_res[1, "formula"], best_metric = best_metric)
+  all_res[, c("k", "Matern", metric, "formula", "rep")]
 }
 
 #' @describeIn feature_selection_LMM Internal function performing the feature selection on LMMs
 #' @export
 #'
-feature_selection_LMM_internal <- function(full_fit, data, rep = 10, Ncpu = 1, target = "staff_rangers_log", spatial = "Matern", seed = 123, ...) {
+feature_selection_LMM_internal <- function(full_fit, rep = 10, Ncpu = 1, target = "staff_rangers_log", spatial = "Matern", seed = 123, ...) {
+  data <- full_fit$data
   test_k <- function(fit, k) {
     f <- formula_top_pred_LMM(fit, k = k)
     v <- validate_LMM(f, data = data, rep = rep, Ncpu = Ncpu, target = target, spatial = spatial, seed = seed, ...)
