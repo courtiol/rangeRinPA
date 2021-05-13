@@ -52,43 +52,57 @@ selection_training_rangers_complete <- feature_selection_LMM(
   rep = 1000, Ncpu = Ncpu,
   target = "staff_rangers_log",
   seed = 123)
-selected_formula_rangers_complete <- staff_rangers_log ~ area_country_log + pop_density_log
 
 selection_training_others_complete <- feature_selection_LMM(
   full_fit = fit_data_initial_training_others_complete_full,
   rep = 1000, Ncpu = Ncpu,
   target = "staff_others_log",
   seed = 123)
-selected_formula_others_complete <- staff_others_log ~ area_country_log + pop_density_log + Matern(1 | long + lat)
 
 selection_training_all_complete <- feature_selection_LMM(
   full_fit = fit_data_initial_training_all_complete_full,
   rep = 1000, Ncpu = Ncpu,
   target = "staff_total_log",
   seed = 123)
-selected_formula_all_complete <- staff_total_log ~ area_country_log + pop_density_log + EPI_2020 + long + EVI + Matern(1 | long + lat)
-#selected_formula_all_complete <- staff_total_log ~ area_country_log + pop_density_log ## not quite as good (11% higher RMSE) but complete
 
 selection_training_rangers_partial <- feature_selection_LMM(
   full_fit = fit_data_initial_training_rangers_partial_full,
   rep = 1000, Ncpu = Ncpu,
   target = "staff_rangers_log",
   seed = 123)
-selected_formula_rangers_partial <-
 
 selection_training_others_partial <- feature_selection_LMM(
   full_fit = fit_data_initial_training_others_partial_full,
   rep = 1000, Ncpu = Ncpu,
   target = "staff_others_log",
   seed = 123)
-selected_formula_others_partial <-
 
 selection_training_all_partial <- feature_selection_LMM(
   full_fit = fit_data_initial_training_all_partial_full,
   rep = 1000, Ncpu = Ncpu,
   target = "staff_total_log",
   seed = 123)
-selected_formula_all_partial <-
+
+selection_training_rangers_complete
+selected_formula_rangers_complete <- staff_rangers_log ~ area_country_log + pop_density_log
+
+selection_training_others_complete
+selected_formula_others_complete <- staff_others_log ~ area_country_log + pop_density_log + Matern(1 | long + lat)
+
+selection_training_all_complete
+selected_formula_all_complete <- staff_total_log ~ area_country_log + pop_density_log + EPI_2020 + long + EVI + Matern(1 | long + lat)
+#selected_formula_all_complete <- staff_total_log ~ area_country_log + pop_density_log ## not quite as good (ca. 10% higher RMSE) but complete
+
+selection_training_rangers_partial
+selected_formula_rangers_partial <- staff_rangers_log ~ pop_density_log + PA_area_log + area_country_log + long
+
+selection_training_others_partial
+selected_formula_others_partial <- staff_others_log ~ area_country_log + pop_density_log + GDP_capita_log + IUCN_1_4_prop + GDP_growth + area_forest_pct + Matern(1 | long + lat)
+#selected_formula_others_partial <- staff_others_log ~ area_country_log + pop_density_log + GDP_capita_log + Matern(1 | long + lat) ## not quite as good (ca. 2% higher RMSE)
+#selected_formula_others_partial <- staff_others_log ~ area_country_log + pop_density_log + Matern(1 | long + lat) ## not quite as good (ca. 10% higher RMSE) but complete
+
+selection_training_all_partial
+selected_formula_all_partial <- staff_total_log ~ pop_density_log + area_country_log + PA_area_log ## not quite as good (ca. 4% higher RMSE) but complete
 
 
 # Step 4: Preparation of final training datasets
@@ -127,105 +141,67 @@ any(is.na(data_final_training_all_partial))
 
 
 # Step 5: Selection of function inputs (fine tuning)
-CV_rangers_complete_ML <- validate_LMM(selected_formula_rangers_complete,
-                                       data = data_final_training_rangers_complete,
-                                       rep = 1000, Ncpu = Ncpu,
-                                       spatial = any(grepl("Matern", selected_formula_rangers_complete)),
-                                       target = "staff_rangers_log", seed = 123,
-                                       method = "ML")
+finetune_rangers_complete <- finetune_LMM(selected_formula_rangers_complete,
+                                          data = data_final_training_rangers_complete,
+                                          rep = 1000, Ncpu = Ncpu, seed = 123)
 
-CV_rangers_complete_REML <- validate_LMM(selected_formula_rangers_complete,
-                                         data = data_final_training_rangers_complete,
-                                         rep = 1000, Ncpu = Ncpu,
-                                         spatial = any(grepl("Matern", selected_formula_rangers_complete)),
-                                         target = "staff_rangers_log", seed = 123,
-                                         method = "REML")
+finetune_others_complete <- finetune_LMM(selected_formula_others_complete,
+                                         data = data_final_training_others_complete,
+                                         rep = 1000, Ncpu = Ncpu, seed = 123)
 
-CV_others_complete_ML <- validate_LMM(selected_formula_others_complete,
-                                      data = data_final_training_others_complete,
-                                      rep = 1000, Ncpu = Ncpu,
-                                      spatial = any(grepl("Matern", selected_formula_others_complete)),
-                                      target = "staff_others_log", seed = 123,
-                                      method = "ML")
+finetune_all_complete <- finetune_LMM(selected_formula_all_complete,
+                                         data = data_final_training_all_complete,
+                                         rep = 1000, Ncpu = Ncpu, seed = 123)
 
-CV_others_complete_REML <- validate_LMM(selected_formula_others_complete,
-                                        data = data_final_training_others_complete,
-                                        rep = 1000, Ncpu = Ncpu,
-                                        spatial = any(grepl("Matern", selected_formula_others_complete)),
-                                        target = "staff_others_log", seed = 123,
-                                        method = "REML")
+finetune_rangers_partial <- finetune_LMM(selected_formula_rangers_partial,
+                                         data = data_final_training_rangers_partial,
+                                         rep = 1000, Ncpu = Ncpu, seed = 123)
 
-CV_all_complete_ML <- validate_LMM(selected_formula_all_complete,
-                                   data = data_final_training_all_complete,
-                                   rep = 1000, Ncpu = Ncpu,
-                                   spatial = any(grepl("Matern", selected_formula_all_complete)),
-                                   target = "staff_all_log", seed = 123,
-                                   method = "ML")
+finetune_others_partial <- finetune_LMM(selected_formula_others_partial,
+                                        data = data_final_training_others_partial,
+                                        rep = 1000, Ncpu = Ncpu, seed = 123)
 
-CV_all_complete_REML <- validate_LMM(selected_formula_all_complete,
-                                     data = data_final_training_all_complete,
-                                     rep = 1000, Ncpu = Ncpu,
-                                     spatial = any(grepl("Matern", selected_formula_all_complete)),
-                                     target = "staff_all_log", seed = 123,
-                                     method = "REML")
+finetune_all_partial <- finetune_LMM(selected_formula_all_partial,
+                                     data = data_final_training_all_partial,
+                                     rep = 1000, Ncpu = Ncpu, seed = 123)
 
-CV_rangers_partial_ML <- validate_LMM(selected_formula_rangers_partial,
-                                      data = data_final_training_rangers_partial,
-                                      rep = 1000, Ncpu = Ncpu,
-                                      spatial = any(grepl("Matern", selected_formula_rangers_partial)),
-                                      target = "staff_rangers_log", seed = 123,
-                                      method = "ML")
-
-CV_rangers_partial_REML <- validate_LMM(selected_formula_rangers_partial,
-                                        data = data_final_training_rangers_partial,
-                                        rep = 1000, Ncpu = Ncpu,
-                                        spatial = any(grepl("Matern", selected_formula_rangers_partial)),
-                                        target = "staff_rangers_log", seed = 123,
-                                        method = "REML")
-
-CV_others_partial_ML <- validate_LMM(selected_formula_others_partial,
-                                     data = data_final_training_others_partial,
-                                     rep = 1000, Ncpu = Ncpu,
-                                     spatial = any(grepl("Matern", selected_formula_others_partial)),
-                                     target = "staff_others_log", seed = 123,
-                                     method = "ML")
-
-CV_others_partial_REML <- validate_LMM(selected_formula_others_partial,
-                                       data = data_final_training_others_partial,
-                                       rep = 1000, Ncpu = Ncpu,
-                                       spatial = any(grepl("Matern", selected_formula_others_partial)),
-                                       target = "staff_others_log", seed = 123,
-                                       method = "REML")
-
-CV_all_partial_ML <- validate_LMM(selected_formula_all_partial,
-                                  data = data_final_training_all_partial,
-                                  rep = 1000, Ncpu = Ncpu,
-                                  spatial = any(grepl("Matern", selected_formula_all_partial)),
-                                  target = "staff_all_log", seed = 123,
-                                  method = "ML")
-
-CV_all_partial_REML <- validate_LMM(selected_formula_all_partial,
-                                    data = data_final_training_all_partial,
-                                    rep = 1000, Ncpu = Ncpu,
-                                    spatial = any(grepl("Matern", selected_formula_all_partial)),
-                                    target = "staff_all_log", seed = 123,
-                                    method = "REML")
-
-aggregate_metrics(CV_rangers_complete_ML)
-aggregate_metrics(CV_rangers_complete_REML)
-aggregate_metrics(CV_rangers_others_ML)
-aggregate_metrics(CV_rangers_others_REML)
-aggregate_metrics(CV_all_complete_ML)
-aggregate_metrics(CV_all_complete_REML)
-aggregate_metrics(CV_rangers_partial_ML)
-aggregate_metrics(CV_rangers_partial_REML)
-aggregate_metrics(CV_rangers_others_ML)
-aggregate_metrics(CV_rangers_others_REML)
-aggregate_metrics(CV_all_partial_ML)
-aggregate_metrics(CV_all_partial_REML)
-
+finetune_rangers_complete
+finetune_others_complete
+finetune_all_complete
+finetune_rangers_partial
+finetune_others_partial
+finetune_all_partial
 
 # Step 6: Final training
+fit_final_rangers_complete <- fitme(selected_formula_rangers_complete,
+                                    data = data_final_training_rangers_complete,
+                                    control.dist = list(dist.method = "Earth"),
+                                    method = finetune_rangers_complete$best_method)
+
+fit_final_others_complete <- fitme(selected_formula_others_complete,
+                                   data = data_final_training_others_complete,
+                                   control.dist = list(dist.method = "Earth"),
+                                   method = finetune_others_complete$best_method)
+
+fit_final_all_complete <- fitme(selected_formula_all_complete,
+                                data = data_final_training_all_complete,
+                                control.dist = list(dist.method = "Earth"),
+                                method = finetune_all_complete$best_method)
+
+fit_final_rangers_partial <- fitme(selected_formula_rangers_partial,
+                                   data = data_final_training_rangers_partial,
+                                   control.dist = list(dist.method = "Earth"),
+                                   method = finetune_rangers_partial$best_method)
+
+fit_final_others_partial <- fitme(selected_formula_others_partial,
+                                  data = data_final_training_others_partial,
+                                  control.dist = list(dist.method = "Earth"),
+                                  method = finetune_others_partial$best_method)
+
+fit_final_all_partial <- fitme(selected_formula_all_partial,
+                               data = data_final_training_all_partial,
+                               control.dist = list(dist.method = "Earth"),
+                               method = finetune_all_partial$best_method)
 
 # Step 7: Preparation of datasets for predictions & simulations
 
