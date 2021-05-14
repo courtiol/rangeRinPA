@@ -219,7 +219,7 @@ data_final_pred_rangers_complete <- build_final_pred_data(
   formula = selected_formula_rangers_complete,
   survey = "complete_known")
 
-data_final_pred_others_complete <- build_final_pred_data(
+data_final_pred_others_complete <- build_final_pred_data( # 1 country missing -> Greenland
   data = data_rangers,
   formula = selected_formula_others_complete,
   survey = "complete_known")
@@ -234,7 +234,7 @@ data_final_pred_rangers_partial <- build_final_pred_data(
   formula = selected_formula_rangers_partial,
   survey = "partial_known")
 
-data_final_pred_others_partial <- build_final_pred_data(
+data_final_pred_others_partial <- build_final_pred_data(  # 1 country missing -> Greenland
   data = data_rangers,
   formula = selected_formula_others_partial,
   survey = "partial_known")
@@ -245,8 +245,30 @@ data_final_pred_all_partial <- build_final_pred_data(
   survey = "partial_known")
 
 
-# Step 8: Predictions and simulations
-str(predict(fit_final_rangers_complete, newdata = data_final_pred_rangers_complete))
+# Step 8a: Point predictions
+data_final_pred_rangers_complete$data_predictable$staff_rangers_log_predicted <- predict(
+  fit_final_rangers_complete, newdata = data_final_pred_rangers_complete$data_predictable)[, 1]
+compute_tally(data_final_pred_rangers_complete)
+
+data_final_pred_others_complete$data_predictable$staff_others_log_predicted <- predict(
+  fit_final_others_complete, newdata = data_final_pred_others_complete$data_predictable)[, 1]
+compute_tally(data_final_pred_others_complete)
+
+data_final_pred_all_complete$data_predictable$staff_total_log_predicted <- predict(
+  fit_final_all_complete, newdata = data_final_pred_all_complete$data_predictable)[, 1]
+compute_tally(data_final_pred_all_complete)
+
+data_final_pred_rangers_partial$data_predictable$staff_rangers_log_predicted <- predict(
+  fit_final_rangers_partial, newdata = data_final_pred_rangers_partial$data_predictable)[, 1]
+compute_tally(data_final_pred_rangers_partial)
+
+data_final_pred_others_partial$data_predictable$staff_others_log_predicted <- predict(
+  fit_final_others_partial, newdata = data_final_pred_others_partial$data_predictable)[, 1]
+compute_tally(data_final_pred_others_partial)
+
+data_final_pred_all_partial$data_predictable$staff_total_log_predicted <- predict(
+  fit_final_all_partial, newdata = data_final_pred_all_partial$data_predictable)[, 1]
+compute_tally(data_final_pred_all_partial)
 
 
-
+# Step 8b: Simulations
