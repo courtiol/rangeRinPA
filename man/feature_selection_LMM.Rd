@@ -22,7 +22,7 @@ feature_selection_LMM_internal(
   rep = 10,
   Ncpu = 1,
   target = "staff_rangers_log",
-  spatial = "Matern",
+  spatial = TRUE,
   seed = 123,
   ...
 )
@@ -44,7 +44,7 @@ feature_selection_LMM_internal(
 
 \item{...}{additional parameters to be passed to \code{\link[spaMM:fitme]{spaMM::fitme()}}}
 
-\item{spatial}{either FALSE (default) or TRUE (or "Matern" as synonymous)}
+\item{spatial}{either FALSE (default) or TRUE}
 }
 \description{
 Perform feature selection on LMMs

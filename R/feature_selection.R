@@ -52,7 +52,7 @@ NULL
 #' @export
 #'
 feature_selection_LMM <- function(full_fit, metric = "RMSE", minimise = TRUE, rep = 10, Ncpu = 1, target = "staff_rangers_log", seed = 123, ...) {
-  all_res_matern <- feature_selection_LMM_internal(full_fit = full_fit, rep = rep, Ncpu = Ncpu, target = target, spatial = "Matern", seed = seed, ...)
+  all_res_matern <- feature_selection_LMM_internal(full_fit = full_fit, rep = rep, Ncpu = Ncpu, target = target, spatial = TRUE, seed = seed, ...)
   all_res_matern$Matern <- TRUE
   full_fit_no_matern <- stats::update(full_fit, . ~ . - Matern(1|long + lat))
   all_res_no_matern <- feature_selection_LMM_internal(full_fit = full_fit_no_matern, rep = rep, Ncpu = Ncpu, target = target, spatial = FALSE, seed = seed, ...)
@@ -78,7 +78,7 @@ feature_selection_LMM <- function(full_fit, metric = "RMSE", minimise = TRUE, re
 #' @describeIn feature_selection_LMM internal function performing the feature selection on LMMs
 #' @export
 #'
-feature_selection_LMM_internal <- function(full_fit, rep = 10, Ncpu = 1, target = "staff_rangers_log", spatial = "Matern", seed = 123, ...) {
+feature_selection_LMM_internal <- function(full_fit, rep = 10, Ncpu = 1, target = "staff_rangers_log", spatial = TRUE, seed = 123, ...) {
   data <- full_fit$data
   test_k <- function(fit, k) {
     f <- formula_top_pred_LMM(fit, k = k)
@@ -92,7 +92,7 @@ feature_selection_LMM_internal <- function(full_fit, rep = 10, Ncpu = 1, target 
     k <- k_to_do[i]
     res[[i]] <- test_k(fit, k = k)
     new_formula <- formula_top_pred_LMM(fit, k = k)
-    if (spatial == "Matern") {
+    if (spatial) {
       new_formula <- stats::as.formula(paste(as.character(new_formula)[2], "~", as.character(new_formula)[3], "+ Matern(1|long + lat)"))
     }
     res[[i]]$formula <- deparse(new_formula, width.cutoff = 500)

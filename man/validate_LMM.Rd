@@ -27,7 +27,7 @@ validate_LMM(
 
 \item{target}{the quoted name of the response variable (default = "staff_rangers_log")}
 
-\item{spatial}{either FALSE (default) or TRUE (or "Matern" as synonymous)}
+\item{spatial}{either FALSE (default) or TRUE}
 
 \item{seed}{the seed used to control the reproducibility of the cross validation}
 
