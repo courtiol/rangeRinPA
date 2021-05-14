@@ -53,6 +53,7 @@ check_losses <- function(vars, data, resp_var = "staff_rangers_log", PA_var = "P
 #' @param data the complete dataset
 #' @param test_prop the amount of rows to keep in the test dataset (default = 0)
 #' @param keep.var a vector of character strings indicating which variables to keep in the dataset on top of those defined by the formula
+#' @param drop_na whether to drop NAs or not (default = TRUE)
 #' @param seed an optional seed for the RNG
 #' @export
 #'
@@ -60,7 +61,7 @@ check_losses <- function(vars, data, resp_var = "staff_rangers_log", PA_var = "P
 #' prepare_data(log(staff_rangers + 1) ~ log(GDP_2019) + Matern(1|lat + long),
 #'              data = data_rangers, test_prop = 0.1)
 #'
-prepare_data <- function(formula, data, test_prop = 0, keep.var = NULL, seed = NULL) {
+prepare_data <- function(formula, data, test_prop = 0, keep.var = NULL, drop_na = TRUE, seed = NULL) {
   if (test_prop < 0 | test_prop > 1) stop("test_prop must be between 0 and 1")
   vars <- all.vars(formula)
   if (any(vars == ".")) {
@@ -76,7 +77,7 @@ prepare_data <- function(formula, data, test_prop = 0, keep.var = NULL, seed = N
   data <- data[, vars]
   omit_obj <- stats::na.omit(data)
   row_to_drop <- as.numeric(attr(omit_obj, "na.action"))
-  if (length(row_to_drop) > 0) {
+  if (length(row_to_drop) > 0 && drop_na) {
     data_train <- data[-row_to_drop, ]
   } else {
     data_train <- data

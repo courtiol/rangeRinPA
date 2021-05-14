@@ -184,6 +184,10 @@ globalVariables(".data")
 #'     - completely or partially known ("partial_known")
 #'     - completely known ("complete")
 #' according to the choice, the variable PA_area is also adjusted.
+#' @param NA_in_resp whether or not to keep only NA (TRUE) or discard them all (FALSE) in response variable (default = NULL -> do nothing)
+#' @param NA_in_preds whether or not to keep only NA (TRUE) or discard them all (FALSE) in predictor variables (default = NULL -> do nothin)
+#' @param keep_details whether or not to keep variables used for construction (default = FALSE)
+#' @param type either "prediction" or "training"
 #'
 #' @return a tibble
 #' @name build_training_data
@@ -207,8 +211,80 @@ NULL
 #' @describeIn build_training_data build the initial training datasets
 #' @export
 #'
-build_initial_training_data <- function(data, response, survey) {
+build_initial_training_data <- function(data, formula, survey) {
+  data <- build_data(data = data, formula = formula, type = "training")
+  data <- handle_outliers(data = data)
+  data <- handle_PA_area(data = data, survey = survey, formula = formula, keep_details = TRUE)
+  data <- handle_transform(data = data)
+  data <- handle_na(data = data, response = paste0(as.character(formula)[[2]], "_log"))
+  data <- handle_order(data)
+  data
+}
 
+
+#' @describeIn build_training_data build the final training datasets
+#' @export
+#'
+build_final_training_data <- function(data, formula, survey) {
+  data <- build_data(data = data, formula = formula, type = "training")
+  data <- handle_PA_area(data = data, survey = survey, formula = formula, keep_details = TRUE)
+  data <- handle_outliers(data = data)
+  data <- handle_transform(data = data)
+  data <- handle_order(data)
+  data
+}
+
+#' @describeIn build_training_data build the final prediction datasets
+#' @export
+#'
+build_final_pred_data <- function(data, formula, survey) {
+  data_list <- build_data(data = data, formula = formula, type = "prediction")
+  for (data in names(data_list)) {
+    if (data == "data_known") {
+      data_list[[data]] <- handle_PA_area(data = data_list[[data]], survey = survey, formula = formula, keep_details = TRUE)
+    } else {
+      data_list[[data]] <- handle_PA_area(data = data_list[[data]], survey = "any_unknown", formula = formula, keep_details = TRUE)
+      data_list[[data]] <- handle_outliers(data = data_list[[data]])
+    }
+    data_list[[data]] <- handle_transform(data = data_list[[data]])
+    data_list[[data]] <- handle_order(data_list[[data]])
+  }
+  data_list
+}
+
+#' @describeIn build_training_data internal function to build the training and prediction datasets
+#' @export
+#'
+build_data <- function(data, formula, type) {
+
+  formula <- drop_logs(formula)
+
+  if (type == "training") {
+    data <- prepare_data(formula = formula, data = data, test_prop = 0, drop_na = TRUE,
+                         keep.var = c("countryname_eng", "PA_area_surveyed", "PA_area_unsurveyed"))$data_train
+    data <- handle_na(data = data, response = as.character(formula)[[2]], NA_in_resp = FALSE, NA_in_preds = FALSE)
+  } else if (type == "prediction") {
+    data <- prepare_data(formula = formula, data = data, test_prop = 0, drop_na = FALSE,
+                         keep.var = c("countryname_eng", "PA_area_surveyed", "PA_area_unsurveyed"))$data_train
+    data_known   <- handle_na(data = data, response = as.character(formula)[[2]], NA_in_resp = FALSE, NA_in_preds = NULL)
+    data_only_na <- handle_na(data = data, response = as.character(formula)[[2]], NA_in_resp = NULL, NA_in_preds = TRUE)
+    data_no_na   <- handle_na(data = data, response = as.character(formula)[[2]], NA_in_resp = NULL, NA_in_preds = FALSE)
+
+    data_only_na   <- data_only_na[is.na(data_only_na[[as.character(formula)[[2]]]]) | !(!is.na(data_only_na[[as.character(formula)[[2]]]]) & data_only_na$PA_area_unsurveyed == 0), ]
+    data_no_na   <- data_no_na[is.na(data_no_na[[as.character(formula)[[2]]]]) | !(!is.na(data_no_na[[as.character(formula)[[2]]]]) & data_no_na$PA_area_unsurveyed == 0), ]
+
+    data <- list(data_not_predictable = data_only_na, data_predictable = data_no_na, data_known = data_known)
+  } else {
+    stop("type unknown")
+  }
+  data
+}
+
+
+#' @describeIn build_training_data internal function to handle PA_area while building the datasets
+#' @export
+#'
+handle_PA_area <- function(data, survey, formula = NULL, keep_details = FALSE) {
   if (survey == "complete_unknown") {
     data %>%
       dplyr::filter(.data$PA_area_surveyed < 0.1) %>%
@@ -216,6 +292,9 @@ build_initial_training_data <- function(data, response, survey) {
   } else if (survey == "partial_unknown") {
     data %>%
       dplyr::filter(.data$PA_area_unsurveyed > 0) %>%
+      dplyr::mutate(PA_area = .data$PA_area_unsurveyed) -> data
+  } else if (survey == "any_unknown") {
+    data %>%
       dplyr::mutate(PA_area = .data$PA_area_unsurveyed) -> data
   } else if (survey == "complete_known") {
     data %>%
@@ -227,61 +306,38 @@ build_initial_training_data <- function(data, response, survey) {
       dplyr::mutate(PA_area = .data$PA_area_surveyed) -> data
   } else stop("survey argument invalid")
 
-  data %>%
-    dplyr::filter(.data$countryname_eng != "Greenland") %>% # Greenland is a clear outlier, so we drop this country
-    tidyr::drop_na(.data$pop_density,
-                   .data$lat, .data$long, .data$country_UN_subcontinent,
-                   .data$PA_area, .data$area_country, .data$area_forest_pct,
-                   .data$GDP_2019, .data$GDP_capita, .data$GDP_growth, .data$unemployment,
-                   .data$EVI, .data$SPI, .data$EPI_2020, .data$IUCN_1_4_prop, .data$IUCN_1_2_prop) %>%
-    dplyr::mutate(dplyr::across(c({{response}},
-                                  .data$PA_area, .data$area_country,
-                                  .data$pop_density,
-                                  .data$GDP_2019, .data$GDP_capita, .data$unemployment), # we log transform to get hump-shaped distributions
-                  ~ log(.x + 1), .names = "{col}_log")) %>%
-    dplyr::select(tidyselect::contains("staff") & tidyselect::contains("log"), # the number of rangers (log)
-                  .data$pop_density_log,   # the density of the population
-                  .data$lat, .data$long, .data$country_UN_subcontinent, # the coordinate of the centroid of the largest polygon associated with a country/territory + subcontinent
-                  .data$PA_area_log, .data$area_country_log, .data$area_forest_pct, # areas of Protected area, country and pct of forest
-                  .data$GDP_2019_log, .data$GDP_capita_log, .data$GDP_growth, .data$unemployment_log, # economic indices
-                  .data$EVI, .data$SPI, .data$EPI_2020, .data$IUCN_1_4_prop, .data$IUCN_1_2_prop # ecological indices
-    )
-}
+  if (!is.null(formula) && !any(grepl(pattern = "PA_area", as.character(formula)[[3]]))) {
+    data %>%
+      dplyr::select(-.data$PA_area) -> data
+  }
 
+  # if (!keep_known) {
+  #   data %>%
+  #     dplyr::filter(.data$PA_area_unsurveyed == 0 && data$PA_area_surveyed > 0) -> data
+  # }
 
-#' @describeIn build_training_data build the final training datasets
-#' @export
-#'
-build_final_training_data <- function(data, formula, survey) {
-
-  data %>%
-    dplyr::filter(.data$countryname_eng != "Greenland") -> data # Greenland is a clear outlier, so we drop this country
-
-  formula <- drop_logs(formula)
-  data <- prepare_data(formula = formula, data = data, test_prop = 0)$data_train
-
-  if (any(colnames(data) == "PA_area_surveyed")) {
-    if (survey == "complete_unknown") {
-      data %>%
-        dplyr::filter(.data$PA_area_surveyed < 0.1) %>%
-        dplyr::mutate(PA_area = .data$PA_area_unsurveyed) -> data
-    } else if (survey == "partial_unknown") {
-      data %>%
-        dplyr::filter(.data$PA_area_unsurveyed > 0) %>%
-        dplyr::mutate(PA_area = .data$PA_area_unsurveyed) -> data
-    } else if (survey == "complete_known") {
-      data %>%
-        dplyr::filter(.data$PA_area_unsurveyed < 0.1) %>%
-        dplyr::mutate(PA_area = .data$PA_area_surveyed) -> data
-    } else if (survey == "partial_known") {
-      data %>%
-        dplyr::filter(.data$PA_area_surveyed > 0) %>%
-        dplyr::mutate(PA_area = .data$PA_area_surveyed) -> data
-    } else stop("survey argument invalid")
+  if (!keep_details) {
   data %>%
     dplyr::select(-.data$PA_area_surveyed, -.data$PA_area_unsurveyed) -> data
   }
 
+  data
+}
+
+
+#' @describeIn build_training_data internal function to handle outliers while building the datasets
+#' @export
+#'
+handle_outliers <- function(data) {
+  data %>%
+    dplyr::filter(.data$countryname_eng != "Greenland")
+}
+
+
+#' @describeIn build_training_data internal function to handle variable transformation while building the datasets
+#' @export
+#'
+handle_transform <- function(data) {
   for (var in colnames(data)) {
     if (var %in% c("staff_rangers", "staff_others", "staff_total", "PA_area", "area_country", "pop_density", "GDP_2019", "GDP_capita", "unemployment")) {
       data[[paste0(var, "_log")]] <- log(data[[var]] + 1)
@@ -291,6 +347,54 @@ build_final_training_data <- function(data, formula, survey) {
   data
 }
 
+
+#' @describeIn build_training_data internal function to handle order of variables while building the datasets
+#' @export
+#'
+handle_order <- function(data) {
+
+  inorder <- c("countryname_eng",
+               "staff_rangers", "staff_rangers_log",
+               "staff_others", "staff_others_log",
+               "staff_total", "staff_total_log",
+               "PA_area_surveyed", "PA_area_unsurveyed", "PA_area",  "PA_area_log",
+               "lat", "long",
+               "area_country", "area_country_log", "area_forest_pct",
+               "pop_density", "pop_density_log",
+               "GDP_2019", "GDP_2019_log", "GDP_capita", "GDP_capita_log", "GDP_growth",
+               "unemployment", "unemployment_log",
+               "EVI", "SPI", "EPI_2020", "IUCN_1_4_prop", "IUCN_1_2_prop")
+
+  data_ordered <- data[, stats::na.omit(match(inorder, colnames(data)))]
+
+  data_ordered
+}
+
+#' @describeIn build_training_data internal function to handle missing data while building the datasets
+#' @export
+#'
+handle_na <- function(data, response, NA_in_resp = NULL, NA_in_preds = NULL) {
+
+  bool_response <- grepl(pattern = response, x = colnames(data))
+
+  if (!is.null(NA_in_resp)) {
+    if (!NA_in_resp) {
+      data <- data[!is.na(data[, bool_response]), ]
+    } else if (NA_in_resp) {
+      data <- data[is.na(data[, bool_response]), ]
+    }
+  }
+
+  if (!is.null(NA_in_preds)) {
+    if (!NA_in_preds) {
+      data <- data[!apply(is.na(data[, !bool_response, drop = FALSE]), 1, any), ]
+    } else if (NA_in_preds) {
+      data <- data[apply(is.na(data[, !bool_response, drop = FALSE]), 1, any), ]
+    }
+  }
+
+  data
+}
 
 #' Test data
 #'

@@ -5,16 +5,37 @@
 \alias{build_initial_training_data,}
 \alias{build_final_training_data}
 \alias{build_initial_training_data}
+\alias{build_final_pred_data}
+\alias{build_data}
+\alias{handle_PA_area}
+\alias{handle_outliers}
+\alias{handle_transform}
+\alias{handle_order}
+\alias{handle_na}
 \title{Build the training datasets}
 \usage{
-build_initial_training_data(data, response, survey)
+build_initial_training_data(data, formula, survey)
 
 build_final_training_data(data, formula, survey)
+
+build_final_pred_data(data, formula, survey)
+
+build_data(data, formula, type)
+
+handle_PA_area(data, survey, formula = NULL, keep_details = FALSE)
+
+handle_outliers(data)
+
+handle_transform(data)
+
+handle_order(data)
+
+handle_na(data, response, NA_in_resp = NULL, NA_in_preds = NULL)
 }
 \arguments{
 \item{data}{the complete dataset}
 
-\item{response}{the unquoted name of the response variable}
+\item{formula}{the formula for the LMM or RF}
 
 \item{survey}{the criterion used to select rows depending on whether the focal number of staff is:
 - completely unknown ("complete_unknown")
@@ -23,7 +44,15 @@ build_final_training_data(data, formula, survey)
 - completely known ("complete")
 according to the choice, the variable PA_area is also adjusted.}
 
-\item{formula}{the formula for the LMM or RF}
+\item{type}{either "prediction" or "training"}
+
+\item{keep_details}{whether or not to keep variables used for construction (default = FALSE)}
+
+\item{response}{the unquoted name of the response variable}
+
+\item{NA_in_resp}{whether or not to keep only NA (TRUE) or discard them all (FALSE) in response variable (default = NULL -> do nothing)}
+
+\item{NA_in_preds}{whether or not to keep only NA (TRUE) or discard them all (FALSE) in predictor variables (default = NULL -> do nothin)}
 }
 \value{
 a tibble
@@ -36,6 +65,20 @@ These functions create a subset of the dataset \code{\link{data_rangers}} and lo
 \item \code{build_initial_training_data}: build the initial training datasets
 
 \item \code{build_final_training_data}: build the final training datasets
+
+\item \code{build_final_pred_data}: build the final prediction datasets
+
+\item \code{build_data}: internal function to build the training and prediction datasets
+
+\item \code{handle_PA_area}: internal function to handle PA_area while building the datasets
+
+\item \code{handle_outliers}: internal function to handle outliers while building the datasets
+
+\item \code{handle_transform}: internal function to handle variable transformation while building the datasets
+
+\item \code{handle_order}: internal function to handle order of variables while building the datasets
+
+\item \code{handle_na}: internal function to handle missing data while building the datasets
 }}
 
 \examples{
