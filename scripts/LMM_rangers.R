@@ -1,16 +1,25 @@
 library(spaMM)
 library(rangeRinPA)
 library(tidyverse)
-Ncpu <- 100
+
+Ncpu <- 1
+rep_feature_select <- 1000
+rep_finetune <- 10
+
 
 # Step 1 + 2: General data preparation & preparation of initial training datasets
+formula_rangers_full <- staff_rangers_log ~ PA_area_log + lat + long + area_country_log + area_forest_pct + pop_density_log + GDP_2019_log + GDP_capita_log +
+  GDP_growth + unemployment_log + EVI + SPI + EPI_2020 + IUCN_1_4_prop + IUCN_1_2_prop + Matern(1|long + lat)
 
-data_initial_training_rangers_complete <- drop_na(build_initial_training_data(data_rangers, response = staff_rangers, survey = "complete_known"))
-data_initial_training_others_complete  <- drop_na(build_initial_training_data(data_rangers, response = staff_others, survey = "complete_known"))
-data_initial_training_all_complete     <- drop_na(build_initial_training_data(data_rangers, response = staff_total, survey = "complete_known"))
-data_initial_training_rangers_partial  <- drop_na(build_initial_training_data(data_rangers, response = staff_rangers, survey = "partial_known"))
-data_initial_training_others_partial   <- drop_na(build_initial_training_data(data_rangers, response = staff_others, survey = "partial_known"))
-data_initial_training_all_partial      <- drop_na(build_initial_training_data(data_rangers, response = staff_total, survey = "partial_known"))
+formula_others_full <- update(formula_rangers_full, staff_others_log ~ .)
+formula_all_full <- update(formula_rangers_full, staff_total_log ~ .)
+
+data_initial_training_rangers_complete <- build_initial_training_data(data_rangers, formula = formula_rangers_full, survey = "complete_known")
+data_initial_training_others_complete  <- build_initial_training_data(data_rangers, formula = formula_others_full, survey = "complete_known")
+data_initial_training_all_complete     <- build_initial_training_data(data_rangers, formula = formula_all_full, survey = "complete_known")
+data_initial_training_rangers_partial  <- build_initial_training_data(data_rangers, formula = formula_rangers_full, survey = "partial_known")
+data_initial_training_others_partial   <- build_initial_training_data(data_rangers, formula = formula_others_full, survey = "partial_known")
+data_initial_training_all_partial      <- build_initial_training_data(data_rangers, formula = formula_all_full, survey = "partial_known")
 
 dim(data_initial_training_rangers_complete)
 dim(data_initial_training_others_complete)
@@ -21,12 +30,6 @@ dim(data_initial_training_all_partial)
 
 
 # Step 3: Selection of predictor variables
-
-formula_rangers_full <- staff_rangers_log ~ pop_density_log + PA_area_log + lat + long + area_country_log + area_forest_pct + GDP_2019_log + GDP_capita_log +
-  GDP_growth + unemployment_log + EVI + SPI + EPI_2020 + IUCN_1_4_prop + IUCN_1_2_prop + Matern(1|long + lat)
-
-formula_others_full <- update(formula_rangers_full, staff_others_log ~ .)
-formula_all_full <- update(formula_rangers_full, staff_total_log ~ .)
 
 fit_data_initial_training_rangers_complete_full <- fitme(formula_rangers_full,
                                                          data = data_initial_training_rangers_complete,
@@ -49,37 +52,37 @@ fit_data_initial_training_all_partial_full <- fitme(formula_all_full,
 
 selection_training_rangers_complete <- feature_selection_LMM(
   full_fit = fit_data_initial_training_rangers_complete_full,
-  rep = 1000, Ncpu = Ncpu,
+  rep = rep_feature_select, Ncpu = Ncpu,
   target = "staff_rangers_log",
   seed = 123)
 
 selection_training_others_complete <- feature_selection_LMM(
   full_fit = fit_data_initial_training_others_complete_full,
-  rep = 1000, Ncpu = Ncpu,
+  rep = rep_feature_select, Ncpu = Ncpu,
   target = "staff_others_log",
   seed = 123)
 
 selection_training_all_complete <- feature_selection_LMM(
   full_fit = fit_data_initial_training_all_complete_full,
-  rep = 1000, Ncpu = Ncpu,
+  rep = rep_feature_select, Ncpu = Ncpu,
   target = "staff_total_log",
   seed = 123)
 
 selection_training_rangers_partial <- feature_selection_LMM(
   full_fit = fit_data_initial_training_rangers_partial_full,
-  rep = 1000, Ncpu = Ncpu,
+  rep = rep_feature_select, Ncpu = Ncpu,
   target = "staff_rangers_log",
   seed = 123)
 
 selection_training_others_partial <- feature_selection_LMM(
   full_fit = fit_data_initial_training_others_partial_full,
-  rep = 1000, Ncpu = Ncpu,
+  rep = rep_feature_select, Ncpu = Ncpu,
   target = "staff_others_log",
   seed = 123)
 
 selection_training_all_partial <- feature_selection_LMM(
   full_fit = fit_data_initial_training_all_partial_full,
-  rep = 1000, Ncpu = Ncpu,
+  rep = rep_feature_select, Ncpu = Ncpu,
   target = "staff_total_log",
   seed = 123)
 
@@ -111,59 +114,64 @@ data_final_training_rangers_complete <- build_final_training_data(
   data = data_rangers,
   formula = selected_formula_rangers_complete,
   survey = "complete_known")
+
 data_final_training_others_complete <- build_final_training_data(
   data = data_rangers,
   formula = selected_formula_others_complete,
   survey = "complete_known")
+
 data_final_training_all_complete <- build_final_training_data(
   data = data_rangers,
   formula = selected_formula_all_complete,
   survey = "complete_known")
+
 data_final_training_rangers_partial <- build_final_training_data(
   data = data_rangers,
   formula = selected_formula_rangers_partial,
   survey = "partial_known")
+
 data_final_training_others_partial <- build_final_training_data(
   data = data_rangers,
   formula = selected_formula_others_partial,
   survey = "partial_known")
+
 data_final_training_all_partial <- build_final_training_data(
   data = data_rangers,
   formula = selected_formula_all_partial,
   survey = "partial_known")
 
-any(is.na(data_final_training_rangers_complete))
-any(is.na(data_final_training_others_complete))
-any(is.na(data_final_training_all_complete))
-any(is.na(data_final_training_rangers_partial))
-any(is.na(data_final_training_others_partial))
-any(is.na(data_final_training_all_partial))
+dim(data_final_training_rangers_complete)
+dim(data_final_training_others_complete)
+dim(data_final_training_all_complete)
+dim(data_final_training_rangers_partial)
+dim(data_final_training_others_partial)
+dim(data_final_training_all_partial)
 
 
 # Step 5: Selection of function inputs (fine tuning)
 finetune_rangers_complete <- finetune_LMM(selected_formula_rangers_complete,
                                           data = data_final_training_rangers_complete,
-                                          rep = 1000, Ncpu = Ncpu, seed = 123)
+                                          rep = rep_finetune, Ncpu = Ncpu, seed = 123)
 
 finetune_others_complete <- finetune_LMM(selected_formula_others_complete,
                                          data = data_final_training_others_complete,
-                                         rep = 1000, Ncpu = Ncpu, seed = 123)
+                                         rep = rep_finetune, Ncpu = Ncpu, seed = 123)
 
 finetune_all_complete <- finetune_LMM(selected_formula_all_complete,
-                                         data = data_final_training_all_complete,
-                                         rep = 1000, Ncpu = Ncpu, seed = 123)
+                                      data = data_final_training_all_complete,
+                                      rep = rep_finetune, Ncpu = Ncpu, seed = 123)
 
 finetune_rangers_partial <- finetune_LMM(selected_formula_rangers_partial,
                                          data = data_final_training_rangers_partial,
-                                         rep = 1000, Ncpu = Ncpu, seed = 123)
+                                         rep = rep_finetune, Ncpu = Ncpu, seed = 123)
 
 finetune_others_partial <- finetune_LMM(selected_formula_others_partial,
                                         data = data_final_training_others_partial,
-                                        rep = 1000, Ncpu = Ncpu, seed = 123)
+                                        rep = rep_finetune, Ncpu = Ncpu, seed = 123)
 
 finetune_all_partial <- finetune_LMM(selected_formula_all_partial,
                                      data = data_final_training_all_partial,
-                                     rep = 1000, Ncpu = Ncpu, seed = 123)
+                                     rep = rep_finetune, Ncpu = Ncpu, seed = 123)
 
 finetune_rangers_complete
 finetune_others_complete
@@ -171,6 +179,7 @@ finetune_all_complete
 finetune_rangers_partial
 finetune_others_partial
 finetune_all_partial
+
 
 # Step 6: Final training
 fit_final_rangers_complete <- fitme(selected_formula_rangers_complete,
@@ -203,7 +212,41 @@ fit_final_all_partial <- fitme(selected_formula_all_partial,
                                control.dist = list(dist.method = "Earth"),
                                method = finetune_all_partial$best_method)
 
+
 # Step 7: Preparation of datasets for predictions & simulations
+data_final_pred_rangers_complete <- build_final_pred_data(
+  data = data_rangers,
+  formula = selected_formula_rangers_complete,
+  survey = "complete_known")
+
+data_final_pred_others_complete <- build_final_pred_data(
+  data = data_rangers,
+  formula = selected_formula_others_complete,
+  survey = "complete_known")
+
+data_final_pred_all_complete <- build_final_pred_data(
+  data = data_rangers,
+  formula = selected_formula_all_complete,
+  survey = "complete_known")
+
+data_final_pred_rangers_partial <- build_final_pred_data(
+  data = data_rangers,
+  formula = selected_formula_rangers_partial,
+  survey = "partial_known")
+
+data_final_pred_others_partial <- build_final_pred_data(
+  data = data_rangers,
+  formula = selected_formula_others_partial,
+  survey = "partial_known")
+
+data_final_pred_all_partial <- build_final_pred_data(
+  data = data_rangers,
+  formula = selected_formula_all_partial,
+  survey = "partial_known")
+
 
 # Step 8: Predictions and simulations
+str(predict(fit_final_rangers_complete, newdata = data_final_pred_rangers_complete))
+
+
 
