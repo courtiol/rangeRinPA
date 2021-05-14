@@ -240,5 +240,8 @@ drop_logs <- function(formula) {
   if (length(preds) == 1 && preds == "") {
     preds <- "1"
   }
+  if (grepl(pattern = "PA_area", preds)) {
+    preds <- gsub(pattern = "PA_area", replacement = "PA_area_surveyed + PA_area_unsurveyed", x = preds)
+  }
   stats::as.formula(paste(resp, "~", preds))
 }

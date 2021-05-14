@@ -260,7 +260,7 @@ build_final_training_data <- function(data, formula, survey) {
   formula <- drop_logs(formula)
   data <- prepare_data(formula = formula, data = data, test_prop = 0)$data_train
 
-  if (any(colnames(data) == "PA_area")) {
+  if (any(colnames(data) == "PA_area_surveyed")) {
     if (survey == "complete_unknown") {
       data %>%
         dplyr::filter(.data$PA_area_surveyed < 0.1) %>%
@@ -278,6 +278,8 @@ build_final_training_data <- function(data, formula, survey) {
         dplyr::filter(.data$PA_area_surveyed > 0) %>%
         dplyr::mutate(PA_area = .data$PA_area_surveyed) -> data
     } else stop("survey argument invalid")
+  data %>%
+    dplyr::select(-.data$PA_area_surveyed, -.data$PA_area_unsurveyed) -> data
   }
 
   for (var in colnames(data)) {
