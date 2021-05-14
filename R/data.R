@@ -280,7 +280,13 @@ build_final_pred_data <- function(data, formula, survey) {
     if (data == "data_known") {
       data_list[[data]] <- handle_PA_area(data = data_list[[data]], survey = survey, formula = formula, keep_details = TRUE)
     } else {
-      data_list[[data]] <- handle_PA_area(data = data_list[[data]], survey = "any_unknown", formula = formula, keep_details = TRUE)
+      if (survey == "partial_known") {
+        data_list[[data]] <- handle_PA_area(data = data_list[[data]], survey = "any_unknown", formula = formula, keep_details = TRUE)
+      } else if (survey == "complete_known") {
+        data_list[[data]] <- handle_PA_area(data = data_list[[data]], survey = "any_known", formula = formula, keep_details = TRUE)
+      } else {
+        stop("wrong survey argument")
+      }
       data_list[[data]] <- handle_outliers(data = data_list[[data]])
     }
     data_list[[data]] <- handle_transform(data = data_list[[data]])
@@ -340,6 +346,9 @@ handle_PA_area <- function(data, survey, formula = NULL, keep_details = FALSE) {
   } else if (survey == "partial_known") {
     data %>%
       dplyr::filter(.data$PA_area_surveyed > 0) %>%
+      dplyr::mutate(PA_area = .data$PA_area_surveyed) -> data
+  } else if (survey == "any_known") {
+    data %>%
       dplyr::mutate(PA_area = .data$PA_area_surveyed) -> data
   } else stop("survey argument invalid")
 
