@@ -450,56 +450,56 @@ point_prediction_all_partial <- compute_tally(data_final_pred_all_partial)[3, "v
 
 # Step 8b: Simulations
 
-predictions_rangers_complete <- parallel::mclapply(1:1000, function(i) {
+predictions_rangers_complete <- parallel::mclapply(1:10000, function(i) {
   data_final_pred_rangers_complete$data_predictable$staff_rangers_log_predicted <- simulate(
     fit_final_rangers_complete, newdata = data_final_pred_rangers_complete$data_predictable,
     type = "predVar", variances = list(linPred = TRUE, disp = TRUE), verbose = FALSE)
-  compute_tally(data_final_pred_rangers_complete)[3, "value"]}, mc.cores = Ncpu, mc.set.seed = 123)
+  compute_tally(data_final_pred_rangers_complete)[3, "value"]}, mc.cores = Ncpu)
 quantile(unlist(predictions_rangers_complete), probs = c(0.025, 0.975))
-#     2.5%    97.5%
-# 143069.3 213158.2
+#      2.5%    97.5%
+#  127421.9 283112.7
 
-predictions_others_complete <- parallel::mclapply(1:1000, function(i) {
+predictions_others_complete <- parallel::mclapply(1:10000, function(i) {
   data_final_pred_others_complete$data_predictable$staff_others_log_predicted <- simulate(
     fit_final_others_complete, newdata = data_final_pred_others_complete$data_predictable,
     type = "predVar", variances = list(linPred = TRUE, disp = TRUE), verbose = FALSE)
-  compute_tally(data_final_pred_others_complete)[3, "value"]}, mc.cores = Ncpu, mc.set.seed = 123)
+  compute_tally(data_final_pred_others_complete)[3, "value"]}, mc.cores = Ncpu)
 quantile(unlist(predictions_others_complete), probs = c(0.025, 0.975))
-#     2.5%    97.5%
-# 109369.9 179821.7
+#       2.5%     97.5%
+#   87177.94 284380.55
 
-predictions_all_complete <- parallel::mclapply(1:1000, function(i) {
+predictions_all_complete <- parallel::mclapply(1:10000, function(i) {
   data_final_pred_all_complete$data_predictable$staff_total_log_predicted <- simulate(
     fit_final_all_complete, newdata = data_final_pred_all_complete$data_predictable,
     type = "predVar", variances = list(linPred = TRUE, disp = TRUE), verbose = FALSE)
-  compute_tally(data_final_pred_all_complete)[3, "value"]}, mc.cores = Ncpu, mc.set.seed = 123)
+  compute_tally(data_final_pred_all_complete)[3, "value"]}, mc.cores = Ncpu)
 quantile(unlist(predictions_all_complete), probs = c(0.025, 0.975))
-#     2.5%    97.5%
-# 263774.1 419088.7
+#      2.5%    97.5%
+#  220515.7 494453.4
 
-predictions_rangers_partial <- parallel::mclapply(1:1000, function(i) {
+predictions_rangers_partial <- parallel::mclapply(1:10000, function(i) {
   data_final_pred_rangers_partial$data_predictable$staff_rangers_log_predicted <- simulate(
     fit_final_rangers_partial, newdata = data_final_pred_rangers_partial$data_predictable,
     type = "predVar", variances = list(linPred = TRUE, disp = TRUE), verbose = FALSE)
-  compute_tally(data_final_pred_rangers_partial)[3, "value"]}, mc.cores = Ncpu, mc.set.seed = 123)
+  compute_tally(data_final_pred_rangers_partial)[3, "value"]}, mc.cores = Ncpu)
 quantile(unlist(predictions_rangers_partial), probs = c(0.025, 0.975))
-#     2.5%    97.5%
-# 267119.4 311374.1
+#      2.5%    97.5%
+#  263103.9 340497.6
 
-predictions_others_partial <- parallel::mclapply(1:1000, function(i) {
+predictions_others_partial <- parallel::mclapply(1:10000, function(i) {
   data_final_pred_others_partial$data_predictable$staff_others_log_predicted <- simulate(
     fit_final_others_partial, newdata = data_final_pred_others_partial$data_predictable,
     type = "predVar", variances = list(linPred = TRUE, disp = TRUE), verbose = FALSE)
-  compute_tally(data_final_pred_others_partial)[3, "value"]}, mc.cores = Ncpu, mc.set.seed = 123)
+  compute_tally(data_final_pred_others_partial)[3, "value"]}, mc.cores = Ncpu)
 quantile(unlist(predictions_others_partial), probs = c(0.025, 0.975))
 #     2.5%    97.5%
-# 254060.4 524283.7
+# 249115.6 568438.0
 
-predictions_all_partial <- parallel::mclapply(1:1000, function(i) {
+predictions_all_partial <- parallel::mclapply(1:10000, function(i) {
   data_final_pred_all_partial$data_predictable$staff_total_log_predicted <- simulate(
     fit_final_all_partial, newdata = data_final_pred_all_partial$data_predictable,
     type = "predVar", variances = list(linPred = TRUE, disp = TRUE), verbose = FALSE)
-  compute_tally(data_final_pred_all_partial)[3, "value"]}, mc.cores = Ncpu, mc.set.seed = 123)
+  compute_tally(data_final_pred_all_partial)[3, "value"]}, mc.cores = Ncpu)
 quantile(unlist(predictions_all_partial), probs = c(0.025, 0.975))
-#     2.5%    97.5%
-# 487392.2 634185.0
+#      2.5%    97.5%
+#  482282.4 628054.2
