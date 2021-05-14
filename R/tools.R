@@ -246,3 +246,21 @@ drop_logs <- function(formula) {
   }
   stats::as.formula(paste(resp, "~", preds))
 }
+
+
+#' Compute tally
+#'
+#' @param data the prediction data
+#'
+#' @export
+#'
+compute_tally <- function(data) {
+  vars <-  colnames(data$data_predictable)
+  resp_predicted <- vars[grep(pattern = "predicted", vars)]
+  resp_observed <- sub(pattern = "_predicted", replacement = "", resp_predicted)
+  sum_predicted <- sum(exp(data$data_predictable[, resp_predicted, drop = TRUE]) - 1)
+  sum_observed <- sum(exp(data$data_known[, resp_observed, drop = TRUE]) - 1)
+  sum_total <- sum_predicted + sum_observed
+  data.frame(sum = c("observed", "predicted", "total"),
+             value = c(sum_observed, sum_predicted, sum_total))
+}
