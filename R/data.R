@@ -171,6 +171,43 @@ globalVariables(".data")
 "data_rangers"
 
 
+#' Impute missing staff numbers proportionally to the density in surveyed areas
+#'
+#' This function modifies the numbers of staffs for countries/territories where it is partially known.
+#' For those country, it assumes that the unsurveyed area have a density of staff proportional to the density in the surveyed areas.
+#' The proportionality is set by the argument `coef`:
+#'     - e.g. if `coef = 1`, then unsurveyed areas are populated with the same density as the surveyed areas.
+#'     - e.g. if `coef = 0.5`, then unsurveyed areas are populated with half the density as the surveyed areas.
+#'
+#' @param data a data.frame or tibble produced by [`fetch_data_rangers()`]
+#' @param coef the coefficient used for the propagation
+#'
+#' @return a dataframe or tibble
+#' @export
+#'
+#' @examples
+#' data_rangers_50 <- fill_PA_area(data_rangers, coef = 0.5)
+#' surveyed_fraction <- with(data_rangers, PA_area_surveyed /
+#'      (PA_area_surveyed + PA_area_unsurveyed))
+#' plot(surveyed_fraction,
+#'      surveyed_fraction * data_rangers_50$staff_rangers / data_rangers$staff_rangers,
+#'      ylim = c(0, 1), xlim = c(0, 1))
+#' polygon(x = c(0, 1, 0, 0), y = c(0, 1, 0.5, 0))
+#'
+fill_PA_area <- function(data, coef) {
+
+  if (coef < 0 || coef > 1) {
+    stop("coef must be between 0 and 1")
+  }
+
+  data %>%
+    dplyr::mutate(prop_surveyed = .data$PA_area_surveyed / (.data$PA_area_surveyed + .data$PA_area_unsurveyed),
+                  correction_factor = 1/.data$prop_surveyed) %>%
+    dplyr::mutate(dplyr::across(tidyselect::contains("staff"), ~ .x * (1 + (.data$correction_factor - 1) * coef))) %>%
+    dplyr::mutate(PA_area_surveyed = .data$PA_area_surveyed + .data$PA_area_unsurveyed,
+                  PA_area_unsurveyed = 0)
+}
+
 
 #' Build the training datasets
 #'
