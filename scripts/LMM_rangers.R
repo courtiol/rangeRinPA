@@ -8,6 +8,7 @@ rep_finetune <- 10
 
 
 # Step 1 + 2: General data preparation & preparation of initial training datasets
+
 formula_rangers_full <- staff_rangers_log ~ PA_area_log + lat + long + area_country_log + area_forest_pct + pop_density_log + GDP_2019_log + GDP_capita_log +
   GDP_growth + unemployment_log + EVI + SPI + EPI_2020 + IUCN_1_4_prop + IUCN_1_2_prop + Matern(1|long + lat)
 
@@ -149,6 +150,7 @@ dim(data_final_training_all_partial)
 
 
 # Step 5: Selection of function inputs (fine tuning)
+
 finetune_rangers_complete <- finetune_LMM(selected_formula_rangers_complete,
                                           data = data_final_training_rangers_complete,
                                           rep = rep_finetune, Ncpu = Ncpu, seed = 123)
@@ -182,6 +184,7 @@ finetune_all_partial
 
 
 # Step 6: Final training
+
 fit_final_rangers_complete <- fitme(selected_formula_rangers_complete,
                                     data = data_final_training_rangers_complete,
                                     control.dist = list(dist.method = "Earth"),
@@ -214,6 +217,7 @@ fit_final_all_partial <- fitme(selected_formula_all_partial,
 
 
 # Step 7: Preparation of datasets for predictions & simulations
+
 data_final_pred_rangers_complete <- build_final_pred_data(
   data = data_rangers,
   formula = selected_formula_rangers_complete,
@@ -246,6 +250,7 @@ data_final_pred_all_partial <- build_final_pred_data(
 
 
 # Step 8a: Point predictions
+
 data_final_pred_rangers_complete$data_predictable$staff_rangers_log_predicted <- predict(
   fit_final_rangers_complete, newdata = data_final_pred_rangers_complete$data_predictable)[, 1]
 compute_tally(data_final_pred_rangers_complete)
@@ -278,6 +283,7 @@ point_prediction_all_partial <- compute_tally(data_final_pred_all_partial)[3, "v
 
 
 # Step 8b: Simulations
+
 set.seed(123)
 PI_prediction_rangers_complete <- quantile(replicate(1000, {
   data_final_pred_rangers_complete$data_predictable$staff_rangers_log_predicted <- simulate(
