@@ -249,26 +249,79 @@ data_final_pred_all_partial <- build_final_pred_data(
 data_final_pred_rangers_complete$data_predictable$staff_rangers_log_predicted <- predict(
   fit_final_rangers_complete, newdata = data_final_pred_rangers_complete$data_predictable)[, 1]
 compute_tally(data_final_pred_rangers_complete)
+point_prediction_rangers_complete <- compute_tally(data_final_pred_rangers_complete)[3, "value"]
 
 data_final_pred_others_complete$data_predictable$staff_others_log_predicted <- predict(
   fit_final_others_complete, newdata = data_final_pred_others_complete$data_predictable)[, 1]
 compute_tally(data_final_pred_others_complete)
+point_prediction_others_complete <- compute_tally(data_final_pred_others_complete)[3, "value"]
 
 data_final_pred_all_complete$data_predictable$staff_total_log_predicted <- predict(
   fit_final_all_complete, newdata = data_final_pred_all_complete$data_predictable)[, 1]
 compute_tally(data_final_pred_all_complete)
+point_prediction_all_complete <- compute_tally(data_final_pred_all_complete)[3, "value"]
 
 data_final_pred_rangers_partial$data_predictable$staff_rangers_log_predicted <- predict(
   fit_final_rangers_partial, newdata = data_final_pred_rangers_partial$data_predictable)[, 1]
 compute_tally(data_final_pred_rangers_partial)
+point_prediction_rangers_partial <- compute_tally(data_final_pred_rangers_partial)[3, "value"]
 
 data_final_pred_others_partial$data_predictable$staff_others_log_predicted <- predict(
   fit_final_others_partial, newdata = data_final_pred_others_partial$data_predictable)[, 1]
 compute_tally(data_final_pred_others_partial)
+point_prediction_others_partial <- compute_tally(data_final_pred_others_partial)[3, "value"]
 
 data_final_pred_all_partial$data_predictable$staff_total_log_predicted <- predict(
   fit_final_all_partial, newdata = data_final_pred_all_partial$data_predictable)[, 1]
 compute_tally(data_final_pred_all_partial)
+point_prediction_all_partial <- compute_tally(data_final_pred_all_partial)[3, "value"]
 
 
 # Step 8b: Simulations
+set.seed(123)
+PI_prediction_rangers_complete <- quantile(replicate(1000, {
+  data_final_pred_rangers_complete$data_predictable$staff_rangers_log_predicted <- simulate(
+    fit_final_rangers_complete, newdata = data_final_pred_rangers_complete$data_predictable,
+    type = "predVar", variances = list(linPred = TRUE, disp = TRUE), verbose = FALSE)
+  compute_tally(data_final_pred_rangers_complete)[3, "value"]
+}), probs = c(0.025, 0.975))
+
+set.seed(123)
+PI_prediction_others_complete <- quantile(replicate(1000, {
+  data_final_pred_others_complete$data_predictable$staff_others_log_predicted <- simulate(
+    fit_final_others_complete, newdata = data_final_pred_others_complete$data_predictable,
+    type = "predVar", variances = list(linPred = TRUE, disp = TRUE), verbose = FALSE)
+  compute_tally(data_final_pred_others_complete)[3, "value"]
+}), probs = c(0.025, 0.975))
+
+set.seed(123)
+PI_prediction_all_complete <- quantile(replicate(1000, {
+  data_final_pred_all_complete$data_predictable$staff_all_log_predicted <- simulate(
+    fit_final_all_complete, newdata = data_final_pred_all_complete$data_predictable,
+    type = "predVar", variances = list(linPred = TRUE, disp = TRUE), verbose = FALSE)
+  compute_tally(data_final_pred_all_complete)[3, "value"]
+}), probs = c(0.025, 0.975))
+
+set.seed(123)
+PI_prediction_rangers_partial <- quantile(replicate(1000, {
+  data_final_pred_rangers_partial$data_predictable$staff_rangers_log_predicted <- simulate(
+    fit_final_rangers_partial, newdata = data_final_pred_rangers_partial$data_predictable,
+    type = "predVar", variances = list(linPred = TRUE, disp = TRUE), verbose = FALSE)
+  compute_tally(data_final_pred_rangers_partial)[3, "value"]
+}), probs = c(0.025, 0.975))
+
+set.seed(123)
+PI_prediction_others_partial <- quantile(replicate(1000, {
+  data_final_pred_others_partial$data_predictable$staff_others_log_predicted <- simulate(
+    fit_final_others_partial, newdata = data_final_pred_others_partial$data_predictable,
+    type = "predVar", variances = list(linPred = TRUE, disp = TRUE), verbose = FALSE)
+  compute_tally(data_final_pred_others_partial)[3, "value"]
+}), probs = c(0.025, 0.975))
+
+set.seed(123)
+PI_prediction_all_partial <- quantile(replicate(1000, {
+  data_final_pred_all_partial$data_predictable$staff_all_log_predicted <- simulate(
+    fit_final_all_partial, newdata = data_final_pred_all_partial$data_predictable,
+    type = "predVar", variances = list(linPred = TRUE, disp = TRUE), verbose = FALSE)
+  compute_tally(data_final_pred_all_partial)[3, "value"]
+}), probs = c(0.025, 0.975))
