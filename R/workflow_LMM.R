@@ -246,7 +246,7 @@ run_LMM_workflow <- function(data, Ncpu = 2,  coef = 0, rep_feature_select = 100
   record$others$upr <- stats::quantile(unlist(predictions_others), probs = 0.975)
   record$all$upr <- stats::quantile(unlist(predictions_all), probs = 0.975)
 
-  cat("DONE!")
+  cat("DONE!\n")
   record$meta$duration_h <- as.double(difftime(Sys.time(), record$meta$start, units = "hours"))
   record
 }
