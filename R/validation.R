@@ -29,7 +29,7 @@ validate_LMM <- function(formula, data, rep = 10, Ncpu = 1, target = "staff_rang
                               keep.var =  c("long", "lat"), seed = seed + i)
     newfit <- spaMM::fitme(formula = formula, data = data_list$data_train, ...)
     predicted <- spaMM::predict.HLfit(newfit, newdata = data_list$data_test,
-                                      control = list(fix_predVar = TRUE))[, 1]
+                                      control = list(fix_predVar = FALSE))[, 1]
     observed <- data_list$data_test[, target, drop = TRUE]
     inv.dist <- NULL
     if (all(c("long", "lat") %in% colnames(data_list$data_test))) {
