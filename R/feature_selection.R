@@ -54,7 +54,8 @@ NULL
 feature_selection_LMM <- function(full_fit, metric = "RMSE", minimise = TRUE, rep = 10, Ncpu = 1, target = "staff_rangers_log", seed = 123, ...) {
   all_res_matern <- feature_selection_LMM_internal(full_fit = full_fit, rep = rep, Ncpu = Ncpu, target = target, spatial = TRUE, seed = seed, ...)
   all_res_matern$Matern <- TRUE
-  full_fit_no_matern <- spaMM::update.HLfit(full_fit, . ~ . - Matern(1|long + lat))
+  data <- full_fit$data
+  full_fit_no_matern <- spaMM::update.HLfit(full_fit, . ~ . - Matern(1|long + lat), data = data)
   all_res_no_matern <- feature_selection_LMM_internal(full_fit = full_fit_no_matern, rep = rep, Ncpu = Ncpu, target = target, spatial = FALSE, seed = seed, ...)
   all_res_no_matern$Matern <- FALSE
   all_res <- rbind(all_res_matern, all_res_no_matern)
