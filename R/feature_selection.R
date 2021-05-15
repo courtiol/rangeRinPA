@@ -54,7 +54,7 @@ NULL
 feature_selection_LMM <- function(full_fit, metric = "RMSE", minimise = TRUE, rep = 10, Ncpu = 1, target = "staff_rangers_log", seed = 123, ...) {
   all_res_matern <- feature_selection_LMM_internal(full_fit = full_fit, rep = rep, Ncpu = Ncpu, target = target, spatial = TRUE, seed = seed, ...)
   all_res_matern$Matern <- TRUE
-  full_fit_no_matern <- stats::update(full_fit, . ~ . - Matern(1|long + lat))
+  full_fit_no_matern <- spaMM::update.HLfit(full_fit, . ~ . - Matern(1|long + lat))
   all_res_no_matern <- feature_selection_LMM_internal(full_fit = full_fit_no_matern, rep = rep, Ncpu = Ncpu, target = target, spatial = FALSE, seed = seed, ...)
   all_res_no_matern$Matern <- FALSE
   all_res <- rbind(all_res_matern, all_res_no_matern)
@@ -96,7 +96,7 @@ feature_selection_LMM_internal <- function(full_fit, rep = 10, Ncpu = 1, target 
       new_formula <- stats::as.formula(paste(as.character(new_formula)[2], "~", as.character(new_formula)[3], "+ Matern(1|long + lat)"))
     }
     res[[i]]$formula <- deparse(new_formula, width.cutoff = 500)
-    fit <- stats::update(fit, new_formula)
+    fit <- spaMM::update.HLfit(fit, new_formula, data = data)
     ##TODO: extract and store AIC (marginal for LM, conditional for LMM)
   }
   cbind(k = k_to_do, as.data.frame(do.call("rbind", res)))
