@@ -1,4 +1,5 @@
 library(rangeRinPA)
+options(width = 350)
 LMM_000 <- run_LMM_workflow(data = data_rangers, Ncpu = 100, coef = 0)
 LMM_025 <- run_LMM_workflow(data = data_rangers, Ncpu = 100, coef = 0.25)
 LMM_050 <- run_LMM_workflow(data = data_rangers, Ncpu = 100, coef = 0.50)
