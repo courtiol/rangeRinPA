@@ -60,16 +60,13 @@ run_LMM_workflow <- function(data, Ncpu = 2,  coef = 0, rep_feature_select = 100
 
   fit_data_initial_training_rangers_full <- spaMM::fitme(formula_rangers_full,
                                                          data = data_initial_training_rangers,
-                                                         control.dist = list(dist.method = "Earth"),
-                                                         control = list(fix_predVar = TRUE))
+                                                         control.dist = list(dist.method = "Earth"))
   fit_data_initial_training_others_full <- spaMM::fitme(formula_others_full,
                                                         data = data_initial_training_others,
-                                                        control.dist = list(dist.method = "Earth"),
-                                                        control = list(fix_predVar = TRUE))
+                                                        control.dist = list(dist.method = "Earth"))
   fit_data_initial_training_all_full <- spaMM::fitme(formula_all_full,
                                                      data = data_initial_training_all,
-                                                     control.dist = list(dist.method = "Earth"),
-                                                     control = list(fix_predVar = TRUE))
+                                                     control.dist = list(dist.method = "Earth"))
 
   selection_training_rangers <- feature_selection_LMM(
     full_fit = fit_data_initial_training_rangers_full,
@@ -147,20 +144,17 @@ run_LMM_workflow <- function(data, Ncpu = 2,  coef = 0, rep_feature_select = 100
   fit_final_rangers <- spaMM::fitme(selected_formula_rangers,
                                     data = data_final_training_rangers,
                                     control.dist = list(dist.method = "Earth"),
-                                    method = finetune_rangers$best_method,
-                                    control = list(fix_predVar = TRUE))
+                                    method = finetune_rangers$best_method)
 
   fit_final_others <- spaMM::fitme(selected_formula_others,
                                    data = data_final_training_others,
                                    control.dist = list(dist.method = "Earth"),
-                                   method = finetune_others$best_method,
-                                   control = list(fix_predVar = TRUE))
+                                   method = finetune_others$best_method)
 
   fit_final_all <- spaMM::fitme(selected_formula_all,
                                 data = data_final_training_all,
                                 control.dist = list(dist.method = "Earth"),
-                                method = finetune_all$best_method,
-                                control = list(fix_predVar = TRUE))
+                                method = finetune_all$best_method)
 
 
   cat("Step 7: Preparation of datasets for predictions & simulations\n")
