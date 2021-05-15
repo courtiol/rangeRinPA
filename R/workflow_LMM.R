@@ -68,16 +68,19 @@ run_LMM_workflow <- function(data, Ncpu = 2,  coef = 0, rep_feature_select = 100
                                                      data = data_initial_training_all,
                                                      control.dist = list(dist.method = "Earth"))
 
+  cat("Step 3a: selection for rangers\n")
   selection_training_rangers <- feature_selection_LMM(
     full_fit = fit_data_initial_training_rangers_full,
     rep = rep_feature_select, Ncpu = Ncpu,
     target = "staff_rangers_log")
 
+  cat("Step 3b: selection for others\n")
   selection_training_others <- feature_selection_LMM(
     full_fit = fit_data_initial_training_others_full,
     rep = rep_feature_select, Ncpu = Ncpu,
     target = "staff_others_log")
 
+  cat("Step 3c: selection for all\n")
   selection_training_all <- feature_selection_LMM(
     full_fit = fit_data_initial_training_all_full,
     rep = rep_feature_select, Ncpu = Ncpu,
