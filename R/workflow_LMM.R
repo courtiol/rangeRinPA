@@ -19,12 +19,13 @@
 #'   LMM_100 <- run_LMM_workflow(data = data_rangers, Ncpu = 100, coef = 1)
 #' }
 #'
-run_LMM_workflow <- function(data, Ncpu = 2,  coef = 0, rep_feature_select = 1000, rep_finetune = 1000, rep_simu = 10000) {
+run_LMM_workflow <- function(data, rerank = TRUE, Ncpu = 2,  coef = 0, rep_feature_select = 1000, rep_finetune = 1000, rep_simu = 10000) {
 
   data <- fill_PA_area(data, coef = coef)
 
   record <- list(meta = tibble::tibble(start = Sys.time(),
                                        Ncpu = Ncpu,
+                                       rerank = rerank,
                                        rep_feature_select = rep_feature_select,
                                        rep_finetune = rep_finetune,
                                        rep_simu = rep_simu,
@@ -74,18 +75,21 @@ run_LMM_workflow <- function(data, Ncpu = 2,  coef = 0, rep_feature_select = 100
   cat("Step 3a: selection for rangers\n")
   selection_training_rangers <- feature_selection_LMM(
     full_fit = fit_data_initial_training_rangers_full,
+    rerank = rerank,
     rep = rep_feature_select, Ncpu = Ncpu,
     target = "staff_rangers_log")
 
   cat("Step 3b: selection for others\n")
   selection_training_others <- feature_selection_LMM(
     full_fit = fit_data_initial_training_others_full,
+    rerank = rerank,
     rep = rep_feature_select, Ncpu = Ncpu,
     target = "staff_others_log")
 
   cat("Step 3c: selection for all\n")
   selection_training_all <- feature_selection_LMM(
     full_fit = fit_data_initial_training_all_full,
+    rerank = rerank,
     rep = rep_feature_select, Ncpu = Ncpu,
     target = "staff_total_log")
 

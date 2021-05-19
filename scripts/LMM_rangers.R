@@ -26,6 +26,7 @@ sapply(files_to_load, function(file) load(file, envir = .GlobalEnv))
 extract_results <- function(what, who) {
   data.frame(type = "LMM",
     coef = what$meta$coef_population,
+    rerank = what$meta$rerank,
     Ncpu = what$meta$Ncpu,
     run_time = what$meta$duration_h,
     point_pred = what[[who]]$tally_total,
