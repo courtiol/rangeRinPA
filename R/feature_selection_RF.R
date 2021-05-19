@@ -57,7 +57,7 @@ feature_selection_RF <- function(full_fit, data, metric = "RMSE", minimise = TRU
   all_res_spatial$spatial <- TRUE
 
   all_res_no_spatial <- feature_selection_RF_internal(full_fit = full_fit, data = data, rep = rep, Ncpu = Ncpu, target = target, spatial = FALSE, seed = seed, ...)
-  all_res_spatial$spatial <- FALSE
+  all_res_no_spatial$spatial <- FALSE
 
   all_res <- rbind(all_res_spatial, all_res_no_spatial)
   if (minimise) {
