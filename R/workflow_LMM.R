@@ -91,6 +91,18 @@ run_LMM_workflow <- function(data, Ncpu = 2,  coef = 0, rep_feature_select = 100
   selected_formula_others <- stats::as.formula(selection_training_others$formula[1])
   selected_formula_all <- stats::as.formula(selection_training_all$formula[1])
 
+  if (selection_training_rangers$spatial[1]) {
+    selected_formula_rangers <- stats::update.formula(selected_formula_rangers, . ~ . + Matern(1|long + lat))
+  }
+
+  if (selected_formula_others$spatial[1]) {
+    selected_formula_others <- stats::update.formula(selected_formula_others, . ~ . + Matern(1|long + lat))
+  }
+
+  if (selected_formula_all$spatial[1]) {
+    selected_formula_all <- stats::update.formula(selected_formula_all, . ~ . + Matern(1|long + lat))
+  }
+
   record$rangers$selected_features <- list(selection_training_rangers)
   record$rangers$selected_formula <- deparse(selected_formula_rangers, width.cutoff = 500)
   record$others$selected_features <- list(selection_training_others)

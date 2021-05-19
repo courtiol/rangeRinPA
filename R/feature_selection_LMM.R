@@ -52,13 +52,13 @@ NULL
 #' @export
 #'
 feature_selection_LMM <- function(full_fit, metric = "RMSE", minimise = TRUE, rep = 10, Ncpu = 1, target = "staff_rangers_log", seed = 123, ...) {
-  all_res_matern <- feature_selection_LMM_internal(full_fit = full_fit, rep = rep, Ncpu = Ncpu, target = target, spatial = TRUE, seed = seed, ...)
-  all_res_matern$Matern <- TRUE
+  all_res_spatial <- feature_selection_LMM_internal(full_fit = full_fit, rep = rep, Ncpu = Ncpu, target = target, spatial = TRUE, seed = seed, ...)
+  all_res_spatial$spatial <- TRUE
   data <- full_fit$data
-  full_fit_no_matern <- spaMM::update.HLfit(full_fit, . ~ . - Matern(1|long + lat), data = data)
-  all_res_no_matern <- feature_selection_LMM_internal(full_fit = full_fit_no_matern, rep = rep, Ncpu = Ncpu, target = target, spatial = FALSE, seed = seed, ...)
-  all_res_no_matern$Matern <- FALSE
-  all_res <- rbind(all_res_matern, all_res_no_matern)
+  full_fit_no_spatial <- spaMM::update.HLfit(full_fit, . ~ . - Matern(1|long + lat), data = data)
+  all_res_no_spatial <- feature_selection_LMM_internal(full_fit = full_fit_no_spatial, rep = rep, Ncpu = Ncpu, target = target, spatial = FALSE, seed = seed, ...)
+  all_res_no_spatial$spatial <- FALSE
+  all_res <- rbind(all_res_spatial, all_res_no_spatial)
   if (minimise) {
     best_k <- all_res$k[which.min(all_res[, metric])]
     best_metric <- min(all_res[, metric])
@@ -73,7 +73,7 @@ feature_selection_LMM <- function(full_fit, metric = "RMSE", minimise = TRUE, re
   all_res <- all_res[order(all_res[, metric], decreasing = decreasing), ]
   rownames(all_res) <- NULL
   all_res[[paste0(metric, "_tol")]] <- 100*(abs(all_res[, metric] - extreme(all_res[, metric])))/extreme(all_res[, metric]) #as in caret::pickSizeTolerance
-  tibble::as_tibble(all_res[, c("k", "Matern", metric, paste0(metric, "_tol"), "formula", "rep")])
+  tibble::as_tibble(all_res[, c("k", "spatial", metric, paste0(metric, "_tol"), "formula", "rep")])
 }
 
 #' @describeIn feature_selection_LMM internal function performing the feature selection on LMMs
@@ -81,23 +81,16 @@ feature_selection_LMM <- function(full_fit, metric = "RMSE", minimise = TRUE, re
 #'
 feature_selection_LMM_internal <- function(full_fit, rep = 10, Ncpu = 1, target = "staff_rangers_log", spatial = TRUE, seed = 123, ...) {
   data <- full_fit$data
-  test_k <- function(fit, k) {
-    f <- formula_top_pred_LMM(fit, k = k)
-    v <- validate_LMM(f, data = data, rep = rep, Ncpu = Ncpu, target = target, spatial = spatial, seed = seed, ...)
-    aggregate_metrics(v)
-  }
-  k_to_do <- nrow(rank_predictors_LMM(full_fit)):0
+  k_to_do <- nrow(rank_predictors_LMM(full_fit)):0L
   fit <- full_fit
   res <- list()
   for (i in seq_along(k_to_do)) {
     k <- k_to_do[i]
-    res[[i]] <- test_k(fit, k = k)
     new_formula <- formula_top_pred_LMM(fit, k = k)
-    if (spatial) {
-      new_formula <- stats::as.formula(paste(as.character(new_formula)[2], "~", as.character(new_formula)[3], "+ Matern(1|long + lat)"))
-    }
+    v <- validate_LMM(new_formula, data = data, rep = rep, Ncpu = Ncpu, target = target, spatial = spatial, seed = seed, ...)
+    res[[i]] <- aggregate_metrics(v)
     res[[i]]$formula <- deparse(new_formula, width.cutoff = 500)
-    fit <- spaMM::update.HLfit(fit, new_formula, data = data)
+    fit <- attr(v, "fit_fulldata")
     ##TODO: extract and store AIC (marginal for LM, conditional for LMM)
   }
   cbind(k = k_to_do, as.data.frame(do.call("rbind", res)))
