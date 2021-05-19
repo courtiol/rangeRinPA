@@ -2,6 +2,7 @@
 #' Run the full workflow for LMM
 #'
 #' @inheritParams validate_LMM
+#' @inheritParams feature_selection_LMM
 #' @param coef the coefficient used to population rangers in unsurveyed part of surveyed countries (see [`fill_PA_area()`])
 #' @param rep_feature_select the number of replicates for the feature selection (default = 1000)
 #' @param rep_finetune the number of replicates for fine tuning (default = 1000)
