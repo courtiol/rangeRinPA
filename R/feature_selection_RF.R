@@ -82,7 +82,7 @@ feature_selection_RF <- function(full_fit, data, metric = "RMSE", minimise = TRU
 #' @export
 #'
 feature_selection_RF_internal <- function(full_fit, data, rep = 10, Ncpu = 1, target = "staff_rangers_log", spatial = TRUE, seed = 123, ...) {
-  k_to_do <- nrow(rank_predictors_RF(full_fit)):0
+  k_to_do <- nrow(rank_predictors_RF(full_fit)):1L ## must stop at 1 not 0 since intercept only model not possible in ranger
   fit <- full_fit
   res <- list()
   for (i in seq_along(k_to_do)) {
