@@ -4,12 +4,14 @@
 \alias{finetune_LMM}
 \title{Fine tune LMM}
 \usage{
-finetune_LMM(formula, data, rep = 10, Ncpu = 1, seed = 123)
+finetune_LMM(formula, data, spatial, rep = 10, Ncpu = 1, seed = 123)
 }
 \arguments{
 \item{formula}{a model formula used to fit the data}
 
 \item{data}{the full dataset}
+
+\item{spatial}{either FALSE (default) or TRUE}
 
 \item{rep}{the number of cross validation replicates (default = 10)}
 

@@ -257,6 +257,23 @@ drop_logs <- function(formula) {
 }
 
 
+#' Add Matern to formula
+#'
+#' @param formula a formula
+#'
+#' @return a formula
+#' @export
+#'
+#' @examples
+#' f <- staff_rangers_log ~ pop_density_log + PA_area_log + long
+#' add_Matern(f)
+#'
+add_Matern <- function(formula) {
+  f <- stats::as.formula(formula)
+  stats::update.formula(f, . ~ . + Matern(1|long + lat))
+}
+
+
 #' Compute tally
 #'
 #' @param data the prediction data

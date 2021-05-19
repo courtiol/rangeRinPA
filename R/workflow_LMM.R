@@ -135,14 +135,17 @@ run_LMM_workflow <- function(data, Ncpu = 2,  coef = 0, rep_feature_select = 100
 
   finetune_rangers <- finetune_LMM(selected_formula_rangers,
                                    data = data_final_training_rangers,
+                                   spatial = record$rangers$selected_spatial,
                                    rep = rep_finetune, Ncpu = Ncpu)
 
   finetune_others <- finetune_LMM(selected_formula_others,
                                   data = data_final_training_others,
+                                  spatial = record$others$selected_spatial,
                                   rep = rep_finetune, Ncpu = Ncpu)
 
   finetune_all <- finetune_LMM(selected_formula_all,
                                data = data_final_training_all,
+                               spatial = record$all$selected_spatial,
                                rep = rep_finetune, Ncpu = Ncpu)
 
   record$rangers$fine_tuning <- list(finetune_rangers)
@@ -155,17 +158,17 @@ run_LMM_workflow <- function(data, Ncpu = 2,  coef = 0, rep_feature_select = 100
 
   cat("Step 6: Final training\n")
 
-  fit_final_rangers <- spaMM::fitme(selected_formula_rangers,
+  fit_final_rangers <- spaMM::fitme(if (record$rangers$selected_spatial) add_Matern(selected_formula_rangers) else selected_formula_rangers,
                                     data = data_final_training_rangers,
                                     control.dist = list(dist.method = "Earth"),
                                     method = finetune_rangers$best_method)
 
-  fit_final_others <- spaMM::fitme(selected_formula_others,
+  fit_final_others <- spaMM::fitme(if (record$others$selected_spatial) add_Matern(selected_formula_others) else selected_formula_others,
                                    data = data_final_training_others,
                                    control.dist = list(dist.method = "Earth"),
                                    method = finetune_others$best_method)
 
-  fit_final_all <- spaMM::fitme(selected_formula_all,
+  fit_final_all <- spaMM::fitme(if (record$all$selected_spatial) add_Matern(selected_formula_all) else selected_formula_all,
                                 data = data_final_training_all,
                                 control.dist = list(dist.method = "Earth"),
                                 method = finetune_all$best_method)

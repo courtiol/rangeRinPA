@@ -4,18 +4,18 @@
 #'
 #' @export
 #'
-finetune_LMM <- function(formula, data, rep = 10, Ncpu = 1, seed = 123) {
+finetune_LMM <- function(formula, data, spatial, rep = 10, Ncpu = 1, seed = 123) {
   ML_res <- validate_LMM(formula,
                          data = data,
                          rep = rep, Ncpu = Ncpu,
-                         spatial = any(grepl("Matern", formula)),
+                         spatial = spatial,
                          target = as.character(formula)[2],
                          seed = seed,
                          method = "ML")
   REML_res <- validate_LMM(formula,
                            data = data,
                            rep = rep, Ncpu = Ncpu,
-                           spatial = any(grepl("Matern", formula)),
+                           spatial = spatial,
                            target = as.character(formula)[2],
                            seed = seed,
                            method = "REML")
