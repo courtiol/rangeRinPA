@@ -51,7 +51,7 @@ validate_LMM <- function(formula, data, rep = 10, Ncpu = 1, target = "staff_rang
 #' Compute accuracy metrics on test set for RF
 #'
 #' @inheritParams validate_LMM
-#' @param spatial either FALSE (default), "dist" (to use matrix of distances as predictor), "coord" (to use long & lat as predictors) or "hybrid" (to use predicts from spaMM as predictors)
+#' @param spatial either FALSE (default), or TRUE (to use matrix of distances as predictor)
 #' @param method either "CV" for cross-validation or "OOB" for directly using the out-of-bag observations generated when growing the forest
 #' @param ... additional parameters to be passed to [`ranger::ranger()`]
 #'
@@ -68,14 +68,10 @@ validate_LMM <- function(formula, data, rep = 10, Ncpu = 1, target = "staff_rang
 #'
 validate_RF <- function(formula, data, rep = 10, Ncpu = 1, target = "staff_rangers_log", spatial = FALSE, seed = 123, method = "CV", return_fit = TRUE, ...) {
 
-  if (spatial == "coord") {
-    formula <- stats::update.formula(formula, . ~ . + lat + long)
-  } else if (spatial == "dist") { ## add distance to each location as predictors
+  if (spatial) { ## add distance to each location as predictors
       data <- cbind(data, compute_distance(long = data$long, lat = data$lat))
       dist_vars <- colnames(data)[grep("loc_", colnames(data))]
       formula <- stats::as.formula(paste(formula[[2]], paste(c(formula[[3]], dist_vars), collapse = "+"), sep = " ~ "))
-  } else if (spatial == "hybrid") {
-    formula_lmm <- stats::update.formula(formula, . ~ . + Matern(1 |long + lat))
   } else if (spatial != FALSE) {
     stop("Spatial method not found")
   }
@@ -83,12 +79,6 @@ validate_RF <- function(formula, data, rep = 10, Ncpu = 1, target = "staff_range
     metrics <- parallel::mclapply(seq_len(rep), function(i) {
       data_list <- prepare_data(formula = formula, data = data, test_prop = 0.1,
                                 keep.var =  c("long", "lat"), seed = seed + i)
-      if (spatial == "hybrid") {
-        formula <- stats::update.formula(formula, . ~ . + pred_spaMM) ## this call should not be moved up before call to prepare_data()!
-        newfit_lmm <- spaMM::fitme(formula_lmm, data =  data_list$data_train)
-        data_list$data_train$pred_spaMM <- spaMM::predict.HLfit(newfit_lmm, newdata = data_list$data_train)[, 1]
-        data_list$data_test$pred_spaMM  <- spaMM::predict.HLfit(newfit_lmm, newdata = data_list$data_test)[, 1]
-      }
       newfit <- ranger::ranger(formula = formula, data = data_list$data_train, num.threads = 1, ...)
       predicted <- stats::predict(newfit, data = data_list$data_test, num.threads = 1)$predictions
       observed <- data_list$data_test[, target, drop = TRUE]
@@ -104,12 +94,7 @@ validate_RF <- function(formula, data, rep = 10, Ncpu = 1, target = "staff_range
     out <- cbind(CV_test = seq_len(rep), as.data.frame(do.call("rbind", metrics)))
     } else if (method == "OOB") {
       if (rep > 1) {
-        warning("Argument rep ignore when method = 'OOB', you can influence repetitions using the argument num.tress passed to ranger() instead")
-      }
-      if (spatial == "hybrid") {
-        formula <- stats::update.formula(formula, . ~ . + pred_spaMM) ## this call should not be moved up before call to prepare_data()!
-        newfit_lmm <- spaMM::fitme(formula_lmm, data =  data, method = "ML")
-        data$pred_spaMM <- spaMM::predict.HLfit(newfit_lmm)[, 1]
+        warning("Argument rep ignore when method = 'OOB', you can influence repetitions using the argument num.trees passed to ranger() instead")
       }
       newfit <- ranger::ranger(formula = formula, data = data, num.threads = Ncpu, keep.inbag = TRUE, seed = seed, ...)
       inbag <- do.call(cbind, newfit$inbag.counts)
@@ -137,10 +122,6 @@ validate_RF <- function(formula, data, rep = 10, Ncpu = 1, target = "staff_range
     if (method == "OOB") {
       fit_fulldata <- newfit
     } else if (method == "CV") {
-      if (spatial == "hybrid") {
-        newfit_lmm <- spaMM::fitme(formula_lmm, data =  data)
-        data$pred_spaMM <- spaMM::predict.HLfit(newfit_lmm)[, 1]
-      }
       fit_fulldata <- ranger::ranger(formula = formula, data = data, num.threads = Ncpu, keep.inbag = TRUE, seed = seed, ...)
     }
     attr(out, "fit_fulldata") <- fit_fulldata
