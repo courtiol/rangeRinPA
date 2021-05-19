@@ -6,6 +6,7 @@
 \usage{
 run_LMM_workflow(
   data,
+  rerank = TRUE,
   Ncpu = 2,
   coef = 0,
   rep_feature_select = 1000,
