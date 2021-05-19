@@ -10,6 +10,7 @@ prepare_data(
   test_prop = 0,
   keep.var = NULL,
   drop_na = TRUE,
+  spatial = FALSE,
   seed = NULL
 )
 }
@@ -23,6 +24,8 @@ prepare_data(
 \item{keep.var}{a vector of character strings indicating which variables to keep in the dataset on top of those defined by the formula}
 
 \item{drop_na}{whether to drop NAs or not (default = TRUE)}
+
+\item{spatial}{whether or not keeping predictor for fitting spatial effects (default = FALSE)}
 
 \item{seed}{an optional seed for the RNG}
 }

@@ -39,13 +39,16 @@ run_LMM_workflow <- function(data, Ncpu = 2,  coef = 0, rep_feature_select = 100
 
   data_initial_training_rangers <- build_initial_training_data(data,
                                                                formula = formula_rangers_full,
-                                                               survey = "complete_known")
+                                                               survey = "complete_known",
+                                                               spatial = TRUE)
   data_initial_training_others  <- build_initial_training_data(data,
                                                                formula = formula_others_full,
-                                                               survey = "complete_known")
+                                                               survey = "complete_known",
+                                                               spatial = TRUE)
   data_initial_training_all     <- build_initial_training_data(data,
                                                                formula = formula_all_full,
-                                                               survey = "complete_known")
+                                                               survey = "complete_known",
+                                                               spatial = TRUE)
 
   record <- c(record,
               list(rangers = tibble::tibble(initial_training_nrow = nrow(data_initial_training_rangers),
@@ -91,39 +94,35 @@ run_LMM_workflow <- function(data, Ncpu = 2,  coef = 0, rep_feature_select = 100
   selected_formula_others <- stats::as.formula(selection_training_others$formula[1])
   selected_formula_all <- stats::as.formula(selection_training_all$formula[1])
 
-  if (selection_training_rangers$spatial[1]) {
-    selected_formula_rangers <- stats::update.formula(selected_formula_rangers, . ~ . + Matern(1|long + lat))
-  }
-
-  if (selected_formula_others$spatial[1]) {
-    selected_formula_others <- stats::update.formula(selected_formula_others, . ~ . + Matern(1|long + lat))
-  }
-
-  if (selected_formula_all$spatial[1]) {
-    selected_formula_all <- stats::update.formula(selected_formula_all, . ~ . + Matern(1|long + lat))
-  }
-
   record$rangers$selected_features <- list(selection_training_rangers)
   record$rangers$selected_formula <- deparse(selected_formula_rangers, width.cutoff = 500)
+  record$rangers$selected_spatial <- selection_training_rangers$spatial[1]
+
   record$others$selected_features <- list(selection_training_others)
   record$others$selected_formula <- deparse(selected_formula_others, width.cutoff = 500)
+  record$others$selected_spatial <- selection_training_others$spatial[1]
+
   record$all$selected_features <- list(selection_training_all)
   record$all$selected_formula <- deparse(selected_formula_all, width.cutoff = 500)
+  record$all$selected_spatial <- selection_training_all$spatial[1]
 
 
   cat("Step 4: Preparation of final training datasets\n")
 
   data_final_training_rangers <- build_final_training_data(data = data,
                                                            formula = selected_formula_rangers,
-                                                           survey = "complete_known")
+                                                           survey = "complete_known",
+                                                           spatial = record$rangers$selected_spatial)
 
   data_final_training_others <- build_final_training_data(data = data,
                                                           formula = selected_formula_others,
-                                                          survey = "complete_known")
+                                                          survey = "complete_known",
+                                                          spatial = record$others$selected_spatial)
 
   data_final_training_all <- build_final_training_data(data = data,
                                                        formula = selected_formula_all,
-                                                       survey = "complete_known")
+                                                       survey = "complete_known",
+                                                       spatial = record$all$selected_spatial)
 
   record$rangers$final_training_nrow <- nrow(data_final_training_rangers)
   record$others$final_training_nrow <- nrow(data_final_training_others)
@@ -177,17 +176,20 @@ run_LMM_workflow <- function(data, Ncpu = 2,  coef = 0, rep_feature_select = 100
   data_final_pred_rangers <- build_final_pred_data(
     data = data,
     formula = selected_formula_rangers,
-    survey = "complete_known")
+    survey = "complete_known",
+    spatial = record$rangers$selected_spatial)
 
   data_final_pred_others <- build_final_pred_data( # 1 country missing -> Greenland
     data = data,
     formula = selected_formula_others,
-    survey = "complete_known")
+    survey = "complete_known",
+    spatial = record$others$selected_spatial)
 
   data_final_pred_all <- build_final_pred_data(
     data = data,
     formula = selected_formula_all,
-    survey = "complete_known")
+    survey = "complete_known",
+    spatial = record$all$selected_spatial)
 
 
   record$rangers$PA_area_obs_or_imputed <- sum(data_final_pred_rangers$data_known$PA_area_surveyed)

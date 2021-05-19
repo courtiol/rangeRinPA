@@ -54,6 +54,7 @@ check_losses <- function(vars, data, resp_var = "staff_rangers_log", PA_var = "P
 #' @param test_prop the amount of rows to keep in the test dataset (default = 0)
 #' @param keep.var a vector of character strings indicating which variables to keep in the dataset on top of those defined by the formula
 #' @param drop_na whether to drop NAs or not (default = TRUE)
+#' @param spatial whether or not keeping predictor for fitting spatial effects (default = FALSE)
 #' @param seed an optional seed for the RNG
 #' @export
 #'
@@ -61,19 +62,27 @@ check_losses <- function(vars, data, resp_var = "staff_rangers_log", PA_var = "P
 #' prepare_data(log(staff_rangers + 1) ~ log(GDP_2019) + Matern(1|lat + long),
 #'              data = data_rangers, test_prop = 0.1)
 #'
-prepare_data <- function(formula, data, test_prop = 0, keep.var = NULL, drop_na = TRUE, seed = NULL) {
+prepare_data <- function(formula, data, test_prop = 0, keep.var = NULL, drop_na = TRUE, spatial = FALSE, seed = NULL) {
   if (test_prop < 0 | test_prop > 1) stop("test_prop must be between 0 and 1")
   vars <- all.vars(formula)
   if (any(vars == ".")) {
     vars <- colnames(data)
   }
-  if (!is.null(keep.var)) {
+  if (is.null(keep.var)) {
+    if (spatial) {
+      keep.var <- c("long", "lat")
+    }
+  } else {
+    if (spatial) {
+      keep.var <- c(keep.var, "long", "lat")
+    }
     vars <- unique(c(vars, keep.var))
     if (any(!keep.var %in% colnames(data))) {
       warning("Some variables in keep.var are not found in data")
       vars <- vars[vars %in% colnames(data)]
     }
   }
+
   data <- data[, vars]
   omit_obj <- stats::na.omit(data)
   row_to_drop <- as.numeric(attr(omit_obj, "na.action"))

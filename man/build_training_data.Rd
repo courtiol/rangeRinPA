@@ -14,13 +14,13 @@
 \alias{handle_na}
 \title{Build the training datasets}
 \usage{
-build_initial_training_data(data, formula, survey)
+build_initial_training_data(data, formula, survey, spatial = FALSE)
 
-build_final_training_data(data, formula, survey)
+build_final_training_data(data, formula, survey, spatial = FALSE)
 
-build_final_pred_data(data, formula, survey)
+build_final_pred_data(data, formula, survey, spatial = FALSE)
 
-build_data(data, formula, type)
+build_data(data, formula, type, spatial = FALSE)
 
 handle_PA_area(data, survey, formula = NULL, keep_details = FALSE)
 
@@ -43,6 +43,8 @@ handle_na(data, response, NA_in_resp = NULL, NA_in_preds = NULL)
 - completely or partially known ("partial_known")
 - completely known ("complete")
 according to the choice, the variable PA_area is also adjusted.}
+
+\item{spatial}{whether or not keeping predictor for fitting spatial effects (default = FALSE)}
 
 \item{type}{either "prediction" or "training"}
 

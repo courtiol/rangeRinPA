@@ -248,8 +248,8 @@ NULL
 #' @describeIn build_training_data build the initial training datasets
 #' @export
 #'
-build_initial_training_data <- function(data, formula, survey) {
-  data <- build_data(data = data, formula = formula, type = "training")
+build_initial_training_data <- function(data, formula, survey, spatial = FALSE) {
+  data <- build_data(data = data, formula = formula, type = "training", spatial = spatial)
   data <- handle_outliers(data = data)
   data <- handle_PA_area(data = data, survey = survey, formula = formula, keep_details = TRUE)
   data <- handle_transform(data = data)
@@ -262,8 +262,8 @@ build_initial_training_data <- function(data, formula, survey) {
 #' @describeIn build_training_data build the final training datasets
 #' @export
 #'
-build_final_training_data <- function(data, formula, survey) {
-  data <- build_data(data = data, formula = formula, type = "training")
+build_final_training_data <- function(data, formula, survey, spatial = FALSE) {
+  data <- build_data(data = data, formula = formula, type = "training", spatial = spatial)
   data <- handle_PA_area(data = data, survey = survey, formula = formula, keep_details = TRUE)
   data <- handle_outliers(data = data)
   data <- handle_transform(data = data)
@@ -274,8 +274,8 @@ build_final_training_data <- function(data, formula, survey) {
 #' @describeIn build_training_data build the final prediction datasets
 #' @export
 #'
-build_final_pred_data <- function(data, formula, survey) {
-  data_list <- build_data(data = data, formula = formula, type = "prediction")
+build_final_pred_data <- function(data, formula, survey, spatial = FALSE) {
+  data_list <- build_data(data = data, formula = formula, type = "prediction", spatial = spatial)
   for (data in names(data_list)) {
     if (data == "data_known") {
       data_list[[data]] <- handle_PA_area(data = data_list[[data]], survey = survey, formula = formula, keep_details = TRUE)
@@ -298,16 +298,16 @@ build_final_pred_data <- function(data, formula, survey) {
 #' @describeIn build_training_data internal function to build the training and prediction datasets
 #' @export
 #'
-build_data <- function(data, formula, type) {
+build_data <- function(data, formula, type, spatial = FALSE) {
 
   formula <- drop_logs(formula)
 
   if (type == "training") {
-    data <- prepare_data(formula = formula, data = data, test_prop = 0, drop_na = TRUE,
+    data <- prepare_data(formula = formula, data = data, test_prop = 0, drop_na = TRUE, spatial = spatial,
                          keep.var = c("countryname_eng", "PA_area_surveyed", "PA_area_unsurveyed"))$data_train
     data <- handle_na(data = data, response = as.character(formula)[[2]], NA_in_resp = FALSE, NA_in_preds = FALSE)
   } else if (type == "prediction") {
-    data <- prepare_data(formula = formula, data = data, test_prop = 0, drop_na = FALSE,
+    data <- prepare_data(formula = formula, data = data, test_prop = 0, drop_na = FALSE, spatial = spatial,
                          keep.var = c("countryname_eng", "PA_area_surveyed", "PA_area_unsurveyed"))$data_train
     data_known   <- handle_na(data = data, response = as.character(formula)[[2]], NA_in_resp = FALSE, NA_in_preds = NULL)
     data_only_na <- handle_na(data = data, response = as.character(formula)[[2]], NA_in_resp = NULL, NA_in_preds = TRUE)
