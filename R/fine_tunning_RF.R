@@ -10,7 +10,7 @@
 #' @export
 #'
 #'
-fine_tune_RF <- function(values_to_try, param_to_tune, formula, data, rep = 10, Ncpu = 1, target = "staff_rangers_log", fn = mean, ...) {
+finetune_RF <- function(values_to_try, param_to_tune, formula, data, rep = 10, Ncpu = 1, target = "staff_rangers_log", fn = mean, ...) {
 
   call_CV  <- paste("lapply(values_to_try, function(i) {
                     validate_RF(formula = formula, data = data, rep = rep, Ncpu = Ncpu, target = target, method = 'CV'," , deparse1(substitute(param_to_tune)), " = i, ...)
