@@ -2,11 +2,23 @@
 % Please edit documentation in R/fine_tunning_RF.R
 \name{finetune_RF}
 \alias{finetune_RF}
+\alias{finetune_RF_grid}
 \title{Fine tune the parameters of a random forest}
 \usage{
 finetune_RF(
   values_to_try,
   param_to_tune,
+  formula,
+  data,
+  rep = 10,
+  Ncpu = 1,
+  target = "staff_rangers_log",
+  fn = mean,
+  ...
+)
+
+finetune_RF_grid(
+  grid,
   formula,
   data,
   rep = 10,
@@ -34,6 +46,8 @@ finetune_RF(
 \item{fn}{the function for aggregating all metrics but p-values}
 
 \item{...}{additional parameters to be passed to \code{\link[ranger:ranger]{ranger::ranger()}}}
+
+\item{grid}{a data frame defining the combination of parameters to try}
 }
 \value{
 a list with a data frame and a plot
@@ -41,3 +55,8 @@ a list with a data frame and a plot
 \description{
 Fine tune the parameters of a random forest
 }
+\section{Functions}{
+\itemize{
+\item \code{finetune_RF_grid}: Fine tune the parameters of a random forest all at once
+}}
+
