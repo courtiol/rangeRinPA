@@ -143,4 +143,19 @@ record$rangers$final_training_ncol <- ncol(data_final_training_rangers)
 record$others$final_training_ncol <- ncol(data_final_training_others)
 record$all$final_training_ncol <- ncol(data_final_training_all)
 
+
 cat("Step 5: Selection of function inputs (fine tuning)\n")
+
+param_grid_for_tuning_rangers <- expand.grid(replace = c(TRUE, FALSE),
+                                             splitrule = c("'variance'", "'extratrees'"),
+                                             min.node.size = 1:10,
+                                             sample.fraction = c(0.632, 1),
+                                             mtry = c(function(n) 1, function(n) floor(n/3), function(n) n),
+                                             stringsAsFactors = FALSE) # important!
+
+finetune_rangers <- finetune_RF_grid(param_grid_for_tuning_rangers,
+                                     formula = selected_formula_rangers,
+                                     data = data_final_training_rangers,
+                                     spatial = record$rangers$selected_spatial,
+                                     rep = rep_finetune, Ncpu = Ncpu, num.trees = n_trees)
+
