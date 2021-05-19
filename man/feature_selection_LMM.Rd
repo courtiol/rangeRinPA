@@ -8,6 +8,7 @@
 \usage{
 feature_selection_LMM(
   full_fit,
+  rerank = TRUE,
   metric = "RMSE",
   minimise = TRUE,
   rep = 10,
@@ -19,6 +20,7 @@ feature_selection_LMM(
 
 feature_selection_LMM_internal(
   full_fit,
+  rerank = TRUE,
   rep = 10,
   Ncpu = 1,
   target = "staff_rangers_log",
@@ -29,6 +31,8 @@ feature_selection_LMM_internal(
 }
 \arguments{
 \item{full_fit}{a full fitted model}
+
+\item{rerank}{whether or not to recompute variable importance recursively during selection (default = TRUE)}
 
 \item{metric}{the metric used for computing prediction accuracy (see \code{\link[=compute_metrics]{compute_metrics()}})}
 

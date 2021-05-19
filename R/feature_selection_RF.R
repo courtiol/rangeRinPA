@@ -2,8 +2,8 @@
 #'
 #' This function extract the top (fixed-effects) predictors from a RF based on their importance.
 #'
+#' @inheritParams rank_predictors_LMM
 #' @param fit a model fitted with [`ranger()`](ranger::ranger)
-#' @param k the maximum number of predictors to return (default = NULL for no sub-selection)
 #'
 #' @return predictors with their importance
 #' @export
@@ -39,10 +39,8 @@ formula_top_pred_RF <- function(fit, resp, k = NULL) {
 
 #' Perform feature selection on RFs
 #'
-#' @param full_fit a full fitted model
-#' @param metric the metric used for computing prediction accuracy (see [`compute_metrics()`])
-#' @param minimise whether the metric should be minimise (TRUE, default) or maximise (FALSE)
-#' @inheritParams validate_RF
+#' @inheritParams feature_selection_LMM
+#' @param data the full dataset
 #' @name feature_selection_RF
 #' @aliases feature_selection_RF, feature_selection_RF_internal
 #'
@@ -51,12 +49,12 @@ NULL
 #' @describeIn feature_selection_RF wrapper function performing the feature selection on RFs with and without the spatial terms
 #' @export
 #'
-feature_selection_RF <- function(full_fit, data, metric = "RMSE", minimise = TRUE, rep = 10, Ncpu = 1, target = "staff_rangers_log", seed = 123, ...) {
+feature_selection_RF <- function(full_fit, data, rerank = TRUE, metric = "RMSE", minimise = TRUE, rep = 10, Ncpu = 1, target = "staff_rangers_log", seed = 123, ...) {
 
-  all_res_spatial <- feature_selection_RF_internal(full_fit = full_fit, data = data, rep = rep, Ncpu = Ncpu, target = target, spatial = TRUE, seed = seed, ...)
+  all_res_spatial <- feature_selection_RF_internal(full_fit = full_fit, data = data, rerank = rerank, rep = rep, Ncpu = Ncpu, target = target, spatial = TRUE, seed = seed, ...)
   all_res_spatial$spatial <- TRUE
 
-  all_res_no_spatial <- feature_selection_RF_internal(full_fit = full_fit, data = data, rep = rep, Ncpu = Ncpu, target = target, spatial = FALSE, seed = seed, ...)
+  all_res_no_spatial <- feature_selection_RF_internal(full_fit = full_fit, data = data, rerank = rerank, rep = rep, Ncpu = Ncpu, target = target, spatial = FALSE, seed = seed, ...)
   all_res_no_spatial$spatial <- FALSE
 
   all_res <- rbind(all_res_spatial, all_res_no_spatial)
@@ -81,13 +79,18 @@ feature_selection_RF <- function(full_fit, data, metric = "RMSE", minimise = TRU
 #' @describeIn feature_selection_RF internal function performing the feature selection on RFs
 #' @export
 #'
-feature_selection_RF_internal <- function(full_fit, data, rep = 10, Ncpu = 1, target = "staff_rangers_log", spatial = TRUE, seed = 123, ...) {
+feature_selection_RF_internal <- function(full_fit, data, rerank = TRUE, rep = 10, Ncpu = 1, target = "staff_rangers_log", spatial = TRUE, seed = 123, ...) {
   k_to_do <- nrow(rank_predictors_RF(full_fit)):1L ## must stop at 1 not 0 since intercept only model not possible in ranger
   fit <- full_fit
   res <- list()
   for (i in seq_along(k_to_do)) {
     k <- k_to_do[i]
-    new_formula <- formula_top_pred_RF(fit, resp = target, k = k)
+    if (rerank) {
+      fit_for_selection <- fit
+    } else {
+      fit_for_selection <- full_fit
+    }
+    new_formula <- formula_top_pred_RF(fit_for_selection, resp = target, k = k)
     v <- validate_RF(new_formula, data = data, rep = rep, Ncpu = Ncpu, target = target, spatial = spatial, seed = seed, ...)
     res[[i]] <- aggregate_metrics(v)
     res[[i]]$formula <- deparse(new_formula, width.cutoff = 500)

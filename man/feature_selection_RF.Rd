@@ -9,6 +9,7 @@
 feature_selection_RF(
   full_fit,
   data,
+  rerank = TRUE,
   metric = "RMSE",
   minimise = TRUE,
   rep = 10,
@@ -21,6 +22,7 @@ feature_selection_RF(
 feature_selection_RF_internal(
   full_fit,
   data,
+  rerank = TRUE,
   rep = 10,
   Ncpu = 1,
   target = "staff_rangers_log",
@@ -34,6 +36,8 @@ feature_selection_RF_internal(
 
 \item{data}{the full dataset}
 
+\item{rerank}{whether or not to recompute variable importance recursively during selection (default = TRUE)}
+
 \item{metric}{the metric used for computing prediction accuracy (see \code{\link[=compute_metrics]{compute_metrics()}})}
 
 \item{minimise}{whether the metric should be minimise (TRUE, default) or maximise (FALSE)}
@@ -46,9 +50,9 @@ feature_selection_RF_internal(
 
 \item{seed}{the seed used to control the reproducibility of the cross validation}
 
-\item{...}{additional parameters to be passed to \code{\link[ranger:ranger]{ranger::ranger()}}}
+\item{...}{additional parameters to be passed to \code{\link[spaMM:fitme]{spaMM::fitme()}}}
 
-\item{spatial}{either FALSE (default), or TRUE (to use matrix of distances as predictor)}
+\item{spatial}{either FALSE (default) or TRUE}
 }
 \description{
 Perform feature selection on RFs
