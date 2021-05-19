@@ -17,6 +17,8 @@ run_LMM_workflow(
 \arguments{
 \item{data}{the full dataset}
 
+\item{rerank}{whether or not to recompute variable importance recursively during selection (default = TRUE)}
+
 \item{Ncpu}{the number of CPU cores to be used (default = 1)}
 
 \item{coef}{the coefficient used to population rangers in unsurveyed part of surveyed countries (see \code{\link[=fill_PA_area]{fill_PA_area()}})}
