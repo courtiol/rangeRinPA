@@ -45,3 +45,34 @@ finetune_RF <- function(values_to_try, param_to_tune, formula, data, rep = 10, N
 
   list(output = output_long, plot = plot)
 }
+
+
+#' @describeIn finetune_RF Fine tune the parameters of a random forest all at once
+#' @export
+#' @param grid a data frame defining the combination of parameters to try
+#'
+finetune_RF_grid <- function(grid, formula, data, rep = 10, Ncpu = 1, target = "staff_rangers_log", fn = mean, ...) {
+
+  list_test <- list()
+  for (i in seq_len(nrow(grid))) {
+    cat("Trying parameter combination ", i, "/", nrow(grid), "\n")
+    grid_line <- grid[i, ]
+    if (any("mtry" %in% names(grid_line))) {
+      mtry <- grid_line$mtry[[1]]
+      settings <- paste(paste(names(grid_line[names(grid_line) != "mtry"]),
+                              grid_line[names(grid_line) != "mtry"],
+                              sep = " = "), collapse = ", ")
+      settings <- paste(settings, ", mtry =", paste(deparse(mtry), collapse = ""))
+    } else {
+      settings <- paste(paste(names(grid_line), grid_line, sep = " = "), collapse = ", ")
+    }
+    call_CV  <- paste("validate_RF(formula = formula, data = data, rep = rep, Ncpu = Ncpu, target = target, method = 'CV',", settings, ", ...)")
+    list_test[[i]] <- eval(parse(text = call_CV))
+  }
+  output_point <- cbind(grid, do.call("rbind", lapply(list_test, aggregate_metrics, fn = fn)))
+  se <- function(x) stats::sd(x)/sqrt(length(x))
+  output_SE <- cbind(grid, do.call("rbind", lapply(list_test, aggregate_metrics, fn = se)))
+  output <- list(output_point, SE = output_SE)
+  names(output)[[1]] <- deparse1(substitute(fn))
+  output
+}
