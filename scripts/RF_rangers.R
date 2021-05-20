@@ -1,11 +1,12 @@
 library(rangeRinPA)
+options(width = 350)
 data <- data_rangers
 Ncpu = 100
 coef = 0
 rep_feature_select = 100
 rep_finetune = 100
 rep_simu = 100
-n_trees = 1000
+n_trees = 100
 rerank = TRUE
 
 data <- fill_PA_area(data, coef = coef)
@@ -146,16 +147,31 @@ record$all$final_training_ncol <- ncol(data_final_training_all)
 
 cat("Step 5: Selection of function inputs (fine tuning)\n")
 
-param_grid_for_tuning_rangers <- expand.grid(replace = c(TRUE, FALSE),
-                                             splitrule = c("'variance'", "'extratrees'"),
-                                             min.node.size = 1:10,
-                                             sample.fraction = c(0.632, 1),
-                                             mtry = c(function(n) 1, function(n) floor(n/3), function(n) n),
-                                             stringsAsFactors = FALSE) # important!
+param_grid_for_finetuning <- expand.grid(replace = c(TRUE, FALSE),
+                                         splitrule = c("'variance'", "'extratrees'"),
+                                         min.node.size = 1:10,
+                                         sample.fraction = c(0.632, 1),
+                                         mtry = c(function(n) 1, function(n) floor(n/3), function(n) n),
+                                         stringsAsFactors = FALSE) # important!
 
-finetune_rangers <- finetune_RF_grid(param_grid_for_tuning_rangers,
-                                     formula = selected_formula_rangers,
-                                     data = data_final_training_rangers,
-                                     spatial = record$rangers$selected_spatial,
-                                     rep = rep_finetune, Ncpu = Ncpu, num.trees = n_trees)
+finetuning_rangers <- finetune_RF_grid(grid = param_grid_for_finetuning,
+                                       formula = selected_formula_rangers,
+                                       data = data_final_training_rangers,
+                                       spatial = record$rangers$selected_spatial,
+                                       rep = rep_finetune, Ncpu = Ncpu, num.trees = n_trees)
 
+finetuning_others <- finetune_RF_grid(grid = param_grid_for_finetuning,
+                                      formula = selected_formula_others,
+                                      data = data_final_training_others,
+                                      spatial = record$others$selected_spatial,
+                                      rep = rep_finetune, Ncpu = Ncpu, num.trees = n_trees)
+
+finetuning_all <- finetune_RF_grid(grid = param_grid_for_finetuning,
+                                   formula = selected_formula_all,
+                                   data = data_final_training_all,
+                                   spatial = record$all$selected_spatial,
+                                   rep = rep_finetune, Ncpu = Ncpu, num.trees = n_trees)
+
+record$rangers$fine_tuning <- list(finetuning_rangers)
+record$others$fine_tuning <- list(finetuning_others)
+record$all$fine_tuning <- list(finetuning_all)
