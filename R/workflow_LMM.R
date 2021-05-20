@@ -138,27 +138,27 @@ run_LMM_workflow <- function(data, rerank = TRUE, Ncpu = 2,  coef = 0, rep_featu
 
   cat("Step 5: Selection of function inputs (fine tuning)\n")
 
-  finetune_rangers <- finetune_LMM(selected_formula_rangers,
+  finetuning_rangers <- finetune_LMM(selected_formula_rangers,
                                    data = data_final_training_rangers,
                                    spatial = record$rangers$selected_spatial,
                                    rep = rep_finetune, Ncpu = Ncpu)
 
-  finetune_others <- finetune_LMM(selected_formula_others,
+  finetuning_others <- finetune_LMM(selected_formula_others,
                                   data = data_final_training_others,
                                   spatial = record$others$selected_spatial,
                                   rep = rep_finetune, Ncpu = Ncpu)
 
-  finetune_all <- finetune_LMM(selected_formula_all,
+  finetuning_all <- finetune_LMM(selected_formula_all,
                                data = data_final_training_all,
                                spatial = record$all$selected_spatial,
                                rep = rep_finetune, Ncpu = Ncpu)
 
-  record$rangers$fine_tuning <- list(finetune_rangers)
-  record$rangers$fitting_method <- finetune_rangers$best_method
-  record$others$fine_tuning <- list(finetune_others)
-  record$others$fitting_method <- finetune_others$best_method
-  record$all$fine_tuning <- list(finetune_all)
-  record$all$fitting_method <- finetune_all$best_method
+  record$rangers$fine_tuning <- list(finetuning_rangers)
+  record$rangers$fitting_method <- finetuning_rangers$best_method
+  record$others$fine_tuning <- list(finetuning_others)
+  record$others$fitting_method <- finetuning_others$best_method
+  record$all$fine_tuning <- list(finetuning_all)
+  record$all$fitting_method <- finetuning_all$best_method
 
 
   cat("Step 6: Final training\n")
@@ -166,17 +166,17 @@ run_LMM_workflow <- function(data, rerank = TRUE, Ncpu = 2,  coef = 0, rep_featu
   fit_final_rangers <- spaMM::fitme(if (record$rangers$selected_spatial) add_Matern(selected_formula_rangers) else selected_formula_rangers,
                                     data = data_final_training_rangers,
                                     control.dist = list(dist.method = "Earth"),
-                                    method = finetune_rangers$best_method)
+                                    method = finetuning_rangers$best_method)
 
   fit_final_others <- spaMM::fitme(if (record$others$selected_spatial) add_Matern(selected_formula_others) else selected_formula_others,
                                    data = data_final_training_others,
                                    control.dist = list(dist.method = "Earth"),
-                                   method = finetune_others$best_method)
+                                   method = finetuning_others$best_method)
 
   fit_final_all <- spaMM::fitme(if (record$all$selected_spatial) add_Matern(selected_formula_all) else selected_formula_all,
                                 data = data_final_training_all,
                                 control.dist = list(dist.method = "Earth"),
-                                method = finetune_all$best_method)
+                                method = finetuning_all$best_method)
 
 
   cat("Step 7: Preparation of datasets for predictions & simulations\n")
@@ -199,6 +199,17 @@ run_LMM_workflow <- function(data, rerank = TRUE, Ncpu = 2,  coef = 0, rep_featu
     survey = "complete_known",
     spatial = record$all$selected_spatial)
 
+  record$rangers$nrow_obs_or_imputed <- length(data_final_pred_rangers$data_known$PA_area_surveyed)
+  record$others$nrow_obs_or_imputed <- length(data_final_pred_others$data_known$PA_area_surveyed)
+  record$all$nrow_obs_or_imputed <- length(data_final_pred_all$data_known$PA_area_surveyed)
+
+  record$rangers$nrow_no_predict <- length(data_final_pred_rangers$data_not_predictable$PA_area_surveyed)
+  record$others$nrow_no_predict <- length(data_final_pred_others$data_not_predictable$PA_area_surveyed)
+  record$all$nrow_no_predict <- length(data_final_pred_all$data_not_predictable$PA_area_surveyed)
+
+  record$rangers$nrow_predict <- length(data_final_pred_rangers$data_predictable$PA_area_surveyed)
+  record$others$nrow_predict <- length(data_final_pred_others$data_predictable$PA_area_surveyed)
+  record$all$nrow_predict <- length(data_final_pred_all$data_predictable$PA_area_surveyed)
 
   record$rangers$PA_area_obs_or_imputed <- sum(data_final_pred_rangers$data_known$PA_area_surveyed)
   record$others$PA_area_obs_or_imputed <- sum(data_final_pred_others$data_known$PA_area_surveyed)
