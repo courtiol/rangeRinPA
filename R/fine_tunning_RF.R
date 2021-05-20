@@ -67,6 +67,10 @@ finetune_RF_grid <- function(grid, formula, data, rep = 10, Ncpu = 1, fn = mean,
     } else {
       settings <- paste(paste(names(grid_line), grid_line, sep = " = "), collapse = ", ")
     }
+    if (any("splitrule" %in% names(grid_line))) {
+      settings <- sub(pattern = "= variance", replacement = "= 'variance'", x = settings)
+      settings <- sub(pattern = "= extratrees", replacement = "= 'extratrees'", x = settings)
+    }
     call_CV  <- paste("validate_RF(formula = formula, data = data, rep = rep, Ncpu = Ncpu, method = 'CV',", settings, ", ...)")
     list_test[[i]] <- eval(parse(text = call_CV))
   }
