@@ -148,24 +148,27 @@ record$all$final_training_ncol <- ncol(data_final_training_all)
 cat("Step 5: Selection of function inputs (fine tuning)\n")
 
 param_grid_for_finetuning <- expand.grid(replace = c(TRUE, FALSE),
-                                         splitrule = c("'variance'", "'extratrees'"),
+                                         splitrule = c("variance", "extratrees"),
                                          min.node.size = 1:10,
                                          sample.fraction = c(0.632, 1),
                                          mtry = c(function(n) 1, function(n) floor(n/3), function(n) n),
                                          stringsAsFactors = FALSE) # important!
 
+cat("Step 5a: Fine tuning for rangers\n")
 finetuning_rangers <- finetune_RF_grid(grid = param_grid_for_finetuning,
                                        formula = selected_formula_rangers,
                                        data = data_final_training_rangers,
                                        spatial = record$rangers$selected_spatial,
                                        rep = rep_finetune, Ncpu = Ncpu, num.trees = n_trees)
 
+cat("Step 5b: Fine tuning for others\n")
 finetuning_others <- finetune_RF_grid(grid = param_grid_for_finetuning,
                                       formula = selected_formula_others,
                                       data = data_final_training_others,
                                       spatial = record$others$selected_spatial,
                                       rep = rep_finetune, Ncpu = Ncpu, num.trees = n_trees)
 
+cat("Step 5c: Fine tuning for all\n")
 finetuning_all <- finetune_RF_grid(grid = param_grid_for_finetuning,
                                    formula = selected_formula_all,
                                    data = data_final_training_all,
@@ -173,5 +176,107 @@ finetuning_all <- finetune_RF_grid(grid = param_grid_for_finetuning,
                                    rep = rep_finetune, Ncpu = Ncpu, num.trees = n_trees)
 
 record$rangers$fine_tuning <- list(finetuning_rangers)
+record$rangers$best_tuning <- list(as.list(finetuning_rangers$mean[which.min(finetuning_rangers$mean$RMSE),
+                                                                   c("replace", "splitrule", "min.node.size", "sample.fraction", "mtry")]))
+
 record$others$fine_tuning <- list(finetuning_others)
+record$others$best_tuning <- list(as.list(finetuning_others$mean[which.min(finetuning_others$mean$RMSE),
+                                                                 c("replace", "splitrule", "min.node.size", "sample.fraction", "mtry")]))
+
 record$all$fine_tuning <- list(finetuning_all)
+record$all$best_tuning <- list(as.list(finetuning_all$mean[which.min(finetuning_all$mean$RMSE),
+                                                           c("replace", "splitrule", "min.node.size", "sample.fraction", "mtry")]))
+
+cat("Step 6: Final training\n")
+
+fit_final_rangers <- ranger::ranger(selected_formula_rangers,
+                                    data = data_final_training_rangers,
+                                    splitrule = record$rangers$best_tuning[[1]]$splitrule,
+                                    replace = record$rangers$best_tuning[[1]]$replace,
+                                    mtry = record$rangers$best_tuning[[1]]$mtry[[1]],
+                                    min.node.size = record$rangers$best_tuning[[1]]$min.node.size,
+                                    sample.fraction = record$rangers$best_tuning[[1]]$sample.fraction,
+                                    num.trees = n_trees,
+                                    importance = "impurity")
+
+fit_final_others <- ranger::ranger(selected_formula_others,
+                                   data = data_final_training_others,
+                                   splitrule = record$others$best_tuning[[1]]$splitrule,
+                                   replace = record$others$best_tuning[[1]]$replace,
+                                   mtry = record$others$best_tuning[[1]]$mtry[[1]],
+                                   min.node.size = record$others$best_tuning[[1]]$min.node.size,
+                                   sample.fraction = record$others$best_tuning[[1]]$sample.fraction,
+                                   num.trees = n_trees,
+                                   importance = "impurity")
+
+fit_final_all <- ranger::ranger(selected_formula_all,
+                                data = data_final_training_all,
+                                splitrule = record$all$best_tuning[[1]]$splitrule,
+                                replace = record$all$best_tuning[[1]]$replace,
+                                mtry = record$all$best_tuning[[1]]$mtry[[1]],
+                                min.node.size = record$all$best_tuning[[1]]$min.node.size,
+                                sample.fraction = record$all$best_tuning[[1]]$sample.fraction,
+                                num.trees = n_trees,
+                                importance = "impurity")
+
+
+cat("Step 7: Preparation of datasets for predictions & simulations\n")
+
+data_final_pred_rangers <- build_final_pred_data(
+  data = data,
+  formula = selected_formula_rangers,
+  survey = "complete_known",
+  spatial = record$rangers$selected_spatial)
+
+data_final_pred_others <- build_final_pred_data( # 1 country missing -> Greenland
+  data = data,
+  formula = selected_formula_others,
+  survey = "complete_known",
+  spatial = record$others$selected_spatial)
+
+data_final_pred_all <- build_final_pred_data(
+  data = data,
+  formula = selected_formula_all,
+  survey = "complete_known",
+  spatial = record$all$selected_spatial)
+
+
+record$rangers$PA_area_obs_or_imputed <- sum(data_final_pred_rangers$data_known$PA_area_surveyed)
+record$others$PA_area_obs_or_imputed <- sum(data_final_pred_others$data_known$PA_area_surveyed)
+record$all$PA_area_obs_or_imputed <- sum(data_final_pred_all$data_known$PA_area_surveyed)
+
+record$rangers$PA_area_no_predict <- sum(data_final_pred_rangers$data_not_predictable$PA_area_surveyed)
+record$others$PA_area_no_predict <- sum(data_final_pred_others$data_not_predictable$PA_area_surveyed)
+record$all$PA_area_no_predict <- sum(data_final_pred_all$data_not_predictable$PA_area_surveyed)
+
+record$rangers$PA_area_predict <- sum(data_final_pred_rangers$data_predictable$PA_area_surveyed)
+record$others$PA_area_predict <- sum(data_final_pred_others$data_predictable$PA_area_surveyed)
+record$all$PA_area_predict <- sum(data_final_pred_all$data_predictable$PA_area_surveyed)
+
+
+cat("Step 8a: Point predictions\n")
+
+data_final_pred_rangers$data_predictable$staff_rangers_log_predicted <- predict(
+  fit_final_rangers, data = data_final_pred_rangers$data_predictable)$predictions
+tallies_rangers <- compute_tally(data_final_pred_rangers)
+
+data_final_pred_others$data_predictable$staff_others_log_predicted <- predict(
+  fit_final_others, data = data_final_pred_others$data_predictable)$predictions
+tallies_others <- compute_tally(data_final_pred_others)
+
+data_final_pred_all$data_predictable$staff_total_log_predicted <- predict(
+  fit_final_all, data = data_final_pred_all$data_predictable)$predictions
+tallies_all <- compute_tally(data_final_pred_all)
+
+record$rangers$tally_obs_or_imputed <- tallies_rangers[1, "value"]
+record$others$tally_obs_or_imputed <- tallies_others[1, "value"]
+record$all$tally_obs_or_imputed <- tallies_all[1, "value"]
+
+record$rangers$tally_predicted <- tallies_rangers[2, "value"]
+record$others$tally_predicted <- tallies_others[2, "value"]
+record$all$tally_predicted <- tallies_all[2, "value"]
+
+record$rangers$tally_total <- tallies_rangers[3, "value"]
+record$others$tally_total <- tallies_others[3, "value"]
+record$all$tally_total <- tallies_all[3, "value"]
+
