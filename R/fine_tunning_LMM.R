@@ -9,14 +9,12 @@ finetune_LMM <- function(formula, data, spatial, rep = 10, Ncpu = 1, seed = 123)
                          data = data,
                          rep = rep, Ncpu = Ncpu,
                          spatial = spatial,
-                         target = as.character(formula)[2],
                          seed = seed,
                          method = "ML")
   REML_res <- validate_LMM(formula,
                            data = data,
                            rep = rep, Ncpu = Ncpu,
                            spatial = spatial,
-                           target = as.character(formula)[2],
                            seed = seed,
                            method = "REML")
 

@@ -2,6 +2,7 @@
 #'
 #' @inheritParams validate_RF
 #' @inheritParams aggregate_metrics
+#' @inheritParams feature_selection_RF
 #' @param values_to_try the parameter value to try
 #' @param param_to_tune the quoted name of the parameter to study
 #' @param formula the formula for the forest
@@ -13,7 +14,7 @@
 finetune_RF <- function(values_to_try, param_to_tune, formula, data, rep = 10, Ncpu = 1, target = "staff_rangers_log", fn = mean, ...) {
 
   call_CV  <- paste("lapply(values_to_try, function(i) {
-                    validate_RF(formula = formula, data = data, rep = rep, Ncpu = Ncpu, target = target, method = 'CV'," , deparse1(substitute(param_to_tune)), " = i, ...)
+                    validate_RF(formula = formula, data = data, rep = rep, Ncpu = Ncpu, method = 'CV'," , deparse1(substitute(param_to_tune)), " = i, ...)
                     })")
 
   test_CV <- eval(parse(text = call_CV))
@@ -51,11 +52,11 @@ finetune_RF <- function(values_to_try, param_to_tune, formula, data, rep = 10, N
 #' @export
 #' @param grid a data frame defining the combination of parameters to try
 #'
-finetune_RF_grid <- function(grid, formula, data, rep = 10, Ncpu = 1, target = "staff_rangers_log", fn = mean, ...) {
+finetune_RF_grid <- function(grid, formula, data, rep = 10, Ncpu = 1, fn = mean, ...) {
 
   list_test <- list()
   for (i in seq_len(nrow(grid))) {
-    cat("Trying parameter combination ", i, "/", nrow(grid), "\n")
+    cat("Running combination of parameters ", i, "/", nrow(grid), "\n")
     grid_line <- grid[i, ]
     if (any("mtry" %in% names(grid_line))) {
       mtry <- grid_line$mtry[[1]]
@@ -66,7 +67,7 @@ finetune_RF_grid <- function(grid, formula, data, rep = 10, Ncpu = 1, target = "
     } else {
       settings <- paste(paste(names(grid_line), grid_line, sep = " = "), collapse = ", ")
     }
-    call_CV  <- paste("validate_RF(formula = formula, data = data, rep = rep, Ncpu = Ncpu, target = target, method = 'CV',", settings, ", ...)")
+    call_CV  <- paste("validate_RF(formula = formula, data = data, rep = rep, Ncpu = Ncpu, method = 'CV',", settings, ", ...)")
     list_test[[i]] <- eval(parse(text = call_CV))
   }
   output_point <- cbind(grid, do.call("rbind", lapply(list_test, aggregate_metrics, fn = fn)))

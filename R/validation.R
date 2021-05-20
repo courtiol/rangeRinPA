@@ -5,7 +5,6 @@
 #' @param data the full dataset
 #' @param rep the number of cross validation replicates (default = 10)
 #' @param Ncpu the number of CPU cores to be used (default = 1)
-#' @param target the quoted name of the response variable (default = "staff_rangers_log")
 #' @param spatial either FALSE (default) or TRUE
 #' @param seed the seed used to control the reproducibility of the cross validation
 #' @param return_fit whether to return the fit on all the data as attribute (default = FALSE)
@@ -19,7 +18,10 @@
 #' @examples
 #' validate_LMM(staff_rangers_log ~ PA_area_log, data = data_test)
 #'
-validate_LMM <- function(formula, data, rep = 10, Ncpu = 1, target = "staff_rangers_log", spatial = FALSE, seed = 123, return_fit = TRUE, ...) {
+validate_LMM <- function(formula, data, rep = 10, Ncpu = 1, spatial = FALSE, seed = 123, return_fit = TRUE, ...) {
+
+  target <- as.character(formula[[2]])
+
   if (spatial) {
     formula <- stats::update.formula(formula, . ~ . + Matern(1 |long + lat))
   } else stopifnot(!spatial)
@@ -66,7 +68,9 @@ validate_LMM <- function(formula, data, rep = 10, Ncpu = 1, target = "staff_rang
 #'                  rep = 1, num.trees = 10, method = "OOB")
 #'
 #'
-validate_RF <- function(formula, data, rep = 10, Ncpu = 1, target = "staff_rangers_log", spatial = FALSE, seed = 123, method = "CV", return_fit = TRUE, ...) {
+validate_RF <- function(formula, data, rep = 10, Ncpu = 1, spatial = FALSE, seed = 123, method = "CV", return_fit = TRUE, ...) {
+
+  target <- as.character(formula[[2]])
 
   if (spatial) { ## add distance to each location as predictors
       data <- cbind(data, compute_distance(long = data$long, lat = data$lat))

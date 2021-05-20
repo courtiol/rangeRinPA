@@ -42,7 +42,7 @@ feature_selection_LMM_internal(
 
 \item{Ncpu}{the number of CPU cores to be used (default = 1)}
 
-\item{target}{the quoted name of the response variable (default = "staff_rangers_log")}
+\item{target}{the name of the response variable}
 
 \item{seed}{the seed used to control the reproducibility of the cross validation}
 

@@ -43,6 +43,7 @@ formula_top_pred_LMM <- function(fit, k = NULL) {
 #' @param rerank whether or not to recompute variable importance recursively during selection (default = TRUE)
 #' @param metric the metric used for computing prediction accuracy (see [`compute_metrics()`])
 #' @param minimise whether the metric should be minimise (TRUE, default) or maximise (FALSE)
+#' @param target the name of the response variable
 #' @inheritParams validate_LMM
 #' @name feature_selection_LMM
 #' @aliases feature_selection_LMM, feature_selection_LMM_internal
@@ -93,7 +94,7 @@ feature_selection_LMM_internal <- function(full_fit, rerank = TRUE, rep = 10, Nc
       fit_for_selection <- full_fit
     }
     new_formula <- formula_top_pred_LMM(fit_for_selection, k = k)
-    v <- validate_LMM(new_formula, data = data, rep = rep, Ncpu = Ncpu, target = target, spatial = spatial, seed = seed, ...)
+    v <- validate_LMM(new_formula, data = data, rep = rep, Ncpu = Ncpu, spatial = spatial, seed = seed, ...)
     res[[i]] <- aggregate_metrics(v)
     res[[i]]$formula <- deparse(new_formula, width.cutoff = 500)
     fit <- attr(v, "fit_fulldata")

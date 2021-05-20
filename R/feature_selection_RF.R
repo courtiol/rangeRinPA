@@ -91,7 +91,7 @@ feature_selection_RF_internal <- function(full_fit, data, rerank = TRUE, rep = 1
       fit_for_selection <- full_fit
     }
     new_formula <- formula_top_pred_RF(fit_for_selection, resp = target, k = k)
-    v <- validate_RF(new_formula, data = data, rep = rep, Ncpu = Ncpu, target = target, spatial = spatial, seed = seed, ...)
+    v <- validate_RF(new_formula, data = data, rep = rep, Ncpu = Ncpu, spatial = spatial, seed = seed, ...)
     res[[i]] <- aggregate_metrics(v)
     res[[i]]$formula <- deparse(new_formula, width.cutoff = 500)
     fit <- attr(v, "fit_fulldata")

@@ -17,16 +17,7 @@ finetune_RF(
   ...
 )
 
-finetune_RF_grid(
-  grid,
-  formula,
-  data,
-  rep = 10,
-  Ncpu = 1,
-  target = "staff_rangers_log",
-  fn = mean,
-  ...
-)
+finetune_RF_grid(grid, formula, data, rep = 10, Ncpu = 1, fn = mean, ...)
 }
 \arguments{
 \item{values_to_try}{the parameter value to try}
@@ -41,7 +32,7 @@ finetune_RF_grid(
 
 \item{Ncpu}{the number of CPU cores to be used (default = 1)}
 
-\item{target}{the quoted name of the response variable (default = "staff_rangers_log")}
+\item{target}{the name of the response variable}
 
 \item{fn}{the function for aggregating all metrics but p-values}
 

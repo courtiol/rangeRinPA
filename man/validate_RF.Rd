@@ -9,7 +9,6 @@ validate_RF(
   data,
   rep = 10,
   Ncpu = 1,
-  target = "staff_rangers_log",
   spatial = FALSE,
   seed = 123,
   method = "CV",
@@ -25,8 +24,6 @@ validate_RF(
 \item{rep}{the number of cross validation replicates (default = 10)}
 
 \item{Ncpu}{the number of CPU cores to be used (default = 1)}
-
-\item{target}{the quoted name of the response variable (default = "staff_rangers_log")}
 
 \item{spatial}{either FALSE (default), or TRUE (to use matrix of distances as predictor)}
 
