@@ -206,6 +206,8 @@ fill_PA_area <- function(data, coef) {
     dplyr::mutate(dplyr::across(tidyselect::contains("staff"), ~ .x * (1 + (.data$correction_factor - 1) * coef))) %>%
     dplyr::mutate(PA_area_surveyed = .data$PA_area_surveyed + .data$PA_area_unsurveyed,
                   PA_area_unsurveyed = 0)
+  ## TODO: staff * (1 + (PA_total/PA_surveyed - 1)*coef) is the same as staff + coef* staff/PA_surveyed * PA_unsurveyed
+  ## so recode using this second formulation since it is probably clearer to understand.
 }
 
 
