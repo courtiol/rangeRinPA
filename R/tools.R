@@ -290,3 +290,15 @@ compute_tally <- function(data) {
   data.frame(sum = c("observed", "predicted", "total"),
              value = c(sum_observed, sum_predicted, sum_total))
 }
+
+
+#' Unstranform log1p variable
+#'
+#' @param var a vector
+#'
+#' @export
+#'
+delog1p <- function(var) {
+  exp(var) - 1
+}
+
