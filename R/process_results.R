@@ -58,7 +58,9 @@ extract_results_internal <- function(what, who, type) {
              point_pred = what[[who]]$tally_total,
              lwr = what[[who]]$lwr[[1]],
              upr = what[[who]]$upr[[1]],
-             coverage = with(what[[who]], (PA_area_obs_or_imputed + PA_area_predict) / (PA_area_obs_or_imputed + PA_area_predict + PA_area_no_predict))
+             coverage = with(what[[who]], (PA_area_obs_or_imputed + PA_area_predict) / (PA_area_obs_or_imputed + PA_area_predict + PA_area_no_predict)),
+             formula = what[[who]]$selected_formula,
+             spatial = what[[who]]$selected_spatial
   )
 }
 
