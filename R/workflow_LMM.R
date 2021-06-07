@@ -227,13 +227,31 @@ run_LMM_workflow <- function(data, rerank = TRUE, Ncpu = 2,  coef = 0, rep_featu
     fit_final_rangers, newdata = data_final_pred_rangers$data_predictable)[, 1]
   tallies_rangers <- compute_tally(data_final_pred_rangers)
 
+  res_rangers_a <- cbind(data_final_pred_rangers$data_predictable[, c("countryname_eng", "staff_rangers_log_predicted")], type = "predicted")
+  colnames(res_rangers_a)[2] <- "staff_rangers_log"
+  res_rangers_b <- cbind(data_final_pred_rangers$data_not_predictable[, "countryname_eng"], staff_rangers_log = NA, type = "unknown")
+  res_rangers_c <- cbind(data_final_pred_rangers$data_known[, c("countryname_eng", "staff_rangers_log")], type = "known")
+  res_rangers <- rbind(res_rangers_a, res_rangers_b, res_rangers_c)
+
   data_final_pred_others$data_predictable$staff_others_log_predicted <- spaMM::predict.HLfit(
     fit_final_others, newdata = data_final_pred_others$data_predictable)[, 1]
   tallies_others <- compute_tally(data_final_pred_others)
 
+  res_others_a <- cbind(data_final_pred_others$data_predictable[, c("countryname_eng", "staff_others_log_predicted")], type = "predicted")
+  colnames(res_others_a)[2] <- "staff_others_log"
+  res_others_b <- cbind(data_final_pred_others$data_not_predictable[, "countryname_eng"], staff_others_log = NA, type = "unknown")
+  res_others_c <- cbind(data_final_pred_others$data_known[, c("countryname_eng", "staff_others_log")], type = "known")
+  res_others <- rbind(res_others_a, res_others_b, res_others_c)
+
   data_final_pred_all$data_predictable$staff_total_log_predicted <- spaMM::predict.HLfit(
     fit_final_all, newdata = data_final_pred_all$data_predictable)[, 1]
   tallies_all <- compute_tally(data_final_pred_all)
+
+  res_all_a <- cbind(data_final_pred_all$data_predictable[, c("countryname_eng", "staff_total_log_predicted")], type = "predicted")
+  colnames(res_all_a)[2] <- "staff_total_log"
+  res_all_b <- cbind(data_final_pred_all$data_not_predictable[, "countryname_eng"], staff_total_log = NA, type = "unknown")
+  res_all_c <- cbind(data_final_pred_all$data_known[, c("countryname_eng", "staff_total_log")], type = "known")
+  res_all <- rbind(res_all_a, res_all_b, res_all_c)
 
   record$rangers$tally_obs_or_imputed <- tallies_rangers[1, "value"]
   record$others$tally_obs_or_imputed <- tallies_others[1, "value"]
@@ -247,6 +265,9 @@ run_LMM_workflow <- function(data, rerank = TRUE, Ncpu = 2,  coef = 0, rep_featu
   record$others$tally_total <- tallies_others[3, "value"]
   record$all$tally_total <- tallies_all[3, "value"]
 
+  record$rangers$country_preds <- list(res_rangers)
+  record$others$country_preds <- list(res_others)
+  record$all$country_preds <- list(res_all)
 
   cat("Step 8b: Simulations\n")
 
