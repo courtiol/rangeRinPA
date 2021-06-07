@@ -46,7 +46,7 @@ extract_results <- function(list_results_LMM = list(), list_results_RF = list())
   tibble::as_tibble(d)
 }
 
-#' @describeIn extract_results an internal funciton fetching the results
+#' @describeIn extract_results an internal function fetching the results
 #' @export
 #'
 extract_results_internal <- function(what, who, type) {
@@ -65,3 +65,56 @@ extract_results_internal <- function(what, who, type) {
 }
 
 
+
+#' An internal function fetching the results at the country level
+#'
+#' @inheritParams extract_results
+#' @inheritParams validate_LMM
+#' @param result a result table produced by [`run_LMM_workflow()`] or [`run_RF_workflow()`]
+#' @param resp the quoted name of the response variable
+#'
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#'   LMM_small_test <- run_LMM_workflow(data = data_rangers, Ncpu = 2, coef = 0,
+#'                                      rep_feature_select = 2, rep_finetune = 2, rep_simu = 2)
+#'   single_summary_internal(result = LMM_small_test,
+#'                           who = "rangers", resp = "staff_rangers_log", data = data_rangers)
+#' }
+#'
+single_summary_internal <- function(result, who, resp, data) {
+  res_in_context <- dplyr::left_join(data, result[[who]]$country_preds[[1]], by = "countryname_eng")
+  res_in_context %>%
+    dplyr::mutate(staff = delog1p(res_in_context[[resp]])) -> res_in_context
+
+  res_in_context %>%
+    dplyr::filter(.data$type != "unknown") %>%
+    dplyr::group_by(.data$country_UN_continent, .data$type) %>%
+    dplyr::summarise(total = sum(.data$staff, na.rm = TRUE),
+              Ncountry = dplyr::n(),
+              PA_area_surveyed = sum(.data$PA_area_surveyed),
+              PA_area_unsurveyed = sum(.data$PA_area_unsurveyed)) %>%
+    dplyr::ungroup() -> totals
+
+  totals %>%
+    dplyr::group_by(.data$country_UN_continent) %>%
+    dplyr::summarise(type = "all", total = sum(.data$total),
+                     Ncountry = sum(.data$Ncountry),
+                     PA_area_surveyed = sum(.data$PA_area_surveyed),
+                     PA_area_unsurveyed = sum(.data$PA_area_unsurveyed)) -> gd_totals
+
+  dplyr::full_join(totals, gd_totals,
+          by = c("country_UN_continent", "type", "total", "Ncountry", "PA_area_surveyed", "PA_area_unsurveyed")) %>%
+    dplyr::arrange(.data$country_UN_continent) -> all_small_totals
+
+  all_small_totals %>%
+    dplyr::group_by(.data$type) %>%
+    dplyr::summarise(country_UN_continent = "EARTH", total = sum(.data$total), Ncountry = sum(.data$Ncountry),
+                     PA_area_surveyed = sum(.data$PA_area_surveyed),
+                     PA_area_unsurveyed = sum(.data$PA_area_unsurveyed)) -> marginal_totals
+
+  dplyr::full_join(all_small_totals, marginal_totals,
+                   by = c("country_UN_continent", "type", "total", "Ncountry", "PA_area_surveyed", "PA_area_unsurveyed"))
+
+}

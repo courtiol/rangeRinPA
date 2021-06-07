@@ -37,11 +37,8 @@ Run the full workflow for LMM
 }
 \examples{
 \dontrun{
-  LMM_000 <- run_LMM_workflow(data = data_rangers, Ncpu = 100, coef = 0)
-  LMM_025 <- run_LMM_workflow(data = data_rangers, Ncpu = 100, coef = 0.25)
-  LMM_050 <- run_LMM_workflow(data = data_rangers, Ncpu = 100, coef = 0.50)
-  LMM_075 <- run_LMM_workflow(data = data_rangers, Ncpu = 100, coef = 0.75)
-  LMM_100 <- run_LMM_workflow(data = data_rangers, Ncpu = 100, coef = 1)
+  LMM_small_test <- run_LMM_workflow(data = data_rangers, Ncpu = 2, coef = 0,
+                                     rep_feature_select = 2, rep_finetune = 2, rep_simu = 2)
 }
 
 }

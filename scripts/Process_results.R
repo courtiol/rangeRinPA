@@ -1,6 +1,9 @@
 library(rangeRinPA)
 library(tidyverse)
+library(scales)
+library(ggsci)
 
+## Loading results:
 files_to_load <- c("LMM_000.Rdata", "LMM_025.Rdata", "LMM_050.Rdata", "LMM_075.Rdata", "LMM_100.Rdata")
 sapply(paste0("scripts/results/", files_to_load), function(file) load(file, envir = .GlobalEnv))
 
@@ -38,13 +41,12 @@ ggplot(res_long) +
   theme_bw()
 ggsave("./scripts/figures/predictors_presence.pdf", scale = 0.7)
 
+
 ## Models for which spatial autocorrelation is selected:
 res[res$spatial, ]
 
-library(ggplot2)
-library(scales)
-library(ggsci)
 
+## Plot of tallies:
 ggplot(res) +
   aes(y = point_pred, x = as.factor(coef), fill = type, ymin = lwr, ymax = upr) +
   geom_col(position = "dodge", colour = "black", size = 0.2) +
@@ -57,3 +59,5 @@ ggplot(res) +
        y = "Predicted number of staff",
        fill = "workforce") +
   facet_wrap(~ who, scales = "free")
+ggsave("./scripts/figures/predictions_across_analyses.pdf", width = 14, height = 8)
+

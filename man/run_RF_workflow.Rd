@@ -40,11 +40,8 @@ Run the full workflow for RF
 }
 \examples{
 \dontrun{
-  RF_000 <- run_RF_workflow(data = data_rangers, Ncpu = 100, coef = 0)
-  RF_025 <- run_RF_workflow(data = data_rangers, Ncpu = 100, coef = 0.25)
-  RF_050 <- run_RF_workflow(data = data_rangers, Ncpu = 100, coef = 0.50)
-  RF_075 <- run_RF_workflow(data = data_rangers, Ncpu = 100, coef = 0.75)
-  RF_100 <- run_RF_workflow(data = data_rangers, Ncpu = 100, coef = 1)
+  RF_small_test <- run_RF_workflow(data = data_rangers, Ncpu = 2, coef = 0,
+                                   rep_feature_select = 2, rep_finetune = 2, rep_simu = 2)
 }
 
 }

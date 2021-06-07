@@ -25,7 +25,7 @@ Extract and format the results produced by the worflow
 }
 \section{Functions}{
 \itemize{
-\item \code{extract_results_internal}: an internal funciton fetching the results
+\item \code{extract_results_internal}: an internal function fetching the results
 }}
 
 \examples{
