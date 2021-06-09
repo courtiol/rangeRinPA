@@ -338,6 +338,40 @@ extract_PA_areas <- function(data_final_pred, resp) {
     dplyr::right_join(res, by = "countryname_eng") -> res
 
   res %>%
-    dplyr::mutate(across(starts_with("PA_area"), tidyr::replace_na, replace = 0))
+    dplyr::mutate(dplyr::across(tidyselect::starts_with("PA_area"), tidyr::replace_na, replace = 0))
+}
+
+
+#' Internal function used to prepare the grid of the parameters to try when finetuning the RF
+#'
+#' This function is called by [`run_RF_workflow()`].
+#'
+#' @param grid_type The type of grid to use for finetuning the RF ("fine", the default, or "coarse")
+#'
+#' @export
+#'
+#' @examples
+#' nrow(prepare_grid_finetuning())
+#' nrow(prepare_grid_finetuning(grid_type = "coarse"))
+#'
+prepare_grid_finetuning <- function(grid_type = "fine") {
+  if (grid_type == "fine") {
+    param_grid_for_finetuning <- expand.grid(replace = c(TRUE, FALSE),
+                                             splitrule = c("variance", "extratrees"),
+                                             min.node.size = 1:10,
+                                             sample.fraction = c(0.632, 1),
+                                             mtry = c(function(n) 1, function(n) floor(n/3), function(n) n),
+                                             stringsAsFactors = FALSE) # important!
+  } else if (grid_type == "coarse") {
+    param_grid_for_finetuning <- expand.grid(replace = c(TRUE, FALSE),
+                                         splitrule = c("variance", "extratrees"),
+                                         min.node.size = c(1, 10),
+                                         sample.fraction = c(0.632, 1),
+                                         mtry = c(function(n) 1, function(n) n),
+                                         stringsAsFactors = FALSE) # important!
+  } else {
+    stop("grid_type unknown!")
+  }
+  param_grid_for_finetuning
 }
 
