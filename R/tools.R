@@ -302,3 +302,42 @@ delog1p <- function(var) {
   exp(var) - 1
 }
 
+
+#' Internal function used to extract PA_areas at the level of countries/territories
+#'
+#' This function is called by [`run_LMM_workflow()`] or [`run_RF_workflow()`]
+#'
+#' @param data_final_pred A final prediction dataset
+#' @param resp The quoted name of the response variable
+#'
+#' @export
+
+extract_PA_areas <- function(data_final_pred, resp) {
+
+  res_a <- cbind(data_final_pred$data_predictable[, c("countryname_eng", paste0(resp, "_predicted"))], type = "predicted")
+  colnames(res_a)[2] <- resp
+  res_b <- cbind(data_final_pred$data_not_predictable[, "countryname_eng"], staff_log = NA, type = "unknown")
+  colnames(res_b)[colnames(res_b) == "staff_log"] <- resp
+  res_c <- cbind(data_final_pred$data_known[, c("countryname_eng", resp)], type = "known")
+  res <- rbind(res_a, res_b, res_c)
+
+  data_final_pred$data_known %>%
+    dplyr::select(.data$countryname_eng, PA_area_known = .data$PA_area_surveyed_notfilled) %>%
+    dplyr::right_join(res, by = "countryname_eng") -> res
+
+  data_final_pred$data_known %>%
+    dplyr::select(.data$countryname_eng, PA_area_imputed = .data$PA_area_unsurveyed_notfilled) %>%
+    dplyr::right_join(res, by = "countryname_eng") -> res
+
+  data_final_pred$data_predictable %>%
+    dplyr::select(.data$countryname_eng, PA_area_predicted = .data$PA_area_surveyed) %>%
+    dplyr::right_join(res, by = "countryname_eng") -> res
+
+  data_final_pred$data_not_predictable %>%
+    dplyr::select(.data$countryname_eng, PA_area_unknown = .data$PA_area_surveyed) %>%
+    dplyr::right_join(res, by = "countryname_eng") -> res
+
+  res %>%
+    dplyr::mutate(across(starts_with("PA_area"), tidyr::replace_na, replace = 0))
+}
+
