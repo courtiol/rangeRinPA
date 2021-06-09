@@ -1,6 +1,6 @@
 Package: rangeRinPA
 Title: Estimate and Study the Total Number of People Working in Protected Areas
-Version: 0.0.0.9000
+Version: 0.0.0.9001
 Authors@R: 
   c(person("Alexandre", "Courtiol",
            email = "alexandre.courtiol@gmail.com",
