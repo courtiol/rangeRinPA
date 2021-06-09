@@ -3,6 +3,7 @@
 #'
 #' @inheritParams validate_RF
 #' @inheritParams feature_selection_RF
+#' @inheritParams prepare_grid_finetuning
 #' @param coef the coefficient used to population rangers in unsurveyed part of surveyed countries (see [`fill_PA_area()`])
 #' @param rep_feature_select the number of replicates for the feature selection (default = 1000)
 #' @param rep_finetune the number of replicates for fine tuning (default = 1000)
@@ -15,10 +16,11 @@
 #' @examples
 #' \dontrun{
 #'   RF_small_test <- run_RF_workflow(data = data_rangers, Ncpu = 2, coef = 0,
-#'                                    rep_feature_select = 2, rep_finetune = 2, rep_simu = 2)
+#'                                    rep_feature_select = 2, rep_finetune = 2, rep_simu = 2,
+#'                                    grid_type = "coarse")
 #' }
 #'
-run_RF_workflow <- function(data, rerank = TRUE, Ncpu = 2,  coef = 0, rep_feature_select = 1000, rep_finetune = 1000, rep_simu = 10000, n_trees = 1000) {
+run_RF_workflow <- function(data, rerank = TRUE, Ncpu = 2,  coef = 0, rep_feature_select = 1000, rep_finetune = 1000, rep_simu = 10000, n_trees = 1000, grid_type = "fine") {
   set.seed(123)
   data <- fill_PA_area(data, coef = coef)
 
@@ -158,12 +160,7 @@ run_RF_workflow <- function(data, rerank = TRUE, Ncpu = 2,  coef = 0, rep_featur
 
   cat("Step 5: Selection of function inputs (fine tuning)\n")
 
-  param_grid_for_finetuning <- expand.grid(replace = c(TRUE, FALSE),
-                                           splitrule = c("variance", "extratrees"),
-                                           min.node.size = 1:10,
-                                           sample.fraction = c(0.632, 1),
-                                           mtry = c(function(n) 1, function(n) floor(n/3), function(n) n),
-                                           stringsAsFactors = FALSE) # important!
+  param_grid_for_finetuning <- prepare_grid_finetuning(grid_type = grid_type)
 
   cat("Step 5a: Fine tuning for rangers\n")
   finetuning_rangers <- finetune_RF_grid(grid = param_grid_for_finetuning,
@@ -239,7 +236,7 @@ run_RF_workflow <- function(data, rerank = TRUE, Ncpu = 2,  coef = 0, rep_featur
     survey = "complete_known",
     spatial = record$rangers$selected_spatial)
 
-  data_final_pred_others <- build_final_pred_data( # 1 country missing -> Greenland
+  data_final_pred_others <- build_final_pred_data(
     data = data,
     formula = selected_formula_others,
     survey = "complete_known",
@@ -256,58 +253,30 @@ run_RF_workflow <- function(data, rerank = TRUE, Ncpu = 2,  coef = 0, rep_featur
   record$others$nrow_obs_or_imputed <- length(data_final_pred_others$data_known$PA_area_surveyed)
   record$all$nrow_obs_or_imputed <- length(data_final_pred_all$data_known$PA_area_surveyed)
 
-  record$rangers$nrow_no_predict <- length(data_final_pred_rangers$data_not_predictable$PA_area_surveyed)
-  record$others$nrow_no_predict <- length(data_final_pred_others$data_not_predictable$PA_area_surveyed)
-  record$all$nrow_no_predict <- length(data_final_pred_all$data_not_predictable$PA_area_surveyed)
-
   record$rangers$nrow_predict <- length(data_final_pred_rangers$data_predictable$PA_area_surveyed)
   record$others$nrow_predict <- length(data_final_pred_others$data_predictable$PA_area_surveyed)
   record$all$nrow_predict <- length(data_final_pred_all$data_predictable$PA_area_surveyed)
 
-  record$rangers$PA_area_obs_or_imputed <- sum(data_final_pred_rangers$data_known$PA_area_surveyed)
-  record$others$PA_area_obs_or_imputed <- sum(data_final_pred_others$data_known$PA_area_surveyed)
-  record$all$PA_area_obs_or_imputed <- sum(data_final_pred_all$data_known$PA_area_surveyed)
-
-  record$rangers$PA_area_no_predict <- sum(data_final_pred_rangers$data_not_predictable$PA_area_surveyed)
-  record$others$PA_area_no_predict <- sum(data_final_pred_others$data_not_predictable$PA_area_surveyed)
-  record$all$PA_area_no_predict <- sum(data_final_pred_all$data_not_predictable$PA_area_surveyed)
-
-  record$rangers$PA_area_predict <- sum(data_final_pred_rangers$data_predictable$PA_area_surveyed)
-  record$others$PA_area_predict <- sum(data_final_pred_others$data_predictable$PA_area_surveyed)
-  record$all$PA_area_predict <- sum(data_final_pred_all$data_predictable$PA_area_surveyed)
+  record$rangers$nrow_no_predict <- length(data_final_pred_rangers$data_not_predictable$PA_area_surveyed)
+  record$others$nrow_no_predict <- length(data_final_pred_others$data_not_predictable$PA_area_surveyed)
+  record$all$nrow_no_predict <- length(data_final_pred_all$data_not_predictable$PA_area_surveyed)
 
 
   cat("Step 8a: Point predictions\n")
+
+  ## We compute the tallies:
 
   data_final_pred_rangers$data_predictable$staff_rangers_log_predicted <- stats::predict(
     fit_final_rangers, data = data_final_pred_rangers$data_predictable)$predictions
   tallies_rangers <- compute_tally(data_final_pred_rangers)
 
-  res_rangers_a <- cbind(data_final_pred_rangers$data_predictable[, c("countryname_eng", "staff_rangers_log_predicted")], type = "predicted")
-  colnames(res_rangers_a)[2] <- "staff_rangers_log"
-  res_rangers_b <- cbind(data_final_pred_rangers$data_not_predictable[, "countryname_eng"], staff_rangers_log = NA, type = "unknown")
-  res_rangers_c <- cbind(data_final_pred_rangers$data_known[, c("countryname_eng", "staff_rangers_log")], type = "known")
-  res_rangers <- rbind(res_rangers_a, res_rangers_b, res_rangers_c)
-
   data_final_pred_others$data_predictable$staff_others_log_predicted <- stats::predict(
     fit_final_others, data = data_final_pred_others$data_predictable)$predictions
   tallies_others <- compute_tally(data_final_pred_others)
 
-  res_others_a <- cbind(data_final_pred_others$data_predictable[, c("countryname_eng", "staff_others_log_predicted")], type = "predicted")
-  colnames(res_others_a)[2] <- "staff_others_log"
-  res_others_b <- cbind(data_final_pred_others$data_not_predictable[, "countryname_eng"], staff_others_log = NA, type = "unknown")
-  res_others_c <- cbind(data_final_pred_others$data_known[, c("countryname_eng", "staff_others_log")], type = "known")
-  res_others <- rbind(res_others_a, res_others_b, res_others_c)
-
   data_final_pred_all$data_predictable$staff_total_log_predicted <- stats::predict(
     fit_final_all, data = data_final_pred_all$data_predictable)$predictions
   tallies_all <- compute_tally(data_final_pred_all)
-
-  res_all_a <- cbind(data_final_pred_all$data_predictable[, c("countryname_eng", "staff_total_log_predicted")], type = "predicted")
-  colnames(res_all_a)[2] <- "staff_total_log"
-  res_all_b <- cbind(data_final_pred_all$data_not_predictable[, "countryname_eng"], staff_total_log = NA, type = "unknown")
-  res_all_c <- cbind(data_final_pred_all$data_known[, c("countryname_eng", "staff_total_log")], type = "known")
-  res_all <- rbind(res_all_a, res_all_b, res_all_c)
 
   record$rangers$tally_obs_or_imputed <- tallies_rangers[1, "value"]
   record$others$tally_obs_or_imputed <- tallies_others[1, "value"]
@@ -321,9 +290,6 @@ run_RF_workflow <- function(data, rerank = TRUE, Ncpu = 2,  coef = 0, rep_featur
   record$others$tally_total <- tallies_others[3, "value"]
   record$all$tally_total <- tallies_all[3, "value"]
 
-  record$rangers$country_preds <- list(res_rangers)
-  record$others$country_preds <- list(res_others)
-  record$all$country_preds <- list(res_all)
 
   cat("Step 8b: Simulations\n")
 
@@ -361,5 +327,11 @@ run_RF_workflow <- function(data, rerank = TRUE, Ncpu = 2,  coef = 0, rep_featur
 
   cat("DONE!\n")
   record$meta$duration_h <- as.double(difftime(Sys.time(), record$meta$start, units = "hours"))
+
+  ## We add country level data:
+  record$rangers$country_info <- list(extract_PA_areas(data_final_pred = data_final_pred_rangers, resp = "staff_rangers_log", data = data))
+  record$others$country_info <- list(extract_PA_areas(data_final_pred = data_final_pred_others, resp = "staff_others_log", data = data))
+  record$all$country_info <- list(extract_PA_areas(data_final_pred = data_final_pred_all, resp = "staff_total_log", data = data))
+
   record
 }

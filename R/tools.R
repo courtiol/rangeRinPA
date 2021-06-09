@@ -305,14 +305,31 @@ delog1p <- function(var) {
 
 #' Internal function used to extract PA_areas at the level of countries/territories
 #'
-#' This function is called by [`run_LMM_workflow()`] or [`run_RF_workflow()`]
+#' This function is called by [`run_LMM_workflow()`] or [`run_RF_workflow()`].
 #'
+#' @inheritParams run_RF_workflow
 #' @param data_final_pred A final prediction dataset
 #' @param resp The quoted name of the response variable
 #'
 #' @export
+#'
+#' @examples
+#' dat <- fill_PA_area(data_rangers, coef = 0.5)
+#' d <- build_final_pred_data(data = dat,
+#'                            formula = staff_rangers_log ~ lat,
+#'                            survey = "complete_known",
+#'                            spatial = TRUE)
+#' d$data_predictable$staff_rangers_log_predicted <- 0
+#' extract_PA_areas(d, "staff_rangers_log", dat)
+#'
+extract_PA_areas <- function(data_final_pred, resp, data) {
 
-extract_PA_areas <- function(data_final_pred, resp) {
+  ## we add back the original info about PA_area from before imputation:
+  data %>%
+    dplyr::select(.data$countryname_eng, .data$PA_area_surveyed_notfilled, .data$PA_area_unsurveyed_notfilled) -> original_PA_info
+
+  data_final_pred$data_known %>%
+    dplyr::left_join(original_PA_info, by = "countryname_eng") -> data_final_pred$data_known
 
   res_a <- cbind(data_final_pred$data_predictable[, c("countryname_eng", paste0(resp, "_predicted"))], type = "predicted")
   colnames(res_a)[2] <- resp

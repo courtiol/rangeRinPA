@@ -10,9 +10,16 @@
 #'
 #' @examples
 #' \dontrun{
-#' res <- extract_results(
-#'        list_results_LMM = list(LMM_000, LMM_025, LMM_050, LMM_075, LMM_100),
-#'        list_results_RF  = list(RF_000, RF_025, RF_050, RF_075, RF_100))
+#' LMM_small_test <- run_LMM_workflow(data = data_rangers, Ncpu = 2, coef = 0,
+#'                                      rep_feature_select = 2, rep_finetune = 2, rep_simu = 2)
+#'
+#' RF_small_test <- run_RF_workflow(data = data_rangers, Ncpu = 2, coef = 0,
+#'                                    rep_feature_select = 2, rep_finetune = 2, rep_simu = 2,
+#'                                    grid_type = "coarse")
+#'
+#' extract_results(list_results_LMM = list(LMM_small_test),
+#'                 list_results_RF  = list(RF_small_test)) %>%
+#'   tidyr::unnest_wider(PA_areas_pct)
 #' }
 #'
 extract_results <- function(list_results_LMM = list(), list_results_RF = list()) {
@@ -50,17 +57,27 @@ extract_results <- function(list_results_LMM = list(), list_results_RF = list())
 #' @export
 #'
 extract_results_internal <- function(what, who, type) {
-  data.frame(type = type,
-             coef = what$meta$coef_population,
-             rerank = what$meta$rerank,
-             Ncpu = what$meta$Ncpu,
-             run_time = what$meta$duration_h,
-             point_pred = what[[who]]$tally_total,
-             lwr = what[[who]]$lwr[[1]],
-             upr = what[[who]]$upr[[1]],
-             coverage = with(what[[who]], (PA_area_obs_or_imputed + PA_area_predict) / (PA_area_obs_or_imputed + PA_area_predict + PA_area_no_predict)),
-             formula = what[[who]]$selected_formula,
-             spatial = what[[who]]$selected_spatial
+
+  .PA_areas <- list(PA_area_known = sum(what[[who]]$country_info[[1]]$PA_area_known),
+                    PA_area_imputed = sum(what[[who]]$country_info[[1]]$PA_area_imputed),
+                    PA_area_predicted = sum(what[[who]]$country_info[[1]]$PA_area_predicted),
+                    PA_area_unknown = sum(what[[who]]$country_info[[1]]$PA_area_unknown))
+
+  .PA_area_total <- .PA_areas$PA_area_known + .PA_areas$PA_area_imputed + .PA_areas$PA_area_predicted + .PA_areas$PA_area_unknown
+
+  tibble::tibble(type = type,
+                 coef = what$meta$coef_population,
+                 rerank = what$meta$rerank,
+                 Ncpu = what$meta$Ncpu,
+                 run_time = what$meta$duration_h,
+                 point_pred = what[[who]]$tally_total,
+                 lwr = what[[who]]$lwr[[1]],
+                 upr = what[[who]]$upr[[1]],
+                 PA_areas = list(.PA_areas),
+                 PA_areas_pct = list(lapply(.PA_areas, \(x) 100*x/.PA_area_total)),
+                 PA_area_total = .PA_area_total,
+                 formula = what[[who]]$selected_formula,
+                 spatial = what[[who]]$selected_spatial
   )
 }
 
