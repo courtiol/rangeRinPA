@@ -1,6 +1,7 @@
 library(rangeRinPA)
 library(tidyverse)
 library(scales)
+library(ggrepel)
 library(ggsci)
 
 
@@ -132,3 +133,97 @@ ggplot(res) +
   theme(legend.position = "bottom")
 ggsave("./scripts/figures/predictions_across_analyses.pdf", width = 14, height = 9)
 
+
+## Plot predictors:
+options("ggrepel.max.overlaps" = Inf)
+
+data_rangers |>
+  fill_PA_area(coef = 0.5) |>
+  ggplot() +
+  aes(y = staff_total, x = area_PA_total, label = countryname_iso, colour = country_UN_continent) +
+  geom_text_repel(key_glyph = "point", alpha = 0.35, size = 3) +
+  geom_point() +
+  coord_trans(x = "log", y = "log") +
+  scale_colour_npg() +
+  scale_x_continuous(breaks = 10^(1:7), minor_breaks = NULL, limits = c(5, 0.3e7), labels = label_number(accuracy = 1)) +
+  scale_y_continuous(breaks = 10^(0:5), minor_breaks = NULL, limits = c(1, 1e5), labels = label_number(accuracy = 1)) +
+  theme_bw() +
+  theme(legend.position = "bottom") +
+  labs(y = "Total number of staff in surveyed countries/territories",
+       x = expression(paste("Total surface of protected areas for the country/territory in km"^"2")),
+       colour = "Continent:")
+ggsave("./scripts/figures/predictor_PA_area.pdf", width = 13, height = 9, scale = 0.7)
+
+data_rangers |>
+  fill_PA_area(coef = 0.5) |>
+  ggplot() +
+  aes(y = staff_total, x = area_country, label = countryname_iso, colour = country_UN_continent) +
+  geom_text_repel(key_glyph = "point", alpha = 0.35, size = 3) +
+  geom_point() +
+  coord_trans(x = "log", y = "log") +
+  scale_colour_npg() +
+  scale_x_continuous(breaks = 10^(1:7), minor_breaks = NULL, limits = c(50, 0.2e8), labels = label_number(accuracy = 1)) +
+  scale_y_continuous(breaks = 10^(0:5), minor_breaks = NULL, limits = c(1, 1e5), labels = label_number(accuracy = 1)) +
+  theme_bw() +
+  theme(legend.position = "bottom") +
+  labs(y = "Total number of staff in surveyed countries/territories",
+       x = expression(paste("Surface of the country/territory in km"^"2")),
+       colour = "Continent:")
+#ggsave("./scripts/figures/predictor_country_area.pdf", width = 13, height = 9, scale = 0.7) ## useless? -> driven by collinearity
+
+data_rangers |>
+  fill_PA_area(coef = 0.5) |>
+  ggplot() +
+  aes(y = area_PA_total / staff_total, x = area_PA_total, label = countryname_iso, colour = country_UN_continent) +
+  geom_text_repel(key_glyph = "point", alpha = 0.35, size = 3) +
+  geom_point() +
+  coord_trans(y = "log", x = "log") +
+  scale_colour_npg() +
+  scale_x_continuous(breaks = 10^(1:7), minor_breaks = NULL, limits = c(5, 0.3e7), labels = label_number(accuracy = 1)) +
+  scale_y_continuous(breaks = 10^(0:5), minor_breaks = NULL, limits = c(0.5, 1e5), labels = label_number(accuracy = 1)) +
+  theme_bw() +
+  theme(legend.position = "bottom") +
+  labs(y = expression(paste("Surface of protected areas in km"^"2", " per ranger")),
+       x = expression(paste("Total surface of protected areas for the country/territory in km"^"2")),
+       colour = "Continent:")
+ggsave("./scripts/figures/predictor_relative_PA_area.pdf", width = 13, height = 9, scale = 0.7)
+
+
+data_rangers |>
+  fill_PA_area(coef = 0.5) |>
+  filter(!is.na(staff_total)) -> d
+
+fit <- lm(log(staff_total + 1) ~ log(area_PA_total + 1), data = d)
+d$staff_total_resid <- resid(fit)
+
+d |>
+  ggplot() +
+  aes(y = staff_total_resid, x = pop_density, label = countryname_iso, colour = country_UN_continent) +
+  geom_text_repel(key_glyph = "point", alpha = 0.35, size = 3) +
+  geom_point() +
+  coord_trans(x = "log") +
+  scale_colour_npg() +
+  scale_x_continuous(breaks = 10^(0:4), minor_breaks = NULL, limits = c(0.1, 1e4), labels = label_number(accuracy = 1)) +
+  scale_y_continuous(breaks = seq(-6, 4, 1), minor_breaks = NULL, limits = c(-6, 4), labels = label_number(accuracy = 2)) +
+  theme_bw() +
+  theme(legend.position = "bottom") +
+  labs(y = "Residual number of staff in surveyed countries/territories\n(after accounting for the effect of the surface of protected areas)",
+       x = expression(paste("Population density in people per km"^"2")),
+       colour = "Continent:")
+ggsave("./scripts/figures/predictor_pop_density.pdf", width = 13, height = 9, scale = 0.7)
+
+d |>
+  ggplot() +
+  aes(y = staff_total_resid, x = area_country, label = countryname_iso, colour = country_UN_continent) +
+  geom_text_repel(key_glyph = "point", alpha = 0.35, size = 3) +
+  geom_point() +
+  coord_trans(x = "log") +
+  scale_colour_npg() +
+  scale_x_continuous(breaks = 10^(0:8), minor_breaks = NULL, limits = c(50, 4e7), labels = label_number(accuracy = 1)) +
+  scale_y_continuous(breaks = seq(-6, 4, 1), minor_breaks = NULL, limits = c(-6, 4), labels = label_number(accuracy = 2)) +
+  theme_bw() +
+  theme(legend.position = "bottom") +
+  labs(y = "Residual number of staff in surveyed countries/territories\n(after accounting for the effect of the surface of protected areas)",
+       x = expression(paste("Total surface of country/territory in km"^"2")),
+       colour = "Continent:")
+ggsave("./scripts/figures/predictor_area_country.pdf", width = 13, height = 9, scale = 0.7)
