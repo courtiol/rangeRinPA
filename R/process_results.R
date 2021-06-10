@@ -63,7 +63,13 @@ extract_results_internal <- function(what, who, type) {
                     PA_area_predicted = sum(what[[who]]$country_info[[1]]$PA_area_predicted),
                     PA_area_unknown = sum(what[[who]]$country_info[[1]]$PA_area_unknown))
 
-  .PA_area_total <- .PA_areas$PA_area_known + .PA_areas$PA_area_imputed + .PA_areas$PA_area_predicted + .PA_areas$PA_area_unknown
+  .PA_area_total <- sum(unlist(.PA_areas))
+
+  what[[who]]$country_info[[1]] %>%
+    dplyr::group_by(.data$type) %>%
+    dplyr::summarise(dplyr::across(tidyselect::starts_with("staff"), \(x) sum(delog1p(x), na.rm = TRUE), .names = "staff")) %>%
+    tidyr::pivot_wider(names_from = .data$type, values_from = .data$staff) %>%
+    as.list() -> .predictions
 
   tibble::tibble(type = type,
                  coef = what$meta$coef_population,
@@ -76,6 +82,8 @@ extract_results_internal <- function(what, who, type) {
                  PA_areas = list(.PA_areas),
                  PA_areas_pct = list(lapply(.PA_areas, \(x) 100*x/.PA_area_total)),
                  PA_area_total = .PA_area_total,
+                 pred_details = list(.predictions),
+                 pred_details_pct = list(lapply(.predictions, \(x) 100*x/what[[who]]$tally_total)),
                  formula = what[[who]]$selected_formula,
                  spatial = what[[who]]$selected_spatial
   )
