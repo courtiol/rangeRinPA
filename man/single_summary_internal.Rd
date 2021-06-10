@@ -13,7 +13,7 @@ single_summary_internal(result, who, resp, data)
 
 \item{resp}{the quoted name of the response variable}
 
-\item{data}{the full dataset}
+\item{data}{a dataset with info on continents if breakdown by continent is required (optional)}
 }
 \description{
 An internal function fetching the results at the country level

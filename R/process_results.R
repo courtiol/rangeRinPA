@@ -5,6 +5,7 @@
 #' @param type the type of workflow ("LMM" or "RF")
 #' @param list_results_LMM a list of objects produced by [`run_LMM_workflow()`]
 #' @param list_results_RF a list of objects produced by [`run_RF_workflow()`]
+#' @param data a dataset with info on continents if breakdown by continent is required (optional)
 #'
 #' @export
 #'
@@ -22,21 +23,21 @@
 #'   tidyr::unnest_wider(PA_areas_pct)
 #' }
 #'
-extract_results <- function(list_results_LMM = list(), list_results_RF = list()) {
+extract_results <- function(list_results_LMM = list(), list_results_RF = list(), data = NULL) {
   d_LMM <- d_RF <- data.frame()
 
   if (length(list_results_LMM) > 0) {
-    rangers_list_LMM <- lapply(list_results_LMM, function(x) extract_results_internal(what = x, who = "rangers", type = "LMM"))
-    others_list_LMM  <- lapply(list_results_LMM, function(x) extract_results_internal(what = x, who = "others", type = "LMM"))
-    all_list_LMM     <- lapply(list_results_LMM, function(x) extract_results_internal(what = x, who = "all", type = "LMM"))
+    rangers_list_LMM <- lapply(list_results_LMM, function(x) extract_results_internal(what = x, who = "rangers", type = "LMM", data = data))
+    others_list_LMM  <- lapply(list_results_LMM, function(x) extract_results_internal(what = x, who = "others", type = "LMM", data = data))
+    all_list_LMM     <- lapply(list_results_LMM, function(x) extract_results_internal(what = x, who = "all", type = "LMM", data = data))
     rbind(cbind(who = "rangers", as.data.frame(do.call("rbind", rangers_list_LMM))),
           cbind(who = "others",  as.data.frame(do.call("rbind", others_list_LMM))),
           cbind(who = "all",     as.data.frame(do.call("rbind", all_list_LMM)))) -> d_LMM
   }
   if (length(list_results_RF) > 0) {
-    rangers_list_RF <- lapply(list_results_RF, function(x) extract_results_internal(what = x, who = "rangers", type = "RF"))
-    others_list_RF  <- lapply(list_results_RF, function(x) extract_results_internal(what = x, who = "others", type = "RF"))
-    all_list_RF     <- lapply(list_results_RF, function(x) extract_results_internal(what = x, who = "all", type = "RF"))
+    rangers_list_RF <- lapply(list_results_RF, function(x) extract_results_internal(what = x, who = "rangers", type = "RF", data = data))
+    others_list_RF  <- lapply(list_results_RF, function(x) extract_results_internal(what = x, who = "others", type = "RF", data = data))
+    all_list_RF     <- lapply(list_results_RF, function(x) extract_results_internal(what = x, who = "all", type = "RF", data = data))
     rbind(cbind(who = "rangers", as.data.frame(do.call("rbind", rangers_list_RF))),
           cbind(who = "others",  as.data.frame(do.call("rbind", others_list_RF))),
           cbind(who = "all",     as.data.frame(do.call("rbind", all_list_RF)))) -> d_RF
@@ -56,20 +57,30 @@ extract_results <- function(list_results_LMM = list(), list_results_RF = list())
 #' @describeIn extract_results an internal function fetching the results
 #' @export
 #'
-extract_results_internal <- function(what, who, type) {
+extract_results_internal <- function(what, who, type, data) {
 
-  .PA_areas <- list(PA_area_known = sum(what[[who]]$country_info[[1]]$PA_area_known),
-                    PA_area_imputed = sum(what[[who]]$country_info[[1]]$PA_area_imputed),
-                    PA_area_predicted = sum(what[[who]]$country_info[[1]]$PA_area_predicted),
-                    PA_area_unknown = sum(what[[who]]$country_info[[1]]$PA_area_unknown))
+  if (!is.null(data)) {
+    what[[who]]$country_info[[1]] %>%
+      add_continents(data = data) %>%
+      dplyr::group_by(.data$continent) -> country_info
+  } else {
+     country_info <- what[[who]]$country_info[[1]]
+  }
 
-  .PA_area_total <- sum(unlist(.PA_areas))
+  country_info %>%
+    dplyr::summarise(PA_area_known = sum(.data$PA_area_known),
+                     PA_area_imputed = sum(.data$PA_area_imputed),
+                     PA_area_predicted = sum(.data$PA_area_predicted),
+                     PA_area_unknown = sum(.data$PA_area_unknown)) -> .PA_areas
 
-  what[[who]]$country_info[[1]] %>%
-    dplyr::group_by(.data$type) %>%
+  #.PA_areas %>%
+  #  dplyr::summarise(PA_area_total = sum(dplyr::c_across())) -> .PA_area_total
+
+  country_info %>%
+    dplyr::group_by(.data$type, .add = TRUE) %>%
     dplyr::summarise(dplyr::across(tidyselect::starts_with("staff"), \(x) sum(delog1p(x), na.rm = TRUE), .names = "staff")) %>%
-    tidyr::pivot_wider(names_from = .data$type, values_from = .data$staff) %>%
-    as.list() -> .predictions
+    dplyr::ungroup() %>%
+    tidyr::pivot_wider(names_from = .data$type, values_from = .data$staff) -> .predictions
 
   tibble::tibble(type = type,
                  coef = what$meta$coef_population,
@@ -80,10 +91,7 @@ extract_results_internal <- function(what, who, type) {
                  lwr = what[[who]]$lwr[[1]],
                  upr = what[[who]]$upr[[1]],
                  PA_areas = list(.PA_areas),
-                 PA_areas_pct = list(lapply(.PA_areas, \(x) 100*x/.PA_area_total)),
-                 PA_area_total = .PA_area_total,
                  pred_details = list(.predictions),
-                 pred_details_pct = list(lapply(.predictions, \(x) 100*x/what[[who]]$tally_total)),
                  formula = what[[who]]$selected_formula,
                  spatial = what[[who]]$selected_spatial
   )

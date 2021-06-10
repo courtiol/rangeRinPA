@@ -81,7 +81,7 @@ fetch_data_rangers <- function() {
                     .data$country_UN_continent == "150" ~ "Europe",
                     .data$country_UN_continent == "2" ~ "Africa",
                     .data$country_UN_continent == "21" ~ "Northern America",
-                    .data$country_UN_continent == "419" ~ "Latin American & Caribbean",
+                    .data$country_UN_continent == "419" ~ "Latin America & Caribbean",
                     .data$country_UN_continent == "9" ~ "Oceania"),
                   country_UN_subcontinent = as.character(.data$country_UN_subcontinent)) -> d
 

@@ -392,3 +392,19 @@ prepare_grid_finetuning <- function(grid_type = "fine") {
   param_grid_for_finetuning
 }
 
+
+#' Add continent to a table
+#'
+#' @param tbl The table for which continents must be added
+#' @param data The dataset containing the info on continents
+#'
+#' @export
+#'
+#' @examples
+#' add_continents(data.frame(countryname_eng = c("Turkey", "France")), data_rangers)
+#'
+add_continents <- function(tbl, data) {
+  data[, c("countryname_eng", "country_UN_continent")] %>%
+    dplyr::right_join(tbl, by = "countryname_eng") %>%
+    dplyr::rename(continent = .data$country_UN_continent)
+}

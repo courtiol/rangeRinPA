@@ -2,6 +2,7 @@
 
 export("%>%")
 export(add_Matern)
+export(add_continents)
 export(aggregate_metrics)
 export(build_data)
 export(build_final_pred_data)
