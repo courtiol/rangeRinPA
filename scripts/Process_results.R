@@ -3,6 +3,8 @@ library(tidyverse)
 library(scales)
 library(ggrepel)
 library(ggsci)
+library(rnaturalearth)
+library(sf)
 
 
 ## Loading results:
@@ -22,7 +24,7 @@ res |>
   subset(select = c(who, type, coef, formula, spatial)) |>
   as.data.frame()
 
-## Table showing predicitons:
+## Tables showing predicitons:
 res |>
   unnest(pred_details) |>
   group_by(who, continent) |>
@@ -228,6 +230,7 @@ data_rangers |>
   filter(!is.na(staff_total)) -> d
 
 fit <- lm(log(staff_total + 1) ~ log(area_PA_total + 1), data = d)
+confint(fit)
 d$staff_total_resid <- resid(fit)
 
 d |>
@@ -263,3 +266,44 @@ d |>
        colour = "Continent:")
 ggsave("./scripts/figures/predictor_area_country.pdf", width = 13, height = 9, scale = 0.7)
 ggsave("./scripts/figures/predictor_area_country.png", width = 13, height = 9, scale = 0.7)
+
+# Map of the sampling
+
+world_sf <- ne_countries(scale = "medium", returnclass = "sf")
+i <- which(names(world_sf) != "geometry")
+names(world_sf)[i] <- paste0("rne_", names(world_sf)[i])
+
+## check locations not found in map (depend on scale defined above):
+data_rangers %>%
+ anti_join(world_sf, by = c(countryname_iso = "rne_iso_a3")) %>%
+ pull(countryname_eng)
+
+## only keep locations found in map:
+data_rangers %>%
+ right_join(world_sf, by = c(countryname_iso = "rne_iso_a3")) %>%
+ st_as_sf() -> world_rangers
+
+world_rangers %>%
+  mutate(PA_area_surveyed = ifelse(PA_area_surveyed == 0, NA, PA_area_surveyed)) -> world_rangers
+
+## applying projection:
+world_rangers %>%
+ st_transform(crs = "+proj=moll") -> world_rangers
+
+ggplot() +
+  geom_sf(mapping = aes(fill = PA_area_surveyed / (PA_area_surveyed + PA_area_unsurveyed)),
+          data = world_rangers, colour = "black", size = 0.05) +
+  scale_fill_fermenter(palette = 2,
+                       direction = 1,
+                       breaks = seq(0, 0.8, 0.2),
+                       guide = guide_colorsteps(title = "Proportion of PA area surveyed",
+                                                title.vjust = 1, barwidth = 10,
+                                                label.theme = element_text(angle = 0),
+                                                label.hjust = 0.5, label.vjust = 1)) +
+  scale_x_continuous(breaks = seq(-180, 180, 30)) +
+  theme_minimal() +
+  theme(legend.position = "bottom", panel.grid = element_line(colour = "GREY", size = 0.3),
+        plot.title = element_text(size = 20, hjust = 0.5))
+ggsave("./scripts/figures/design.pdf", width = 13, height = 9, scale = 0.7)
+ggsave("./scripts/figures/design.png", width = 13, height = 9, scale = 0.7)
+
