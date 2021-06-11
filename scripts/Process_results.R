@@ -88,6 +88,8 @@ PA_areas_breakdown_long_pct_world |>
           legend.position = "bottom",
           plot.margin = margin(t = 1, l = 0.5, unit = "cm"))
 ggsave("./scripts/figures/PA_area_earth.pdf", width = 10, height = 4.5)
+ggsave("./scripts/figures/PA_area_earth.png", width = 10, height = 4.5)
+
 
 
 ## Plot of retained predictors:
@@ -111,7 +113,7 @@ ggplot(res_long) +
   theme_bw() +
   theme(legend.position = "bottom")
 ggsave("./scripts/figures/predictors_presence.pdf", scale = 1, height = 10, width = 8)
-
+ggsave("./scripts/figures/predictors_presence.png", scale = 1, height = 10, width = 8)
 
 ## Table of models for which spatial autocorrelation is selected:
 res[res$spatial, ]
@@ -132,7 +134,7 @@ ggplot(res) +
   facet_wrap(~ who, scales = "free") +
   theme(legend.position = "bottom")
 ggsave("./scripts/figures/predictions_across_analyses.pdf", width = 14, height = 9)
-
+ggsave("./scripts/figures/predictions_across_analyses.png", width = 14, height = 9)
 
 ## Plot predictors:
 options("ggrepel.max.overlaps" = Inf)
@@ -153,6 +155,7 @@ data_rangers |>
        x = expression(paste("Total surface of protected areas for the country/territory in km"^"2")),
        colour = "Continent:")
 ggsave("./scripts/figures/predictor_PA_area.pdf", width = 13, height = 9, scale = 0.7)
+ggsave("./scripts/figures/predictor_PA_area.png", width = 13, height = 9, scale = 0.7)
 
 data_rangers |>
   fill_PA_area(coef = 0.5) |>
@@ -187,7 +190,7 @@ data_rangers |>
        x = expression(paste("Total surface of protected areas for the country/territory in km"^"2")),
        colour = "Continent:")
 ggsave("./scripts/figures/predictor_relative_PA_area.pdf", width = 13, height = 9, scale = 0.7)
-
+ggsave("./scripts/figures/predictor_relative_PA_area.png", width = 13, height = 9, scale = 0.7)
 
 data_rangers |>
   fill_PA_area(coef = 0.5) |>
@@ -211,6 +214,7 @@ d |>
        x = expression(paste("Population density in people per km"^"2")),
        colour = "Continent:")
 ggsave("./scripts/figures/predictor_pop_density.pdf", width = 13, height = 9, scale = 0.7)
+ggsave("./scripts/figures/predictor_pop_density.png", width = 13, height = 9, scale = 0.7)
 
 d |>
   ggplot() +
@@ -227,3 +231,4 @@ d |>
        x = expression(paste("Total surface of country/territory in km"^"2")),
        colour = "Continent:")
 ggsave("./scripts/figures/predictor_area_country.pdf", width = 13, height = 9, scale = 0.7)
+ggsave("./scripts/figures/predictor_area_country.png", width = 13, height = 9, scale = 0.7)
