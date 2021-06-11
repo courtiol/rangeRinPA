@@ -38,7 +38,11 @@ table_pred_breakdown |>
              total = known + predicted) |>
   mutate(continent = "Earth") |>
   full_join(table_pred_breakdown, by = c("who", "known", "predicted", "total", "continent")) |>
-  relocate(continent, .before = 1) -> table_pred_breakdown_with_earth
+  relocate(continent, .before = 1) |>
+  rename(Location = continent, Staff = who, Surveyed = known, Predicted = predicted, Total = total) |>
+  mutate(Location = factor(Location,
+                           levels = c("Earth", "Africa", "Asia", "Europe", "Latin America & Caribbean", "Northern America", "Oceania"))) |>
+  arrange(Location, Staff) -> table_pred_breakdown_with_earth
 
 table_pred_breakdown_with_earth
 write_csv(table_pred_breakdown_with_earth, "scripts/tables/table_prediction.csv")
