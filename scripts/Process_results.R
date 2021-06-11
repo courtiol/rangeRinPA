@@ -22,6 +22,26 @@ res |>
   subset(select = c(who, type, coef, formula, spatial)) |>
   as.data.frame()
 
+## Table showing predicitons:
+res |>
+  unnest(pred_details) |>
+  group_by(who, continent) |>
+  summarize(known = mean(known, na.rm = TRUE),
+            predicted = mean(predicted, na.rm = TRUE),
+            total = known + predicted) |>
+  ungroup() -> table_pred_breakdown
+
+table_pred_breakdown |>
+  group_by(who) |>
+   summarize(known = sum(known, na.rm = TRUE),
+             predicted = sum(predicted, na.rm = TRUE),
+             total = known + predicted) |>
+  mutate(continent = "Earth") |>
+  full_join(table_pred_breakdown, by = c("who", "known", "predicted", "total", "continent")) |>
+  relocate(continent, .before = 1) -> table_pred_breakdown_with_earth
+
+table_pred_breakdown_with_earth
+write_csv(table_pred_breakdown_with_earth, "scripts/tables/table_prediction.csv")
 
 ## Plot showing distribution of PAs per continent:
 res |>
