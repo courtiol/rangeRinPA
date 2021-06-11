@@ -186,7 +186,7 @@ data_rangers |>
   scale_y_continuous(breaks = 10^(0:5), minor_breaks = NULL, limits = c(0.5, 1e5), labels = label_number(accuracy = 1)) +
   theme_bw() +
   theme(legend.position = "bottom") +
-  labs(y = expression(paste("Surface of protected areas in km"^"2", " per ranger")),
+  labs(y = expression(paste("Surface of protected areas in km"^"2", " per staff member")),
        x = expression(paste("Total surface of protected areas for the country/territory in km"^"2")),
        colour = "Continent:")
 ggsave("./scripts/figures/predictor_relative_PA_area.pdf", width = 13, height = 9, scale = 0.7)
