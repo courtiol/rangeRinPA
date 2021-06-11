@@ -47,6 +47,13 @@ table_pred_breakdown |>
 print(table_pred_breakdown_with_earth, n = Inf)
 write_csv(table_pred_breakdown_with_earth, "scripts/tables/table_prediction.csv")
 
+table_pred_breakdown_with_earth |>
+  select(-Surveyed, -Predicted) |>
+  pivot_wider(names_from = Location, values_from = Total) -> table_pred_total_with_earth
+
+print(table_pred_total_with_earth, n = Inf)
+write_csv(table_pred_total_with_earth, "scripts/tables/table_prediction_simple.csv")
+
 ## Plot showing distribution of PAs per continent:
 res |>
   filter(type == "LMM", coef == 0) |> ## note: changes very little across type and coef
