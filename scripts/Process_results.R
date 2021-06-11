@@ -58,7 +58,7 @@ PA_areas_breakdown_long_pct |>
           legend.position = "bottom",
           plot.margin = margin(t = 1, l = 0.5, unit = "cm"))
 ggsave("./scripts/figures/PA_area_per_continent.pdf", width = 10, height = 6)
-
+ggsave("./scripts/figures/PA_area_per_continent.png", width = 10, height = 6)
 
 ## Plot showing distribution of PAs global:
 PA_areas_breakdown_long |>
