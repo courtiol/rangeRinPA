@@ -38,13 +38,13 @@ table_pred_breakdown |>
              total = known + predicted) |>
   mutate(continent = "Earth") |>
   full_join(table_pred_breakdown, by = c("who", "known", "predicted", "total", "continent")) |>
-  relocate(continent, .before = 1) |>
+  relocate(continent, .before = 2) |>
   rename(Location = continent, Staff = who, Surveyed = known, Predicted = predicted, Total = total) |>
   mutate(Location = factor(Location,
-                           levels = c("Earth", "Africa", "Asia", "Europe", "Latin America & Caribbean", "Northern America", "Oceania"))) |>
-  arrange(Location, Staff) -> table_pred_breakdown_with_earth
+                           levels = c("Earth", "Asia", "Europe", "Northern America", "Africa", "Latin America & Caribbean", "Oceania"))) |>
+  arrange(Staff, Location) -> table_pred_breakdown_with_earth
 
-table_pred_breakdown_with_earth
+print(table_pred_breakdown_with_earth, n = Inf)
 write_csv(table_pred_breakdown_with_earth, "scripts/tables/table_prediction.csv")
 
 ## Plot showing distribution of PAs per continent:
