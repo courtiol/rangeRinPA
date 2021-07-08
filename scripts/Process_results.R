@@ -317,21 +317,33 @@ data_rangers |>
   select(countryname_iso, countryname_eng, km2_per_staff, country_UN_continent, area_country, area_PA_total) |>
   arrange(km2_per_staff) -> d
 
-order_continents <- rev(c("World", "Latin America \n& Caribbean", "Africa", "Oceania", "Asia", "Europe", "Northern America\n (incl. Greenland)"))
+order_continents <- rev(c("World", "Latin America \n& Caribbean", "Africa", "Oceania", "Asia", "Europe", "Northern\n America")) #\n (incl. Greenland)
 
 d_All <- d
 d_All |>
   mutate(country_UN_continent = "World") |>
   bind_rows(d) |>
   mutate(country_UN_continent = ifelse(country_UN_continent == "Latin America & Caribbean", "Latin America \n& Caribbean", country_UN_continent)) |>
-  mutate(country_UN_continent = ifelse(country_UN_continent == "Northern America", "Northern America\n (incl. Greenland)", country_UN_continent)) |>
+  mutate(country_UN_continent = ifelse(country_UN_continent == "Northern America", "Northern\n America", country_UN_continent)) |> #\n (incl. Greenland)
   mutate(country_UN_continent = factor(country_UN_continent, levels = order_continents)) -> dd
 
 dd |>
   filter(!countryname_eng %in% c("Greenland")) |>
   group_by(country_UN_continent) |>
-  summarise(mean = weighted.mean(km2_per_staff, area_PA_total)) |>
+  summarise(mean = weighted.mean(km2_per_staff, area_PA_total),
+            good = sum(area_PA_total[km2_per_staff <= 5]),
+            bad = sum(area_PA_total[km2_per_staff > 5])) |>
   mutate(country_UN_continent = factor(country_UN_continent, levels =  order_continents)) -> dd_mean
+
+dd_mean |>
+  pivot_longer(cols = c("good", "bad")) |>
+  group_nest(country_UN_continent) |>
+  rowwise() |>
+  mutate(gg = list(ggplot(data) +
+    aes(y = value, x = "", fill = name) +
+    geom_bar(stat = "identity", position = "stack", show.legend = FALSE) +
+    coord_polar(theta = "y", start = 0, direction = 1) +
+    theme_void())) -> data_pies
 
 dd |>
   filter(countryname_eng %in% c("Greenland")) -> dd_green
@@ -339,22 +351,37 @@ dd |>
 dd |>
   filter(!countryname_eng %in% c("Greenland")) |>
   ggplot() +
-  geom_point(aes(x = mean, y = country_UN_continent, fill = country_UN_continent),
+  #geom_point(aes(x = km2_per_staff, y = country_UN_continent, size = area_PA_total),
+  #           shape = 8, data = dd_green) +
+  geom_segment(aes(y = mean, x = country_UN_continent, yend = 5, xend = country_UN_continent),
+               arrow = arrow(length = unit(0.3, "cm")), data = dd_mean) +
+  geom_point(aes(y = mean, x = country_UN_continent, fill = country_UN_continent),
              shape = 23, colour = "black", size = 3, data = dd_mean) +
-  geom_point(aes(x = km2_per_staff, y = country_UN_continent, size = area_PA_total),
-             shape = 8, data = dd_green) +
-  geom_text(aes(x = mean, y = country_UN_continent, label = round(mean)), nudge_y = 0.3, size = 6, data = dd_mean) +
-  geom_jitter(aes(x = km2_per_staff, y = country_UN_continent, size = area_PA_total, colour = country_UN_continent),
-              alpha = 0.75, shape = 21,
-              position = position_jitter(seed = 1L, width = 0, height = 0.15)) +
-  geom_vline(xintercept = 5, colour = "darkgreen", linetype = "dashed") +
-  scale_x_continuous(breaks = c(5, 10^(0:5)), minor_breaks = NULL, labels = label_number(accuracy = 1)) +
+  geom_text(aes(y = mean, x = country_UN_continent, label = round(mean)), nudge_x = 0.3, size = 6, data = dd_mean) +
+  geom_jitter(aes(y = km2_per_staff, x = country_UN_continent, size = area_PA_total, alpha = km2_per_staff < 5,
+                  colour = country_UN_continent, fill = country_UN_continent),
+              shape = 21,
+              position = position_jitter(seed = 1L, width = 0.15, height = 0)) +
+  geom_hline(yintercept = 5, colour = "darkgreen") +
+  scale_y_continuous(limits = c(5000, 0.01), breaks = c(5, 10^(0:3)), minor_breaks = NULL, labels = label_number(accuracy = 1), trans = "reverse") +
+  scale_x_discrete(position = "top") +
   scale_colour_npg() +
   scale_fill_npg() +
-  coord_trans(x = "log") +
-  labs(y = "Geographic area", x = expression(paste("Surface of protected area per individual staff (km"^"2", ")"))) +
+  scale_alpha_discrete(range = c(0.3, 0.95)) +
+  coord_trans(y = "pseudo_log") +
+  labs(x = "Geographic area", y = expression(paste("Surface of protected area per individual staff (km"^"2", ")"))) +
   theme_minimal() +
-  guides(colour = "none", size = "none", fill = "none")
+  theme(panel.grid.major.x = element_blank()) +
+  guides(colour = "none", size = "none", fill = "none", alpha = "none") -> main_plot
+
+main_plot +
+  patchwork::inset_element(data_pies$gg[[1]], 0, 0.025, 1/6, 0.1,                 align_to = "panel") +
+  patchwork::inset_element(data_pies$gg[[2]], 0, 0.025, 1/6 + (1 - 1/6)*1/3, 0.1, align_to = "panel") +
+  patchwork::inset_element(data_pies$gg[[3]], 0, 0.025, 1/6 + (1 - 1/6)*2/3, 0.1, align_to = "panel") +
+  patchwork::inset_element(data_pies$gg[[4]], 0, 0.025, 1, 0.1,                   align_to = "panel") +
+  patchwork::inset_element(data_pies$gg[[5]], 0, 0.025, 1 + (1 - 1/6)*1/3, 0.1,   align_to = "panel") +
+  patchwork::inset_element(data_pies$gg[[6]], 0, 0.025, 1 + (1 - 1/6)*2/3, 0.1,   align_to = "panel") +
+  patchwork::inset_element(data_pies$gg[[7]], 0, 0.025, 1 + (1 - 1/6), 0.1,       align_to = "panel")
 
 ggsave("./scripts/figures/density.png", width = 15, height = 9, scale = 0.7)
 ggsave("./scripts/figures/density.pdf", width = 15, height = 9, scale = 0.7)
