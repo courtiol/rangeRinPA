@@ -310,37 +310,57 @@ ggsave("./scripts/figures/design.png", width = 13, height = 9, scale = 0.7)
 
 ## Exploration density rangers
 data_rangers |>
-  filter(!countryname_eng %in% c("Greenland")) |>
+#  filter(!countryname_eng %in% c("Greenland")) |>
   fill_PA_area(coef = 1) |>
   mutate(km2_per_staff = area_PA_total / staff_total) |>
   filter(!is.na(km2_per_staff)) |>
   select(countryname_iso, countryname_eng, km2_per_staff, country_UN_continent, area_country, area_PA_total) |>
   arrange(km2_per_staff) -> d
 
+order_continents <- rev(c("World", "Latin America \n& Caribbean", "Africa", "Oceania", "Asia", "Europe", "Northern America\n (incl. Greenland)"))
+
 d_All <- d
 d_All |>
-  mutate(country_UN_continent = "All") |>
+  mutate(country_UN_continent = "World") |>
   bind_rows(d) |>
-  mutate(country_UN_continent = fct_rev(relevel(as.factor(country_UN_continent), ref = "All"))) -> dd
+  mutate(country_UN_continent = ifelse(country_UN_continent == "Latin America & Caribbean", "Latin America \n& Caribbean", country_UN_continent)) |>
+  mutate(country_UN_continent = ifelse(country_UN_continent == "Northern America", "Northern America\n (incl. Greenland)", country_UN_continent)) |>
+  mutate(country_UN_continent = factor(country_UN_continent, levels = order_continents)) -> dd
 
 dd |>
+  filter(!countryname_eng %in% c("Greenland")) |>
   group_by(country_UN_continent) |>
-  summarise(mean = weighted.mean(km2_per_staff, area_PA_total)) -> dd_mean
+  summarise(mean = weighted.mean(km2_per_staff, area_PA_total)) |>
+  mutate(country_UN_continent = factor(country_UN_continent, levels =  order_continents)) -> dd_mean
 
 dd |>
-  #filter(!countryname_eng %in% c("Greenland", "Niger")) |>
+  filter(countryname_eng %in% c("Greenland")) -> dd_green
+
+dd |>
+  filter(!countryname_eng %in% c("Greenland")) |>
   ggplot() +
-  aes(x = km2_per_staff, y = country_UN_continent, size = area_PA_total,
-      colour = country_UN_continent, label = countryname_iso) + #label = countryname_iso, colour = country_UN_continent) +
-  geom_jitter(shape = 21, width = 0, height = 0.3) +
-  geom_point(aes(x = mean, y = country_UN_continent), shape = "|", size = 10, data = dd_mean, inherit.aes = FALSE) +
-  geom_vline(xintercept = 5, colour = "red", linetype = "dashed") +
-  scale_x_continuous(breaks = 10^(0:5), minor_breaks = NULL, labels = label_number(accuracy = 1)) +
+  geom_point(aes(x = mean, y = country_UN_continent, fill = country_UN_continent),
+             shape = 23, colour = "black", size = 3, data = dd_mean) +
+  geom_point(aes(x = km2_per_staff, y = country_UN_continent, size = area_PA_total),
+             shape = 8, data = dd_green) +
+  geom_text(aes(x = mean, y = country_UN_continent, label = round(mean)), nudge_y = 0.3, size = 6, data = dd_mean) +
+  geom_jitter(aes(x = km2_per_staff, y = country_UN_continent, size = area_PA_total, colour = country_UN_continent),
+              alpha = 0.75, shape = 21,
+              position = position_jitter(seed = 1L, width = 0, height = 0.15)) +
+  geom_vline(xintercept = 5, colour = "darkgreen", linetype = "dashed") +
+  scale_x_continuous(breaks = c(5, 10^(0:5)), minor_breaks = NULL, labels = label_number(accuracy = 1)) +
+  scale_colour_npg() +
+  scale_fill_npg() +
   coord_trans(x = "log") +
-  theme_minimal()
+  labs(y = "Geographic area", x = expression(paste("Surface of protected area per individual staff (km"^"2", ")"))) +
+  theme_minimal() +
+  guides(colour = "none", size = "none", fill = "none")
+
+ggsave("./scripts/figures/density.png", width = 15, height = 9, scale = 0.7)
+ggsave("./scripts/figures/density.pdf", width = 15, height = 9, scale = 0.7)
 
 
 dd %>%
-  filter(country_UN_continent == "All") %>%
+  filter(country_UN_continent == "World") %>%
   summarise(p = 100 * sum(area_PA_total[km2_per_staff < 5]) / sum(area_PA_total))
 
