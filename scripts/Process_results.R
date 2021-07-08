@@ -307,3 +307,40 @@ ggplot() +
 ggsave("./scripts/figures/design.pdf", width = 13, height = 9, scale = 0.7)
 ggsave("./scripts/figures/design.png", width = 13, height = 9, scale = 0.7)
 
+
+## Exploration density rangers
+data_rangers |>
+  filter(!countryname_eng %in% c("Greenland")) |>
+  fill_PA_area(coef = 1) |>
+  mutate(km2_per_staff = area_PA_total / staff_total) |>
+  filter(!is.na(km2_per_staff)) |>
+  select(countryname_iso, countryname_eng, km2_per_staff, country_UN_continent, area_country, area_PA_total) |>
+  arrange(km2_per_staff) -> d
+
+d_All <- d
+d_All |>
+  mutate(country_UN_continent = "All") |>
+  bind_rows(d) |>
+  mutate(country_UN_continent = fct_rev(relevel(as.factor(country_UN_continent), ref = "All"))) -> dd
+
+dd |>
+  group_by(country_UN_continent) |>
+  summarise(mean = weighted.mean(km2_per_staff, area_PA_total)) -> dd_mean
+
+dd |>
+  #filter(!countryname_eng %in% c("Greenland", "Niger")) |>
+  ggplot() +
+  aes(x = km2_per_staff, y = country_UN_continent, size = area_PA_total,
+      colour = country_UN_continent, label = countryname_iso) + #label = countryname_iso, colour = country_UN_continent) +
+  geom_jitter(shape = 21, width = 0, height = 0.3) +
+  geom_point(aes(x = mean, y = country_UN_continent), shape = "|", size = 10, data = dd_mean, inherit.aes = FALSE) +
+  geom_vline(xintercept = 5, colour = "red", linetype = "dashed") +
+  scale_x_continuous(breaks = 10^(0:5), minor_breaks = NULL, labels = label_number(accuracy = 1)) +
+  coord_trans(x = "log") +
+  theme_minimal()
+
+
+dd %>%
+  filter(country_UN_continent == "All") %>%
+  summarise(p = 100 * sum(area_PA_total[km2_per_staff < 5]) / sum(area_PA_total))
+
