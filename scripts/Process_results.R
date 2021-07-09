@@ -343,7 +343,9 @@ dd_mean |>
     aes(y = value, x = "", fill = name) +
     geom_bar(stat = "identity", position = "stack", show.legend = FALSE) +
     coord_polar(theta = "y", start = 0, direction = 1) +
-    theme_void())) -> data_pies
+    scale_fill_npg() +
+    labs(title = paste0(round(100*data$value[1] / sum(data$value), 2), "%")) +
+    theme_void() + theme(plot.title = element_text(hjust = 0.5)))) -> data_pies
 
 dd |>
   filter(countryname_eng %in% c("Greenland")) -> dd_green
@@ -363,15 +365,16 @@ dd |>
               shape = 21,
               position = position_jitter(seed = 1L, width = 0.15, height = 0)) +
   geom_hline(yintercept = 5, colour = "darkgreen") +
-  scale_y_continuous(limits = c(5000, 0.01), breaks = c(5, 10^(0:3)), minor_breaks = NULL, labels = label_number(accuracy = 1), trans = "reverse") +
+  scale_y_continuous(limits = c(6000, 0.01), breaks = c(5, 10^(0:3)), minor_breaks = NULL, labels = label_number(accuracy = 1), trans = "reverse") +
   scale_x_discrete(position = "top") +
   scale_colour_npg() +
   scale_fill_npg() +
   scale_alpha_discrete(range = c(0.3, 0.95)) +
   coord_trans(y = "pseudo_log") +
-  labs(x = "Geographic area", y = expression(paste("Surface of protected area per individual staff (km"^"2", ")"))) +
+  labs(x = "Geographic area", y = expression(paste("Surface of protected area per individual staff (km"^"2", ")")),
+       caption = expression(paste("Proportion of protected area where each staff manages" <= "5 km"^"2",":"))) +
   theme_minimal() +
-  theme(panel.grid.major.x = element_blank()) +
+  theme(panel.grid.major.x = element_blank(), plot.caption = element_text(hjust = 0, vjust = 45)) +
   guides(colour = "none", size = "none", fill = "none", alpha = "none") -> main_plot
 
 main_plot +
