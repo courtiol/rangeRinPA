@@ -14,6 +14,7 @@ Imports:
     ape,
     dplyr,
     ggplot2,
+    scales,
     sf,
     tidyselect,
     googlesheets4,

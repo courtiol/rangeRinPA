@@ -12,16 +12,13 @@
 #' if(require(patchwork)) {
 #'   plot_map_sampling(data_rangers, proj = "+proj=moll") +
 #'   plot_map_sampling(data_rangers, proj = "+proj=robin" ) +
-#'   plot_map_sampling(data_rangers, proj = "+proj=wintri") +
 #'   plot_map_sampling(data_rangers, proj = "+proj=natearth2") +
 #'   plot_map_sampling(data_rangers, proj = "+proj=mbt_fps") +
 #'   plot_map_sampling(data_rangers, proj = "+proj=hammer") +
 #'   plot_map_sampling(data_rangers, proj = "+proj=wag1") +
-#'   plot_map_sampling(data_rangers, proj = "+proj=goode") +
 #'   plot_map_sampling(data_rangers, proj = "+proj=eqearth") +
 #'   plot_map_sampling(data_rangers, proj = "+proj=eck4") +
-#'   plot_map_sampling(data_rangers, proj = "+proj=boggs") +
-#'   plot_map_sampling(data_rangers, proj = "+proj=aitoff")
+#'   plot_map_sampling(data_rangers, proj = "+proj=boggs")
 #' }
 #'
 plot_map_sampling <- function(data, proj = "+proj=moll") {
@@ -42,7 +39,7 @@ plot_map_sampling <- function(data, proj = "+proj=moll") {
     dplyr::pull(.data$countryname_eng) -> missing1
 
   world_sf |>
-    dplyr::anti_join(data_rangers, by = c(rne_iso_a3 = "countryname_iso")) |>
+    dplyr::anti_join(data, by = c(rne_iso_a3 = "countryname_iso")) |>
     dplyr::pull(.data$rne_name) -> missing2
 
   missing <- c(missing1, missing2)
@@ -62,8 +59,8 @@ plot_map_sampling <- function(data, proj = "+proj=moll") {
     dplyr::right_join(world_sf, by = c(countryname_iso = "rne_iso_a3")) |>
     sf::st_as_sf() -> world_rangers
 
-  world_rangers |>
-    dplyr::mutate(PA_area_surveyed = ifelse(.data$PA_area_surveyed == 0, NA, .data$PA_area_surveyed)) -> world_rangers
+  #world_rangers |>
+  #  dplyr::mutate(PA_area_surveyed = ifelse(.data$PA_area_surveyed == 0, NA, .data$PA_area_surveyed)) -> world_rangers
 
   ## applying projection:
   world_rangers |>
@@ -71,13 +68,34 @@ plot_map_sampling <- function(data, proj = "+proj=moll") {
 
   ## computing variable of interest:
   world_rangers |>
-    dplyr::mutate(sampled_coverage = 100*.data$PA_area_surveyed / (.data$PA_area_surveyed + .data$PA_area_unsurveyed),
-                  sampled_coverage2 = cut(.data$sampled_coverage, breaks = seq(0, 100, 20),
-                                          labels = c(paste0(floor(min(.data$sampled_coverage, na.rm = TRUE)), "-20"), "20-40", "40-60", "60-80", "80-100")),
+    dplyr::mutate(sampled_coverage = 100*.data$PA_area_surveyed / (.data$PA_area_surveyed + .data$PA_area_unsurveyed)) -> world_rangers
+
+  if (any(world_rangers$sampled_coverage > 100)) {
+    cat("\n Some countries have sampled coverage > 100%, there must be an issue. The problematic countries are:\n")
+    print(world_rangers$countryname_eng[world_rangers$sampled_coverage > 100 & !is.na(world_rangers$sampled_coverage)])
+    world_rangers$sampled_coverage[world_rangers$sampled_coverage > 100 & !is.na(world_rangers$sampled_coverage)] <- 100
+  }
+
+  world_rangers |>
+    dplyr::mutate(sampled_coverage2 = cut(.data$sampled_coverage, breaks = c(0.1, seq(0, 100, 20)),
+                                          labels = c("0", paste0(floor(min(world_rangers$sampled_coverage[world_rangers$sampled_coverage > 0 & !is.na(world_rangers$sampled_coverage)])), "-20"), "20-40", "40-60", "60-80", "80-100")),
                   sampled_coverage2 = forcats::fct_rev(.data$sampled_coverage2)) -> world_rangers
+
+  world_rangers$sampled_coverage2[world_rangers$PA_area_surveyed == 0 & world_rangers$PA_area_unsurveyed > 0] <- "0"
+
+  #browser()
+  #table(world_rangers$sampled_coverage2)
+
+  ## creating world border:
+  sf::st_graticule(ndiscr = 10000, margin = 10e-6) |>
+    dplyr::filter(.data$degree %in% c(-180, 180)) |>
+    sf::st_transform(crs = proj) |>
+    #sf::st_convex_hull() %>% # if need to use fill to colour oceans
+    dplyr::summarise(geometry = sf::st_union(.data$geometry)) -> border
 
   ## plotting:
   ggplot2::ggplot() +
+    ggplot2::geom_sf(data = border, fill = NA, size = 0.1, colour = "black") +
     ggplot2::geom_sf(mapping = ggplot2::aes(fill = .data$sampled_coverage2),
                      data = world_rangers, colour = "black", size = 0.05) +
     #ggplot2::scale_fill_fermenter(palette = 2, ## for use with sampled_coverage not sampled_coverage2
@@ -88,10 +106,10 @@ plot_map_sampling <- function(data, proj = "+proj=moll") {
     #                                                                title.vjust = 1, barwidth = 1.5,
     #                                                                label.theme = ggplot2::element_text(angle = 0),
     #                                                                label.hjust = 0, label.vjust = 0.5)) +
-    ggplot2::scale_fill_manual(values = scales::brewer_pal(type = "seq", palette = 2, direction = -1)(length(unique(world_rangers$sampled_coverage2))),
-                               labels = c(levels(world_rangers$sampled_coverage2), "0 (not sampled)"),
-                               na.value = "orange",
-                               guide = ggplot2::guide_legend(title = "Protected areas\n sampled (%)")) +
+    ggplot2::scale_fill_manual(values = c(scales::brewer_pal(type = "seq", palette = 2, direction = -1)(length(unique(world_rangers$sampled_coverage2)) - 2), "#FFA500"),
+                               labels = c(levels(world_rangers$sampled_coverage2), "no PA"),
+                               na.value = "grey50",
+                               guide = ggplot2::guide_legend(title = "Protected Areas\n sampled (%)")) +
     ggplot2::theme_void() +
     ggplot2::theme(legend.position = "left",
                    #panel.grid = ggplot2::element_line(colour = "GREY", size = 0.3),
