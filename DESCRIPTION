@@ -19,6 +19,7 @@ Imports:
     googlesheets4,
     magrittr,
     ranger,
+    rgeos,
     rnaturalearth
 Suggests:
     broom,
