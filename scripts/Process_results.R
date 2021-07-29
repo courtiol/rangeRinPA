@@ -296,9 +296,9 @@ d_All |>
 dd |>
   filter(!countryname_eng %in% c("Greenland")) |>
   group_by(country_UN_continent) |>
-  summarise(mean = weighted.mean(km2_per_staff, area_PA_total),
-            good = sum(area_PA_total[km2_per_staff <= 5]),
-            bad = sum(area_PA_total[km2_per_staff > 5])) |>
+  summarise(mean = weighted.mean(km2_per_staff, staff_total), #sum(area_PA_total) / sum(staff_total),#weighted.mean(km2_per_staff, area_PA_total),
+            good = sum(area_PA_total[km2_per_staff <= 10]),
+            bad = sum(area_PA_total[km2_per_staff > 10])) |>
   mutate(country_UN_continent = factor(country_UN_continent, levels =  order_continents)) -> dd_mean
 
 dd_mean |>
@@ -321,16 +321,16 @@ dd |>
   ggplot() +
   #geom_point(aes(x = km2_per_staff, y = country_UN_continent, size = area_PA_total),
   #           shape = 8, data = dd_green) +
-  geom_segment(aes(y = mean, x = country_UN_continent, yend = 5, xend = country_UN_continent),
+  geom_segment(aes(y = mean, x = country_UN_continent, yend = 10, xend = country_UN_continent),
                arrow = arrow(length = unit(0.3, "cm")), data = dd_mean) +
   geom_point(aes(y = mean, x = country_UN_continent, fill = country_UN_continent),
              shape = 23, colour = "black", size = 3, data = dd_mean) +
   geom_text(aes(y = mean, x = country_UN_continent, label = round(mean)), nudge_x = 0.3, size = 6, data = dd_mean) +
-  geom_jitter(aes(y = km2_per_staff, x = country_UN_continent, size = area_PA_total, alpha = km2_per_staff < 5,
+  geom_jitter(aes(y = km2_per_staff, x = country_UN_continent, size = area_PA_total, alpha = km2_per_staff < 10,
                   colour = country_UN_continent, fill = country_UN_continent),
               shape = 21,
               position = position_jitter(seed = 1L, width = 0.15, height = 0)) +
-  geom_hline(yintercept = 5, colour = "darkgreen") +
+  geom_hline(yintercept = 10, colour = "darkgreen") +
   scale_y_continuous(limits = c(6000, 0.01), breaks = c(5, 10^(0:3)), minor_breaks = NULL, labels = label_number(accuracy = 1), trans = "reverse") +
   scale_x_discrete(position = "top") +
   scale_colour_npg() +
@@ -355,8 +355,8 @@ main_plot +
 ggsave("./scripts/figures/density.png", width = 15, height = 9, scale = 0.7)
 ggsave("./scripts/figures/density.pdf", width = 15, height = 9, scale = 0.7)
 
-
 dd %>%
+  #filter(!countryname_eng %in% c("Greenland")) %>%
   filter(country_UN_continent == "World") %>%
-  summarise(p = 100 * sum(area_PA_total[km2_per_staff < 5]) / sum(area_PA_total))
+  summarise(p = 100 * sum(area_PA_total[km2_per_staff < 10]) / sum(area_PA_total))
 
