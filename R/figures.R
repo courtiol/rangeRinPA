@@ -39,11 +39,22 @@ plot_map_sampling <- function(data, proj = "+proj=moll") {
   ## check locations not found in map (depend on scale defined above):
   data |>
     dplyr::anti_join(world_sf, by = c(countryname_iso = "rne_iso_a3")) |>
-    dplyr::pull(.data$countryname_eng) -> missing
+    dplyr::pull(.data$countryname_eng) -> missing1
 
-  if (length(missing) > 0) {
-    cat("Here are the countries/territories for which polygons are not found:\n")
-    print(missing)
+  world_sf |>
+    dplyr::anti_join(data_rangers, by = c(rne_iso_a3 = "countryname_iso")) |>
+    dplyr::pull(.data$rne_name) -> missing2
+
+  missing <- c(missing1, missing2)
+
+  if (length(missing1) > 0) {
+    cat("Here are the countries/territories for which polygons are not found (some or all are merged with their country of belonging):\n")
+    print(missing1)
+  }
+
+  if (length(missing1) > 0) {
+    cat("\n Here are the countries/territories for which data are not found:\n")
+    print(missing2)
   }
 
   ## only keep locations found in map:
