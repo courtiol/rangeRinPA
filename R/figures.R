@@ -53,7 +53,7 @@ plot_map_sampling <- function(data, proj = "+proj=moll") {
 
   world_rangers |>
     dplyr::mutate(PA_area_surveyed = ifelse(.data$PA_area_surveyed == 0, NA, .data$PA_area_surveyed),
-                  PA_area_surveyed2 = cut(PA_area_surveyed, breaks = seq(0, 100, 20))) -> world_rangers
+                  PA_area_surveyed2 = cut(.data$PA_area_surveyed, breaks = seq(0, 100, 20))) -> world_rangers
 
   ## applying projection:
   world_rangers |>
@@ -65,7 +65,7 @@ plot_map_sampling <- function(data, proj = "+proj=moll") {
 
   ## plotting:
   ggplot2::ggplot() +
-    ggplot2::geom_sf(mapping = ggplot2::aes(fill = sampled_coverage),
+    ggplot2::geom_sf(mapping = ggplot2::aes(fill = .data$sampled_coverage),
                      data = world_rangers, colour = "black", size = 0.05) +
     ggplot2::scale_fill_fermenter(palette = 2,
                                   direction = 1,
