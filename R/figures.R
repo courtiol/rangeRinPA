@@ -33,7 +33,7 @@ plot_map_sampling <- function(data, proj = "+proj=moll") {
   ## manual fix of some iso codes discrepancies:
   world_sf$rne_iso_a3[world_sf$rne_name == "Kosovo"] <- "KOS"
 
-  ## check locations not found in map (depend on scale defined above):
+  ## check locations not found in map (depend on scale defined above) or not found in data:
   data |>
     dplyr::anti_join(world_sf, by = c(countryname_iso = "rne_iso_a3")) |>
     dplyr::pull(.data$countryname_eng) -> missing1
@@ -70,12 +70,19 @@ plot_map_sampling <- function(data, proj = "+proj=moll") {
   world_rangers |>
     dplyr::mutate(sampled_coverage = 100*.data$PA_area_surveyed / (.data$PA_area_surveyed + .data$PA_area_unsurveyed)) -> world_rangers
 
-  if (any(world_rangers$sampled_coverage > 100)) {
+  ## checking for potential issues:
+  if (any(world_rangers$sampled_coverage[!is.na(world_rangers$sampled_coverage)] > 100)) {
     cat("\n Some countries have sampled coverage > 100%, there must be an issue. The problematic countries are:\n")
     print(world_rangers$countryname_eng[world_rangers$sampled_coverage > 100 & !is.na(world_rangers$sampled_coverage)])
     world_rangers$sampled_coverage[world_rangers$sampled_coverage > 100 & !is.na(world_rangers$sampled_coverage)] <- 100
   }
 
+  if (any(is.na(world_rangers$sampled_coverage))) {
+    cat("\n Some countries have no PAs. The problematic countries are:\n")
+    print(world_rangers$countryname_eng[is.na(world_rangers$sampled_coverage)])
+  }
+
+  ## binning variable of interest for plotting:
   world_rangers |>
     dplyr::mutate(sampled_coverage2 = cut(.data$sampled_coverage, breaks = c(0.1, seq(0, 100, 20)),
                                           labels = c("0", paste0(floor(min(world_rangers$sampled_coverage[world_rangers$sampled_coverage > 0 & !is.na(world_rangers$sampled_coverage)])), "-20"), "20-40", "40-60", "60-80", "80-100")),
