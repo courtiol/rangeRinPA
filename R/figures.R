@@ -30,8 +30,52 @@ plot_map_sampling <- function(data, proj = "+proj=moll") {
   i <- which(names(world_sf) != "geometry")
   names(world_sf)[i] <- paste0("rne_", names(world_sf)[i])
 
-  ## manual fix of some iso codes discrepancies:
+  ## manual fix for some iso codes discrepancies:
   world_sf$rne_iso_a3[world_sf$rne_name == "Kosovo"] <- "KOS"
+  world_sf$rne_iso_a3[world_sf$rne_name == "Indian Ocean Ter."] <- "IOT"
+  world_sf$rne_iso_a3[world_sf$rne_name == "Siachen Glacier"] <- "KAS"
+
+  ## manual fix for countries/territories referred to differently in the data:
+  world_sf$rne_iso_a3[world_sf$rne_name == "Ashmore and Cartier Is."] <- world_sf$rne_iso_a3[world_sf$rne_name == "Australia"] ## Ashmore is part of Australia in our data
+  world_sf$rne_iso_a3[world_sf$rne_name == "N. Cyprus"] <- world_sf$rne_iso_a3[world_sf$rne_name == "Cyprus"] ## we don't make the difference between N and S Cyprus in our data
+  world_sf$rne_iso_a3[world_sf$rne_name == "Somaliland"] <- world_sf$rne_iso_a3[world_sf$rne_name == "Somalia"] ## we don't make the difference between Somaliland and Somalia in our data
+
+  ## manual fix for polygons combined with others which we need to appear as distinct rows:
+  extract_poly <- function(country, lon, lat) {
+
+    world_sf$geometry[world_sf$rne_name == country] |>
+      sf::st_cast("POLYGON") -> polys
+
+    selection_box <-  sf::st_polygon(list(matrix(c(lon[1], lat[1], lon[2], lat[1], lon[2], lat[2], lon[1], lat[2], lon[1], lat[1]), ncol = 2L, byrow = TRUE)))
+
+    selection <- sapply(polys, \(x) as.numeric(sf::st_intersects(x, selection_box)) == 1)
+    selection <- which(!is.na(selection))
+
+    sf::st_combine(polys[selection])
+  }
+
+  GLP_geom <- extract_poly("France", lon = c(-62, -61), lat = c(16.5, 15.7)) ## Guadeloupe
+  GUF_geom <- extract_poly("France", lon = c(-55, -50), lat = c(6, 2)) ## French Guiana
+  REU_geom <- extract_poly("France", lon = c(55, 56), lat = c(-20.7, -21.5)) ## Reunion
+  BES_geom <- extract_poly("Netherlands", lon = c(-69, -58), lat = c(19, 10)) ## Bonaire, Sint Eustatius and Saba
+  MTQ_geom <- extract_poly("France", lon = c(-62, -60), lat = c(15, 14)) ## Martinique
+  MYT_geom <- extract_poly("France", lon = c(44, 46), lat = c(-12, -13)) ## Mayotte
+  SJM1_geom <- extract_poly("Norway", lon = c(5, 40), lat = c(75.7, 82)) ## Svalbard...
+  SJM2_geom <- extract_poly("Norway", lon = c(-10, -7.2), lat = c(70.7, 71.4)) ## and Jan Mayen
+  SJM_geom <- sf::st_combine(c(SJM1_geom, SJM2_geom))
+  TKL_geom <- extract_poly("New Zealand", lon = c(-174, -169),lat =  c(-6, -11)) ## Tuvalu
+  ## Bouvet Island -> no polygon but tiny
+  ## Cocos (Keeling) Islands -> no polygon but tiny
+  ## Christmas Island -> no polygon but tiny
+  ## Gibraltar -> no polygon but tiny
+  ## United States Minor Outlying Islands -> no polygon but tiny
+
+  polygons_data_to_add <- tibble::tibble(rne_iso_a3 = c("GLP", "GUF", "REU", "BES", "MTQ", "MYT", "SJM", "TKL"),
+                                         rne_name = c("Guadeloupe", "French Guiana", "Reunion", "Bonaire, Sint Eustatius and Saba", "Martinique", "Mayotte", "Svalbard and Jan Mayen", "Tuvalu"),
+                                         geometry = c(GLP_geom, GUF_geom, REU_geom, BES_geom, MTQ_geom, MYT_geom, SJM_geom, TKL_geom))
+
+  world_sf |>
+    dplyr::bind_rows(polygons_data_to_add) -> world_sf
 
   ## check locations not found in map (depend on scale defined above) or not found in data:
   data |>
@@ -45,22 +89,21 @@ plot_map_sampling <- function(data, proj = "+proj=moll") {
   missing <- c(missing1, missing2)
 
   if (length(missing1) > 0) {
-    cat("Here are the countries/territories for which polygons are not found (some or all are merged with their country of belonging):\n")
+    cat("Here are the countries/territories for which polygons are not found (not plotted):\n")
     print(missing1)
   }
 
   if (length(missing1) > 0) {
-    cat("\n Here are the countries/territories for which data are not found:\n")
+    cat("\n Here are the countries/territories for which data are not found in our dataset:\n")
     print(missing2)
+    #world_sf |>
+    #  dplyr::filter(!.data$rne_name %in% missing2) -> world_sf ## to remove but then no plotted
   }
 
   ## only keep locations found in map:
   data |>
     dplyr::right_join(world_sf, by = c(countryname_iso = "rne_iso_a3")) |>
     sf::st_as_sf() -> world_rangers
-
-  #world_rangers |>
-  #  dplyr::mutate(PA_area_surveyed = ifelse(.data$PA_area_surveyed == 0, NA, .data$PA_area_surveyed)) -> world_rangers
 
   ## applying projection:
   world_rangers |>
@@ -78,7 +121,7 @@ plot_map_sampling <- function(data, proj = "+proj=moll") {
   }
 
   if (any(is.na(world_rangers$sampled_coverage))) {
-    cat("\n Some countries have no PAs. The problematic countries are:\n")
+    cat("\n Some countries have no PAs in our dataset. These countries are:\n")
     print(world_rangers$countryname_eng[is.na(world_rangers$sampled_coverage)])
   }
 
@@ -97,7 +140,7 @@ plot_map_sampling <- function(data, proj = "+proj=moll") {
   sf::st_graticule(ndiscr = 10000, margin = 10e-6) |>
     dplyr::filter(.data$degree %in% c(-180, 180)) |>
     sf::st_transform(crs = proj) |>
-    #sf::st_convex_hull() %>% # if need to use fill to colour oceans
+    #sf::st_convex_hull() %>% # if need to use fill to color oceans
     dplyr::summarise(geometry = sf::st_union(.data$geometry)) -> border
 
   ## plotting:
@@ -105,16 +148,8 @@ plot_map_sampling <- function(data, proj = "+proj=moll") {
     ggplot2::geom_sf(data = border, fill = NA, size = 0.1, colour = "black") +
     ggplot2::geom_sf(mapping = ggplot2::aes(fill = .data$sampled_coverage2),
                      data = world_rangers, colour = "black", size = 0.05) +
-    #ggplot2::scale_fill_fermenter(palette = 2, ## for use with sampled_coverage not sampled_coverage2
-    #                              direction = 1,
-    #                              breaks = seq(0, 80, 20),
-    #                              na.value = "orange",
-    #                              guide = ggplot2::guide_colorsteps(title = "Protected areas\n sampled (%)",
-    #                                                                title.vjust = 1, barwidth = 1.5,
-    #                                                                label.theme = ggplot2::element_text(angle = 0),
-    #                                                                label.hjust = 0, label.vjust = 0.5)) +
     ggplot2::scale_fill_manual(values = c(scales::brewer_pal(type = "seq", palette = 2, direction = -1)(length(unique(world_rangers$sampled_coverage2)) - 2), "#FFA500"),
-                               labels = c(levels(world_rangers$sampled_coverage2), "no PA"),
+                               labels = c(levels(world_rangers$sampled_coverage2), "no terrestrial PAs listed in the WDPA"),
                                na.value = "grey50",
                                guide = ggplot2::guide_legend(title = "Protected Areas\n sampled (%)")) +
     ggplot2::theme_void() +
