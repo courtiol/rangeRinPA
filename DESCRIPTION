@@ -6,7 +6,7 @@ Authors@R:
            email = "alexandre.courtiol@gmail.com",
            role = c("aut", "cre"),
            comment = c(ORCID = "0000-0003-0637-2959")),
-    person("Global Wildlife Conservation",
+    person("Re:Wild",
            role = "cph"))
 Description: What the package does (one paragraph).
 License: CC BY 4.0 + file LICENSE
