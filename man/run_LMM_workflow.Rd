@@ -21,7 +21,7 @@ run_LMM_workflow(
 
 \item{Ncpu}{the number of CPU cores to be used (default = 1)}
 
-\item{coef}{the coefficient used to populate rangers in unsurveyed part of surveyed countries (see \code{\link[=fill_PA_area]{fill_PA_area()}})}
+\item{coef}{the coefficient used to population rangers in unsurveyed part of surveyed countries (see \code{\link[=fill_PA_area]{fill_PA_area()}})}
 
 \item{rep_feature_select}{the number of replicates for the feature selection (default = 1000)}
 
