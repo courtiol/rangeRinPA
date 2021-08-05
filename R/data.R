@@ -21,7 +21,7 @@ fetch_data_rangers <- function() {
                                  sheet = "Data for Stats",
                                  na = c("NA", ""),
                                  col_types = "??c??????????????????????????",
-                                 range = "A1:AC248")
+                                 range = "A1:AC250")
 
   ## We rename the columns:
   d %>%
