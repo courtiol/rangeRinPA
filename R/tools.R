@@ -408,3 +408,63 @@ add_continents <- function(tbl, data) {
     dplyr::right_join(tbl, by = "countryname_eng") %>%
     dplyr::rename(continent = .data$country_UN_continent)
 }
+
+
+#' Extract polygon at a given location from a set of polygons
+#'
+#' This functions is a helper function used during the data preparation to extract polygons nested within a
+#' multipolygon sf geometry. We use this because our data set makes distinction between territories that
+#' are not down in the dataset we use to retrieve the polygons.
+#'
+#' @param data A dataset containing at least the columns `geometry` and `name` or `rne_name`
+#' @param countryname_eng The name of a country in English
+#' @param lon A vector of 2 longitude coordinates defining a box containing the polygons to extract
+#' @param lat A vector of 2 latitude coordinates defining a box containing the polygons to extract
+#'
+#' @export
+#'
+#' @examples
+#' ## Extracting the polygon for French Guiana
+#' world <- rnaturalearth::ne_countries(scale = "medium", returnclass = "sf")
+#' FrenchGuiana <- extract_polygon(data = world, countryname_eng = "France", lon = c(-55, -50), lat = c(6, 2))
+#' plot(FrenchGuiana)
+#'
+extract_polygon <- function(data, countryname_eng, lon, lat) {
+  if (!any(colnames(data) %in% "rne_name")) {
+    data$rne_name <- data$name
+  }
+  data$geometry[data$rne_name == countryname_eng] |>
+    sf::st_cast("POLYGON") -> polys
+  selection_box <-  sf::st_polygon(list(matrix(c(lon[1], lat[1], lon[2], lat[1], lon[2], lat[2], lon[1], lat[2], lon[1], lat[1]), ncol = 2L, byrow = TRUE)))
+  selection <- sapply(polys, \(x) as.numeric(sf::st_intersects(x, selection_box)) == 1)
+  selection <- which(!is.na(selection))
+  sf::st_combine(polys[selection])
+}
+
+#' Remove polygon at a given location from a set of polygons
+#'
+#' This functions is a helper function to be used in combination to [`extract_polygon()`].
+#' It removes a set of polygons nested within a multipolygon sf geometry.
+#'
+#' @inheritParams extract_polygon
+#'
+#' @export
+#'
+#' @examples
+#' ## Clipping out the polygon for French Guiana
+#' world <- rnaturalearth::ne_countries(scale = "medium", returnclass = "sf")
+#' France <- world$geometry[world$name == "France"]
+#' plot(France)
+#' France2 <- clipout_polygon(data = world, countryname_eng = "France", lon = c(-55, -50), lat = c(6, 2))
+#' plot(France2)
+#'
+clipout_polygon <- function(data, countryname_eng, lon, lat) {
+  data2 <- data
+  if (!any(colnames(data2) %in% "rne_name")) {
+    data2$rne_name <- data2$name
+  }
+  data2$geometry[data2$rne_name == countryname_eng] |>
+    sf::st_cast("POLYGON") -> raw_polygons
+  polygon_to_remove <- extract_polygon(data = data2, countryname_eng = countryname_eng, lon = lon, lat = lat)
+  sf::st_combine(sf::st_difference(raw_polygons, polygon_to_remove))
+}
