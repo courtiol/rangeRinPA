@@ -145,6 +145,21 @@ fetch_data_rangers <- function() {
                   PA_area_surveyed = dplyr::if_else(is.na(.data$PA_area_surveyed), 0, .data$PA_area_surveyed),
                   PA_area_unsurveyed = dplyr::if_else(is.na(.data$PA_area_unsurveyed), .data$area_PA_total, .data$PA_area_unsurveyed)) -> d
 
+  ## Computing PA sampling coverage:
+  d %>%
+    dplyr::mutate(sampled_coverage = 100*.data$PA_area_surveyed / (.data$PA_area_surveyed + .data$PA_area_unsurveyed)) -> d
+
+  if (any(d$sampled_coverage[!is.na(d$sampled_coverage)] > 100)) {
+    cat("\nSome countries have sampled coverage > 100%, there must be an issue. The problematic countries are:\n")
+    print(d$countryname_eng[d$sampled_coverage > 100 & !is.na(d$sampled_coverage)])
+    d$sampled_coverage[d$sampled_coverage > 100 & !is.na(d$sampled_coverage)] <- 100
+  }
+
+  if (any(is.na(d$sampled_coverage))) {
+    cat("\nSome countries have no PAs in our dataset. These countries are:\n")
+    print(d$countryname_eng[is.na(d$sampled_coverage)])
+  }
+
   ### Adding latitude and longitude automatically:
   world_sf <- rnaturalearth::ne_countries(scale = "large", returnclass = "sf")
   world_sf$iso_a3_eh[world_sf$admin == "Norway"] <- "NOR" ## manual fix
@@ -219,7 +234,7 @@ fetch_data_rangers <- function() {
   missing <- c(missing1, missing2)
 
   if (length(missing1) > 0) {
-    cat("Here are the countries/territories for which polygons are not found:\n")
+    cat("\nHere are the countries/territories for which polygons are not found:\n")
     print(missing1)
   }
 
