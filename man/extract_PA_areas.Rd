@@ -19,7 +19,7 @@ This function is called by \code{\link[=run_LMM_workflow]{run_LMM_workflow()}} o
 \examples{
 dat <- fill_PA_area(data_rangers, coef = 0.5)
 d <- build_final_pred_data(data = dat,
-                           formula = staff_rangers_log ~ lat,
+                           formula = staff_rangers_log ~ GDP_2019,
                            survey = "complete_known",
                            spatial = TRUE)
 d$data_predictable$staff_rangers_log_predicted <- 0

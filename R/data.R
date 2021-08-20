@@ -383,8 +383,14 @@ fill_PA_area <- function(data, coef) {
 #' \dontrun{
 #' ## Here is how we created the data stored in this package:
 #' data_test <- build_initial_training_data(data_rangers,
-#'                                           response = staff_rangers,
-#'                                           survey = "partial_known")
+#'                                          formula = staff_rangers ~ pop_density_log +
+#'                                                    lat + long + country_UN_subcontinent +
+#'                                                    PA_area_log + area_country_log +
+#'                                                    area_forest_pct + GDP_2019_log +
+#'                                                    GDP_capita_log + GDP_growth +
+#'                                                    unemployment_log + EVI + SPI + EPI_2020 +
+#'                                                    IUCN_1_4_prop + IUCN_1_2_prop,
+#'                                          survey = "partial_known")
 #' data_test <- data_test[!is.na(data_test$staff_rangers_log), ]
 #' if (require(usethis)) {
 #'   usethis::use_data(data_test, overwrite = TRUE)

@@ -5,7 +5,7 @@
 \alias{data_test}
 \title{Test data}
 \format{
-An object of class \code{tbl_df} (inherits from \code{tbl}, \code{data.frame}) with 120 rows and 17 columns.
+An object of class \code{tbl_df} (inherits from \code{tbl}, \code{data.frame}) with 123 rows and 19 columns.
 }
 \usage{
 data_test
