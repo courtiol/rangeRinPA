@@ -78,7 +78,7 @@ data_rangers %>%
     theme(legend.position = "none", panel.grid.major.y = element_blank())
 ```
 
-Info: colour represents continents.
+Info: colours represent continents.
 
 **Note**: the distribution is highly skewed.
 
