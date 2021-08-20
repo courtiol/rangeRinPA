@@ -286,6 +286,11 @@ fetch_data_rangers <- function() {
     tidyr::unnest_wider(col = .data$center, names_sep = "") %>%
     dplyr::rename(long = .data$center1, lat = .data$center2) -> d
 
+  ### Add coordinates manually for countries/territories with no polygons:
+  ## Bouvet Island:
+  d$lat[d$countryname_iso == "BVT"]  <- -54.4204601
+  d$long[d$countryname_iso == "BVT"] <- 3.3245614
+
   ### Adding flags
   d %>%
     dplyr::mutate(flag = countrycode::countrycode(sourcevar = .data$countryname_iso, "iso3c", "unicode.symbol", custom_match = c("KOS" = NA))) -> d
