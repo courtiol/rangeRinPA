@@ -94,5 +94,5 @@ Here is a simple example:
 library(rangeRinPA)
 
 sum(data_rangers$staff_total, na.rm = TRUE)
-#> [1] 369059
+#> [1] 331238
 ```
