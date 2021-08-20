@@ -46,6 +46,7 @@ options("ggrepel.max.overlaps" = Inf)
 ```
 
 ```{r setup, message=FALSE}
+library(sf)
 library(dplyr)
 library(tibble)
 library(ggplot2)
@@ -63,7 +64,7 @@ library(gt)
 
 Here are the countries sorted by number of rangers (mind the log scale):
 
-```{r distribution rangers plot, fig.height=20, cache=TRUE}
+```{r distribution rangers plot, fig.height=20}
 data_rangers %>%
   filter(!is.na(staff_rangers)) %>%
   mutate(countryname_eng = fct_reorder(countryname_eng, staff_rangers)) %>%

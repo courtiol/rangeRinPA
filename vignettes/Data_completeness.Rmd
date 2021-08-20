@@ -36,9 +36,6 @@ knitr::opts_chunk$set(
 library(rangeRinPA)
 
 # set how to represent countries in plots:
-#data_rangers$countryname <- countrycode(sourcevar = data_rangers$countryname_iso, "iso3c", "unicode.symbol")
-#data_rangers$countryname[data_rangers$countryname_iso == "ZZZ"] <- "ZZZ"
-#data_rangers$countryname[data_rangers$countryname_iso == "KOS"] <- "KOS"
 data_rangers$countryname <- data_rangers$countryname_iso
 
 # set overlap allowed in plots 
@@ -46,6 +43,7 @@ options("ggrepel.max.overlaps" = Inf)
 ```
 
 ```{r setup, message=FALSE}
+library(sf)
 library(dplyr)
 library(tibble)
 library(ggplot2)
@@ -66,7 +64,7 @@ completness_rangers <- tibble(
   Category = c("countries for which the numbers for rangers and other staff are both separately known",
                "countries for which the numbers for rangers and other staff are both known but undistinguishable",
                "countries for which only the number for rangers is known (other staff missing)",
-               "countries for which we have no about rangers or staff"),
+               "countries for which we have no data about rangers or staff"),
   N = c(sum(!is.na(data_rangers$staff_rangers_others_known)),
         sum(!is.na(data_rangers$staff_total_details_unknown)),
         sum(!is.na(data_rangers$staff_rangers_others_unknown)),
@@ -88,16 +86,14 @@ ggplot(completness_rangers) +
   labs(fill = "")
 ```
 
-**Note**: so far the numbers don't add up due to a data issue with **Kenya**...
-
 **In summary:** for **`r sum(is.na(data_rangers$staff_rangers))`** we have no information on rangers per se, including **`r sum(is.na(data_rangers$staff_rangers_others_known) & is.na(data_rangers$staff_rangers_others_unknown) & is.na(data_rangers$staff_total_details_unknown))`** countries for which we have no information what-so-ever.
 
-The countries for which we miss information about rangers or staff are the following ones (ordered by decreasing country area):
+The countries for which we miss information about rangers or other staff are the following ones (ordered by decreasing country area):
 ```{r completness_rangers list}
 data_rangers %>%
   filter(is.na(staff_rangers_others_known) &
-          is.na(staff_rangers_others_unknown) &
-          is.na(staff_total_details_unknown)) %>%
+         is.na(staff_rangers_others_unknown) &
+         is.na(staff_total_details_unknown)) %>%
   select(countryname_eng) %>%
   mutate(info = "none") -> no_info_countries
 

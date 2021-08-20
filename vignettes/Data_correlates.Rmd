@@ -46,6 +46,7 @@ options("ggrepel.max.overlaps" = Inf)
 ```
 
 ```{r setup, message=FALSE}
+library(sf)
 library(dplyr)
 library(tibble)
 library(ggplot2)
@@ -66,7 +67,7 @@ coef_fit <- coef(fit)
 f <- function(x) (x + 1)^coef_fit[2] * (exp(coef_fit[1]) - 1)
 ```
 
-```{r corr staff_others plot, fig.height=8, fig.width=8, cache=TRUE}
+```{r corr staff_others plot, fig.height=8, fig.width=8}
 data_rangers %>%
   ggplot() +
   aes(y = staff_rangers, x = staff_others, label = countryname, size = area_country, colour = country_UN_continent) +
@@ -90,7 +91,7 @@ Since the slope of the linear model is `r round(coef_fit[2], 2)`, the number of 
 
 First, let's explore the 3 variables we have:
 
-```{r corr PA_areas plot, fig.height=8, fig.width=8, cache=TRUE}
+```{r corr PA_areas plot, fig.height=8, fig.width=8}
 data_rangers %>%
   ggplot() +
   aes(y = area_PA_WDPA, x = PA_area_surveyed, label = countryname, size = area_country, colour = country_UN_continent) +
@@ -103,12 +104,12 @@ data_rangers %>%
   scale_x_continuous(breaks = c(0, 10, 100, 1000, 1e4, 1e5, 1e6, 1e7), minor_breaks = NULL) +
   scale_y_continuous(breaks = c(0, 10, 100, 1000, 1e4, 1e5, 1e6, 1e7), minor_breaks = NULL) +
   theme_minimal() +
-  labs(x = "Area PA according to country",
+  labs(x = "Area PA surveyed",
        y = "Area PA according to WDPA")
 ```
 
 
-```{r corr PA_areas plot 2, fig.height=8, fig.width=8, cache=TRUE}
+```{r corr PA_areas plot 2, fig.height=8, fig.width=8}
 data_rangers %>%
   ggplot() +
   aes(y = area_PA_WDPA, x = area_PA_total, label = countryname, size = area_country, colour = country_UN_continent) +
@@ -125,15 +126,13 @@ data_rangers %>%
        y = "Area PA according to WDPA")
 ```
 
-**Note**: We have large discrepancy for **Turkey**, so for now I will use `area_PA_WDPA`.
+**Note**: We have a few discrepancies:
 
 ```{r corr PA_areas data}
 data_rangers %>%
-  filter(countryname_iso %in% c("TUR")) %>%
-  select(contains("countryname"), "area_PA_WDPA", "area_PA_total")
+  select(contains("countryname"), "area_PA_WDPA", "area_PA_total") %>%
+  filter(area_PA_WDPA != area_PA_total)
 ```
-
-**Question**: why is `area_PA_total` the same for both country? There seem to be an issue.
 
 Let's look at the correlation between the number of rangers and the PA area:
 
@@ -143,7 +142,7 @@ coef_fit <- coef(fit)
 f <- function(x) x^coef_fit[2] * (exp(coef_fit[1]) - 1)
 ```
 
-```{r corr area_PA_total plot, fig.height=8, fig.width=8, cache=TRUE}
+```{r corr area_PA_total plot, fig.height=8, fig.width=8}
 data_rangers %>%
   ggplot() +
   aes(y = staff_rangers, x = area_PA_total, label = countryname, size = area_country, colour = country_UN_continent) +
@@ -165,7 +164,7 @@ Since the slope of the linear model is `r round(coef_fit[2], 2)`, the number of 
 
 Let's look at this relationship as a ratio between logs:
 
-```{r corr area_PA_WDPA_log plot, fig.height=8, fig.width=8, cache=TRUE}
+```{r corr area_PA_WDPA_log plot, fig.height=8, fig.width=8}
 data_rangers %>%
   ggplot() +
   aes(y = log(staff_rangers + 1) / log(area_PA_total), x = area_PA_total, label = countryname, size = area_country, colour = country_UN_continent) +
@@ -183,7 +182,7 @@ data_rangers %>%
 
 Let's first compare the area of the country and its PA:
 
-```{r corr PA_country_areas plot, fig.height=8, fig.width=8, cache=TRUE}
+```{r corr PA_country_areas plot, fig.height=8, fig.width=8}
 data_rangers %>%
   ggplot() +
   aes(y = area_country, x = area_PA_WDPA, label = countryname, size = area_country, colour = country_UN_continent) +
@@ -209,18 +208,15 @@ data_rangers %>%
   arrange(desc(area_country))
 ```
 
-**Question**: is the 0 valid for Somalia?
-
-
 Let's look at the correlation between the number of rangers and the country area:
 
 ```{r corr area_country lm}
-fit  <- lm(log(staff_rangers + 1) ~ log(area_country), data = data_rangers)
+fit  <- lm(log(staff_rangers + 1) ~ log(area_country + 1), data = data_rangers)
 coef_fit <- coef(fit)
-f <- function(x) x^coef_fit[2] * (exp(coef_fit[1]) - 1)
+f <- function(x) (x + 1)^coef_fit[2] * (exp(coef_fit[1]) - 1)
 ```
 
-```{r corr area_country plot, fig.height=8, fig.width=8, cache=TRUE}
+```{r corr area_country plot, fig.height=8, fig.width=8}
 data_rangers %>%
   ggplot() +
   aes(y = staff_rangers, x = area_country, label = countryname, size = area_country, colour = country_UN_continent) +
@@ -241,7 +237,7 @@ Since the slope of the linear model is `r round(coef_fit[2], 2)`, the number of 
 
 Let's look at the correlation between the number of rangers and the proportion of country in PA :
 
-```{r corr PA_prop plot, fig.height=8, fig.width=8, cache=TRUE}
+```{r corr PA_prop plot, fig.height=8, fig.width=8}
 data_rangers %>%
   filter(area_country > 1) %>%
     ggplot() +
@@ -261,7 +257,7 @@ data_rangers %>%
 
 ## reliability
 
-```{r corr reliability plot, fig.height=8, fig.width=8, cache=TRUE}
+```{r corr reliability plot, fig.height=8, fig.width=8}
 data_rangers %>%
     ggplot() +
     aes(y = staff_rangers, x = reliability, label = countryname, size = area_country, colour = country_UN_continent) +
@@ -281,7 +277,7 @@ data_rangers %>%
 
 ## forest area pct
 
-```{r corr forest_area plot, fig.height=8, fig.width=8, cache=TRUE}
+```{r corr forest_area plot, fig.height=8, fig.width=8}
 data_rangers %>%
   ggplot() +
   aes(y = staff_rangers, x = area_forest_pct, label = countryname, size = area_country, colour = country_UN_continent) +
@@ -303,7 +299,7 @@ data_rangers %>%
 
 We start by comparing the ecological indexes:
 
-```{r EVI_SPI plot, fig.height=8, fig.width=8, cache=TRUE}
+```{r EVI_SPI plot, fig.height=8, fig.width=8}
 data_rangers %>%
   ggplot() +
   aes(y = EVI, x = SPI, label = countryname, size = area_country, colour = country_UN_continent) +
@@ -315,7 +311,7 @@ data_rangers %>%
   theme_minimal()
 ```
 
-```{r EVI_EPI plot, fig.height=8, fig.width=8, cache=TRUE}
+```{r EVI_EPI plot, fig.height=8, fig.width=8}
 data_rangers %>%
   ggplot() +
   aes(y = EVI, x = EPI_2020, label = countryname, size = area_country, colour = country_UN_continent) +
@@ -328,7 +324,7 @@ data_rangers %>%
 ```
 
 
-```{r EPI_SPI plot, fig.height=8, fig.width=8, cache=TRUE}
+```{r EPI_SPI plot, fig.height=8, fig.width=8}
 data_rangers %>%
   ggplot() +
   aes(y = EPI_2020, x = SPI, label = countryname, size = area_country, colour = country_UN_continent) +
@@ -344,7 +340,7 @@ We then plot the relationship with the number of rangers.
 
 ### EVI
 
-```{r corr EVI_rangers plot, fig.height=8, fig.width=8, cache=TRUE}
+```{r corr EVI_rangers plot, fig.height=8, fig.width=8}
 data_rangers %>%
   ggplot() +
   aes(y = staff_rangers, x = EVI, label = countryname, size = area_country, colour = country_UN_continent) +
@@ -359,7 +355,7 @@ data_rangers %>%
 
 ### SPI
 
-```{r corr SPI_rangers plot, fig.height=8, fig.width=8, cache=TRUE}
+```{r corr SPI_rangers plot, fig.height=8, fig.width=8}
 data_rangers %>%
   ggplot() +
   aes(y = staff_rangers, x = SPI, label = countryname, size = area_country, colour = country_UN_continent) +
@@ -374,7 +370,7 @@ data_rangers %>%
 
 ### EPI
 
-```{r corr EPI_rangers plot, fig.height=8, fig.width=8, cache=TRUE}
+```{r corr EPI_rangers plot, fig.height=8, fig.width=8}
 data_rangers %>%
   ggplot() +
   aes(y = staff_rangers, x = EPI_2020, label = countryname, size = area_country, colour = country_UN_continent) +
@@ -391,7 +387,7 @@ data_rangers %>%
 
 We start by comparing the different GDP metrics:
 
-```{r GDPcapita_2019 plot, fig.height=8, fig.width=8, cache=TRUE}
+```{r GDPcapita_2019 plot, fig.height=8, fig.width=8}
 data_rangers %>%
   ggplot() +
   aes(y = GDP_capita, x = GDP_2019, label = countryname, size = area_country, colour = country_UN_continent) +
@@ -405,7 +401,7 @@ data_rangers %>%
   theme_minimal()
 ```
 
-```{r GDPcapita_growth plot, fig.height=8, fig.width=8, cache=TRUE}
+```{r GDPcapita_growth plot, fig.height=8, fig.width=8}
 data_rangers %>%
   ggplot() +
   aes(y = GDP_capita, x = GDP_growth, label = countryname, size = area_country, colour = country_UN_continent) +
@@ -418,7 +414,7 @@ data_rangers %>%
   theme_minimal()
 ```
 
-```{r GDP_growth plot, fig.height=8, fig.width=8, cache=TRUE}
+```{r GDP_growth plot, fig.height=8, fig.width=8}
 data_rangers %>%
   ggplot() +
   aes(y = GDP_2019, x = GDP_growth, label = countryname, size = area_country, colour = country_UN_continent) +
@@ -433,13 +429,13 @@ data_rangers %>%
 
 We check if GDP is related to country area:
 
-```{r GDP_area plot, fig.height=8, fig.width=8, cache=TRUE}
+```{r GDP_area plot, fig.height=8, fig.width=8}
 data_rangers %>%
   ggplot() +
   aes(y = GDP_2019, x = area_country, label = countryname, size = area_country, colour = country_UN_continent) +
   # geom_text_repel(min.segment.length = 0, nudge_x = 0, nudge_y = 0, force = 0.03, force_pull = 2, seed = 123) +
   geom_text() +
-  coord_trans(y = "log", x = "log") +
+  coord_trans(y = "log1p", x = "log1p") +
   scale_size_continuous(trans = "sqrt", guide = "none", range = c(3, 7)) +
   scale_y_continuous(breaks = 10^(0:20), minor_breaks = NULL) +
   scale_x_continuous(breaks = 10^(0:20), minor_breaks = NULL) +
@@ -453,7 +449,7 @@ We then plot the relationship with the number of rangers
 
 ### GDP per capita
 
-```{r corr GDP_capita_rangers plot, fig.height=8, fig.width=8, cache=TRUE}
+```{r corr GDP_capita_rangers plot, fig.height=8, fig.width=8}
 data_rangers %>%
   ggplot() +
   aes(y = staff_rangers, x = GDP_capita, label = countryname, size = area_country, colour = country_UN_continent) +
@@ -469,7 +465,7 @@ data_rangers %>%
 
 ### GDP
 
-```{r corr GDP_2019_rangers plot, fig.height=8, fig.width=8, cache=TRUE}
+```{r corr GDP_2019_rangers plot, fig.height=8, fig.width=8}
 data_rangers %>%
   ggplot() +
   aes(y = staff_rangers, x = GDP_2019, label = countryname, size = area_country, colour = country_UN_continent) +
@@ -487,7 +483,7 @@ data_rangers %>%
 
 ### GDP growth
 
-```{r corr GDP_growth_rangers plot, fig.height=8, fig.width=8, cache=TRUE}
+```{r corr GDP_growth_rangers plot, fig.height=8, fig.width=8}
 data_rangers %>%
   ggplot() +
   aes(y = staff_rangers, x = GDP_growth, label = countryname, size = area_country, colour = country_UN_continent) +
@@ -502,7 +498,7 @@ data_rangers %>%
 
 ## unemployment
 
-```{r corr unemployment_rangers plot, fig.height=8, fig.width=8, cache=TRUE}
+```{r corr unemployment_rangers plot, fig.height=8, fig.width=8}
 data_rangers %>%
   ggplot() +
   aes(y = staff_rangers, x = unemployment, label = countryname, size = area_country, colour = country_UN_continent) +
@@ -517,7 +513,7 @@ data_rangers %>%
 
 ## proportion of rural inhabitants
 
-```{r corr rural_rangers plot, fig.height=8, fig.width=8, cache=TRUE}
+```{r corr rural_rangers plot, fig.height=8, fig.width=8}
 data_rangers %>%
   ggplot() +
   aes(y = staff_rangers, x = rural_pct, label = countryname, size = area_country, colour = country_UN_continent) +
@@ -534,7 +530,7 @@ data_rangers %>%
 
 Let's first compare the area of the GDP per capita with the income:
 
-```{r GDP_capita_income plot, fig.height=8, fig.width=8, cache=TRUE}
+```{r GDP_capita_income plot, fig.height=8, fig.width=8}
 data_rangers %>%
   ggplot() +
   aes(y = income, x = GDP_capita, label = countryname, size = area_country, colour = country_UN_continent) +
@@ -553,7 +549,7 @@ data_rangers %>%
 
 We then plot the relationship with the number of rangers:
 
-```{r corr income_rangers plot, fig.height=8, fig.width=8, cache=TRUE}
+```{r corr income_rangers plot, fig.height=8, fig.width=8}
 data_rangers %>%
   ggplot() +
   aes(y = staff_rangers, x = income, label = countryname, size = area_country, colour = country_UN_continent) +
@@ -571,7 +567,7 @@ data_rangers %>%
 
 Let's first compare the area of the country and its density:
 
-```{r corr popdensity_country_areas plot, fig.height=8, fig.width=8, cache=TRUE}
+```{r corr popdensity_country_areas plot, fig.height=8, fig.width=8}
 data_rangers %>%
   ggplot() +
   aes(y = pop_density, x = area_country, label = countryname, size = area_country, colour = country_UN_continent) +
@@ -590,14 +586,14 @@ data_rangers %>%
 
 We then plot the relationship with the number of rangers:
 
-```{r corr popdensity_rangers plot, fig.height=8, fig.width=8, cache=TRUE}
+```{r corr popdensity_rangers plot, fig.height=8, fig.width=8}
 data_rangers %>%
   ggplot() +
   aes(y = staff_rangers, x = pop_density, label = countryname, size = area_country, colour = country_UN_continent) +
   geom_text() +
   scale_size_continuous(trans = "sqrt", guide = "none", range = c(3, 7)) +
   scale_colour_discrete(guide = "none") +
-  coord_trans(y = "log1p", x = "log") +
+  coord_trans(y = "log1p", x = "log1p") +
   scale_y_continuous(breaks = c(0, 10, 100, 1000, 1e4, 1e5, 1e6, 1e7), minor_breaks = NULL) +
   scale_x_continuous(breaks = c(0, 10, 100, 1000, 1e4, 1e5, 1e6, 1e7), minor_breaks = NULL) +
   theme_minimal() +
@@ -608,7 +604,7 @@ data_rangers %>%
 
 Let's first compare the 2 IUCN measurements:
 
-```{r corr IUCN plot, fig.height=8, fig.width=8, cache=TRUE}
+```{r corr IUCN plot, fig.height=8, fig.width=8}
 data_rangers %>%
   ggplot() +
   aes(y = IUCN_1_4_prop, x = IUCN_1_2_prop, label = countryname, size = area_country, colour = country_UN_continent) +
@@ -622,7 +618,7 @@ data_rangers %>%
 
 We then plot the relationship with the number of rangers:
 
-```{r corr IUCN12_rangers plot, fig.height=8, fig.width=8, cache=TRUE}
+```{r corr IUCN12_rangers plot, fig.height=8, fig.width=8}
 data_rangers %>%
   ggplot() +
   aes(y = staff_rangers, x = IUCN_1_2_prop, label = countryname, size = area_country, colour = country_UN_continent) +
@@ -635,7 +631,7 @@ data_rangers %>%
   labs(y = "Number of rangers")
 ```
 
-```{r corr IUCN14_rangers plot, fig.height=8, fig.width=8, cache=TRUE}
+```{r corr IUCN14_rangers plot, fig.height=8, fig.width=8}
 data_rangers %>%
   ggplot() +
   aes(y = staff_rangers, x = IUCN_1_4_prop, label = countryname, size = area_country, colour = country_UN_continent) +
