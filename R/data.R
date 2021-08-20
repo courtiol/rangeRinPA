@@ -132,7 +132,6 @@ fetch_data_rangers <- function() {
   d$country_UN_continent[d$countryname_iso == "VAT"] <- d$country_UN_continent[d$countryname_iso == "ITA"] # Vatican as Italy
   d$country_UN_subcontinent[d$countryname_iso == "VAT"] <- d$country_UN_subcontinent[d$countryname_iso == "ITA"] # Vatican as Italy
 
-
   ### Temporary patch for private analysis only, TODO: remove before release
   d$countryname_iso[d$countryname_eng == "W African Country"] <- "SEN"
   d$countryname_eng[d$countryname_eng == "W African Country"] <- "Senegal"
@@ -148,6 +147,14 @@ fetch_data_rangers <- function() {
     dplyr::mutate(area_PA_total = dplyr::if_else(is.na(.data$area_PA_total), .data$area_PA_WDPA, .data$area_PA_total),
                   PA_area_surveyed = dplyr::if_else(is.na(.data$PA_area_surveyed), 0, .data$PA_area_surveyed),
                   PA_area_unsurveyed = dplyr::if_else(is.na(.data$PA_area_unsurveyed), .data$area_PA_total, .data$PA_area_unsurveyed)) -> d
+
+  ## No area_PA_total means no ranger or staff:
+  d %>%
+    dplyr::mutate(staff_rangers_others_known = dplyr::if_else(.data$area_PA_total == 0, 0, .data$staff_rangers_others_known),
+                  staff_others_rangers_known = dplyr::if_else(.data$area_PA_total == 0, 0, .data$staff_others_rangers_known),
+                  staff_total = dplyr::if_else(.data$area_PA_total == 0, 0, .data$staff_total),
+                  staff_rangers = dplyr::if_else(.data$area_PA_total == 0, 0, .data$staff_rangers),
+                  staff_others = dplyr::if_else(.data$area_PA_total == 0, 0, .data$staff_others)) -> d
 
   ## Computing PA sampling coverage:
   d %>%
