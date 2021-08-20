@@ -426,7 +426,9 @@ add_continents <- function(tbl, data) {
 #' @examples
 #' ## Extracting the polygon for French Guiana
 #' world <- rnaturalearth::ne_countries(scale = "medium", returnclass = "sf")
-#' FrenchGuiana <- extract_polygon(data = world, countryname_eng = "France", lon = c(-55, -50), lat = c(6, 2))
+#' FrenchGuiana <- extract_polygon(data = world,
+#'                                 countryname_eng = "France",
+#'                                 lon = c(-55, -50), lat = c(6, 2))
 #' plot(FrenchGuiana)
 #'
 extract_polygon <- function(data, countryname_eng, lon, lat) {
@@ -455,7 +457,9 @@ extract_polygon <- function(data, countryname_eng, lon, lat) {
 #' world <- rnaturalearth::ne_countries(scale = "medium", returnclass = "sf")
 #' France <- world$geometry[world$name == "France"]
 #' plot(France)
-#' France2 <- clipout_polygon(data = world, countryname_eng = "France", lon = c(-55, -50), lat = c(6, 2))
+#' France2 <- clipout_polygon(data = world,
+#'                            countryname_eng = "France",
+#'                            lon = c(-55, -50), lat = c(6, 2))
 #' plot(France2)
 #'
 clipout_polygon <- function(data, countryname_eng, lon, lat) {

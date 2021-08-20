@@ -24,7 +24,9 @@ It removes a set of polygons nested within a multipolygon sf geometry.
 world <- rnaturalearth::ne_countries(scale = "medium", returnclass = "sf")
 France <- world$geometry[world$name == "France"]
 plot(France)
-France2 <- clipout_polygon(data = world, countryname_eng = "France", lon = c(-55, -50), lat = c(6, 2))
+France2 <- clipout_polygon(data = world,
+                           countryname_eng = "France",
+                           lon = c(-55, -50), lat = c(6, 2))
 plot(France2)
 
 }

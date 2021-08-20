@@ -192,18 +192,18 @@ fetch_data_rangers <- function() {
   ## Ashmore is part of Australia in our data:
   world_sf$geometry[world_sf$rne_name == "Australia"] <- sf::st_combine(c(world_sf$geometry[world_sf$rne_name == "Australia"], world_sf$geometry[world_sf$rne_name == "Ashmore and Cartier Is."]))
   world_sf %>%
-    filter(world_sf$rne_name != "Ashmore and Cartier Is.") -> world_sf
+    dplyr::filter(world_sf$rne_name != "Ashmore and Cartier Is.") -> world_sf
 
   ## No difference between N and S Cyprus in our data:
   world_sf$geometry[world_sf$rne_name == "Cyprus"] <- sf::st_combine(c(world_sf$geometry[world_sf$rne_name == "Cyprus"], world_sf$geometry[world_sf$rne_name == "N. Cyprus"]))
   world_sf %>%
-    filter(world_sf$rne_name != "N. Cyprus") -> world_sf
+    dplyr::filter(world_sf$rne_name != "N. Cyprus") -> world_sf
 
 
   ## No difference between Somaliland and Somalia in our data:
   world_sf$geometry[world_sf$rne_name == "Somalia"] <- sf::st_combine(c(world_sf$geometry[world_sf$rne_name == "Somalia"], world_sf$geometry[world_sf$rne_name == "Somaliland"]))
   world_sf %>%
-    filter(world_sf$rne_name != "Somaliland") -> world_sf
+    dplyr::filter(world_sf$rne_name != "Somaliland") -> world_sf
 
   ### Manual fix for polygons combined with others which we need to appear as distinct rows:
   GLP_geom <- extract_polygon(data = world_sf, countryname_eng = "France", lon = c(-62, -61), lat = c(16.5, 15.7)) ## Guadeloupe
