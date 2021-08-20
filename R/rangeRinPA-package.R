@@ -21,6 +21,10 @@
 #'   skim(data_rangers)
 #' }
 #'
+#'
+#' readr::write_excel_csv(table_completeness(data_rangers),
+#'                        file = "inst/extdata/tables/table_completeness.csv")
+#'
 #' library(rnaturalearth)
 #' library(dplyr)
 #' library(ggplot2)
