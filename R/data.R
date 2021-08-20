@@ -58,6 +58,9 @@ fetch_data_rangers <- function() {
                   IUCN_1_2_prop = "PROPORTION IUCN CAT (I-II)/(I-VI)",
                   notes = "Notes") -> d
 
+  ### Temporary patch before fix in raw data:
+  d$area_country[d$countryname_iso == "ATA"] <- 14200000
+
   ### Some 0 mean NA:
   d %>%
     dplyr::mutate(staff_rangers_others_unknown = dplyr::if_else(.data$staff_rangers_others_unknown == 0,
