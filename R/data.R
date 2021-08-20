@@ -15,7 +15,10 @@
 #' }
 #'
 fetch_data_rangers <- function() {
-  googlesheets4::gs4_auth()
+
+  ### Read the data online:
+  ### TODO: replace by csv when data are final!
+  googlesheets4::gs4_auth() # google authentification
 
   d <- googlesheets4::read_sheet("https://docs.google.com/spreadsheets/d/1x3uo3xojtPAcmB3BDMpBVDuOaYRkYB-mfa9icBZcThc",
                                  sheet = "Data for Stats",
@@ -23,7 +26,7 @@ fetch_data_rangers <- function() {
                                  col_types = "??c??????????????????????????",
                                  range = "A1:AC251")
 
-  ## We rename the columns:
+  ### We rename the columns:
   d %>%
     dplyr::rename(countryname_iso = "ISO 3 Letter Code",
                   countryname_eng = "SURVEYED COUNTRY",
@@ -55,13 +58,13 @@ fetch_data_rangers <- function() {
                   IUCN_1_2_prop = "PROPORTION IUCN CAT (I-II)/(I-VI)",
                   notes = "Notes") -> d
 
-  ## Some 0 mean NA:
+  ### Some 0 mean NA:
   d %>%
     dplyr::mutate(staff_rangers_others_unknown = dplyr::if_else(.data$staff_rangers_others_unknown == 0,
                                                                 NA_real_,
                                                                 .data$staff_rangers_others_unknown)) -> d
 
-  ## Compute ranger variable:
+  ### Compute ranger variable:
   d %>%
     dplyr::mutate(staff_rangers = dplyr::if_else(!is.na(.data$staff_rangers_others_known),
                                                  .data$staff_rangers_others_known,
@@ -76,7 +79,7 @@ fetch_data_rangers <- function() {
                                                 NA_real_,
                                                 .data$staff_total)) -> d
 
-  ## Deal with continents:
+  ### Deal with continents:
   d %>%
     dplyr::mutate(country_UN_continent = as.character(.data$country_UN_continent),
                   country_UN_continent = dplyr::case_when(
@@ -88,7 +91,7 @@ fetch_data_rangers <- function() {
                     .data$country_UN_continent == "9" ~ "Oceania"),
                   country_UN_subcontinent = as.character(.data$country_UN_subcontinent)) -> d
 
-  ## Deal with subcontinents:
+  ### Deal with subcontinents:
   d %>%
     dplyr::mutate(country_UN_subcontinent = as.character(.data$country_UN_subcontinent),
                   country_UN_subcontinent = dplyr::case_when(
@@ -116,7 +119,7 @@ fetch_data_rangers <- function() {
                     .data$country_UN_subcontinent == "61" ~ "Polynesia"),
                   country_UN_subcontinent = as.character(.data$country_UN_subcontinent)) -> d
 
-  ## Manual fixes for continents and subcontinents:
+  ### Manual fixes for continents and subcontinents:
   d$country_UN_continent[d$countryname_iso == "ALA"] <- d$country_UN_continent[d$countryname_iso == "FIN"]       # Aland Islands as Finland
   d$country_UN_subcontinent[d$countryname_iso == "ALA"] <- d$country_UN_subcontinent[d$countryname_iso == "FIN"] # Aland Islands as Finland
 
@@ -130,10 +133,11 @@ fetch_data_rangers <- function() {
   d$country_UN_subcontinent[d$countryname_iso == "VAT"] <- d$country_UN_subcontinent[d$countryname_iso == "ITA"] # Vatican as Italy
 
 
-  ## Temporary patch for private analysis only, TODO: remove before release
+  ### Temporary patch for private analysis only, TODO: remove before release
   d$countryname_iso[d$countryname_eng == "W African Country"] <- "SEN"
   d$countryname_eng[d$countryname_eng == "W African Country"] <- "Senegal"
 
+  ### Dealing with PA variables:
   ## Make clean columns for PA areas:
   d %>%
     dplyr::mutate(PA_area_unsurveyed = .data$area_PA_total - .data$area_PA_surveyed, .after = .data$area_PA_total) %>%
@@ -165,21 +169,33 @@ fetch_data_rangers <- function() {
   world_sf$iso_a3_eh[world_sf$admin == "Norway"] <- "NOR" ## manual fix
   #world_sf$admin[unlist(sapply(world_sf$admin, function(x) grepl("Gu.*", x)))] ## to search for typos
 
-  ## add prefix to variable others than geometry:
+  ## Add prefix to variable others than geometry:
   i <- which(names(world_sf) != "geometry")
   names(world_sf)[i] <- paste0("rne_", names(world_sf)[i])
 
-  ## manual fix for some iso codes discrepancies:
+  ### Manual fix for some iso codes discrepancies:
   world_sf$rne_iso_a3_eh[world_sf$rne_name == "Kosovo"] <- "KOS"
-  world_sf$rne_iso_a3_eh[world_sf$rne_name == "Indian Ocean Ter."] <- "IOT"
+  world_sf$rne_iso_a3_eh[world_sf$rne_name == "Indian Ocean Ter."] <- "IOA"
   world_sf$rne_iso_a3_eh[world_sf$rne_name == "Siachen Glacier"] <- "KAS"
 
-  ## manual fix for countries/territories referred to differently in the data:
-  world_sf$rne_iso_a3_eh[world_sf$rne_name == "Ashmore and Cartier Is."] <- world_sf$rne_iso_a3_eh[world_sf$rne_name == "Australia"] ## Ashmore is part of Australia in our data
-  world_sf$rne_iso_a3_eh[world_sf$rne_name == "N. Cyprus"] <- world_sf$rne_iso_a3_eh[world_sf$rne_name == "Cyprus"] ## we don't make the difference between N and S Cyprus in our data
-  world_sf$rne_iso_a3_eh[world_sf$rne_name == "Somaliland"] <- world_sf$rne_iso_a3_eh[world_sf$rne_name == "Somalia"] ## we don't make the difference between Somaliland and Somalia in our data
+  ### Manual fix for countries/territories referred to differently in the data:
+  ## Ashmore is part of Australia in our data:
+  world_sf$geometry[world_sf$rne_name == "Australia"] <- sf::st_combine(c(world_sf$geometry[world_sf$rne_name == "Australia"], world_sf$geometry[world_sf$rne_name == "Ashmore and Cartier Is."]))
+  world_sf %>%
+    filter(world_sf$rne_name != "Ashmore and Cartier Is.") -> world_sf
 
-  ## manual fix for polygons combined with others which we need to appear as distinct rows:
+  ## No difference between N and S Cyprus in our data:
+  world_sf$geometry[world_sf$rne_name == "Cyprus"] <- sf::st_combine(c(world_sf$geometry[world_sf$rne_name == "Cyprus"], world_sf$geometry[world_sf$rne_name == "N. Cyprus"]))
+  world_sf %>%
+    filter(world_sf$rne_name != "N. Cyprus") -> world_sf
+
+
+  ## No difference between Somaliland and Somalia in our data:
+  world_sf$geometry[world_sf$rne_name == "Somalia"] <- sf::st_combine(c(world_sf$geometry[world_sf$rne_name == "Somalia"], world_sf$geometry[world_sf$rne_name == "Somaliland"]))
+  world_sf %>%
+    filter(world_sf$rne_name != "Somaliland") -> world_sf
+
+  ### Manual fix for polygons combined with others which we need to appear as distinct rows:
   GLP_geom <- extract_polygon(data = world_sf, countryname_eng = "France", lon = c(-62, -61), lat = c(16.5, 15.7)) ## Guadeloupe
   world_sf$geometry[world_sf$rne_name == "France"] <- clipout_polygon(data = world_sf, countryname_eng = "France", lon = c(-62, -61), lat = c(16.5, 15.7))
 
@@ -209,20 +225,27 @@ fetch_data_rangers <- function() {
   TKL_geom <- extract_polygon(data = world_sf, countryname_eng = "New Zealand", lon = c(-174, -169),lat =  c(-6, -11)) ## Tuvalu
   world_sf$geometry[world_sf$rne_name == "New Zealand"] <- clipout_polygon(data = world_sf, countryname_eng = "New Zealand", lon = c(-174, -169),lat =  c(-6, -11))
 
+  CCK_geom <- extract_polygon(data = world_sf, countryname_eng = "Indian Ocean Ter.", lon = c(96.6, 97.1), lat =  c(-11.7, -12.3)) ## Cocos (Keeling) Islands
+  world_sf$geometry[world_sf$rne_name == "Indian Ocean Ter."] <- clipout_polygon(data = world_sf, countryname_eng = "Indian Ocean Ter.", lon = c(96.6, 97.1), lat =  c(-11.7, -12.3))
+
+  CXR_geom <- extract_polygon(data = world_sf, countryname_eng = "Indian Ocean Ter.", lon = c(105.48, 105.8), lat =  c(-10.37, -10.62)) ## Christmas Island
+  world_sf$geometry[world_sf$rne_name == "Indian Ocean Ter."] <- clipout_polygon(data = world_sf, countryname_eng = "Indian Ocean Ter.", lon = c(105.48, 105.8), lat =  c(-10.37, -10.62))
+
+
   ## Bouvet Island -> no polygon but tiny
   ## Cocos (Keeling) Islands -> no polygon but tiny
   ## Christmas Island -> no polygon but tiny
   ## Gibraltar -> no polygon but tiny
   ## United States Minor Outlying Islands -> no polygon but tiny
 
-  polygons_data_to_add <- tibble::tibble(rne_iso_a3_eh = c("GLP", "GUF", "REU", "BES", "MTQ", "MYT", "SJM", "TKL"),
-                                         rne_name = c("Guadeloupe", "French Guiana", "Reunion", "Bonaire, Sint Eustatius and Saba", "Martinique", "Mayotte", "Svalbard and Jan Mayen", "Tuvalu"),
-                                         geometry = c(GLP_geom, GUF_geom, REU_geom, BES_geom, MTQ_geom, MYT_geom, SJM_geom, TKL_geom))
+  polygons_data_to_add <- tibble::tibble(rne_iso_a3_eh = c("GLP", "GUF", "REU", "BES", "MTQ", "MYT", "SJM", "TKL", "CCK", "CXR"),
+                                         rne_name = c("Guadeloupe", "French Guiana", "Reunion", "Bonaire, Sint Eustatius and Saba", "Martinique", "Mayotte", "Svalbard and Jan Mayen", "Tuvalu", "Cocos (Keeling) Islands", "Christmas Island"),
+                                         geometry = c(GLP_geom, GUF_geom, REU_geom, BES_geom, MTQ_geom, MYT_geom, SJM_geom, TKL_geom, CCK_geom, CXR_geom))
 
   world_sf |>
     dplyr::bind_rows(polygons_data_to_add) -> world_sf
 
-  ## check locations not found in map (depend on scale defined above) or not found in data:
+  ### Check locations not found in map (depend on scale defined above) or not found in data:
   d |>
     dplyr::anti_join(world_sf, by = c(countryname_iso = "rne_iso_a3_eh")) |>
     dplyr::pull(.data$countryname_eng) -> missing1
@@ -245,10 +268,10 @@ fetch_data_rangers <- function() {
     #  dplyr::filter(!.data$rne_name %in% missing2) -> world_sf ## to remove but then no plotted
   }
 
-  ## extract coordinate of the center of each country/territory:
+  ### Extract coordinate of the center of each country/territory:
   world_sf$center <- sf::st_centroid(world_sf$geometry, of_largest_polygon = TRUE)
 
-  ## add geographical info to the data:
+  ### Add geographical info to the data:
   d %>%
     dplyr::left_join(world_sf %>% dplyr::select(.data$center, .data$rne_iso_a3_eh), by = c("countryname_iso" = "rne_iso_a3_eh")) -> d
 
@@ -256,15 +279,15 @@ fetch_data_rangers <- function() {
     tidyr::unnest_wider(col = .data$center, names_sep = "") %>%
     dplyr::rename(long = .data$center1, lat = .data$center2) -> d
 
-  ## Adding flags
+  ### Adding flags
   d %>%
     dplyr::mutate(flag = countrycode::countrycode(sourcevar = .data$countryname_iso, "iso3c", "unicode.symbol", custom_match = c("KOS" = NA))) -> d
   d$flag[d$countryname_iso == "KOS"] <- "\U1f1fd\U1f1f0"
   d %>%
     dplyr::mutate(country = paste(.data$countryname_eng, .data$flag)) -> d
 
-  ## Adding row names
-  #rownames(d) <- d$countryname_iso ## no longer supported in tibbles and also not unique
+  ### Adding row names
+  #rownames(d) <- d$countryname_iso ## support in tibbles should stop soon
   d
 }
 
