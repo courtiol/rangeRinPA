@@ -41,7 +41,7 @@ fetch_data_rangers <- function() {
                   area_PA_total = "AREA OF TERRESTRIAL PAS IN THE COUNTRY USED FOR CALCULATIONS (Higlighted IF DIFFERENT FROM WDPA)",
                   area_PA_WDPA = "TOTAL AREA OF TERRESTRIAL PAS IN THE COUNTRY in SQ KM (WDPA )",
                   area_country = "TOTAL TERRESTRIAL AREA OF  COUNTRY (WDPA)",
-                  reliability = "RELIABILITY SCORE /25",
+                  reliability = "RELIABILITY SCORE /20",
                   country_UN_continent = "UN CONT",
                   country_UN_subcontinent = "UN SUBCONT",
                   area_forest_pct = "Forest_area_percent_total",
