@@ -25,7 +25,7 @@ fetch_data_rangers <- function() {
                                  na = c("NA", ""),
                                  col_types = "??c??????????????????????????",
                                  range = "A1:AC251") ## these data are also stored as CSV for backup and reproducibility
-                                                     ## e.g. write.csv(d, file = "inst/extdata/d_2021_08_20.csv", row.names = FALSE)
+                                                     ## e.g. write.csv(d, file = "inst/extdata/raw_data/d_2021_08_20.csv", row.names = FALSE)
 
   ### We rename the columns:
   d %>%

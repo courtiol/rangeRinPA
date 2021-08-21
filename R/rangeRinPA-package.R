@@ -25,22 +25,8 @@
 #' readr::write_excel_csv(table_completeness(data_rangers),
 #'                        file = "inst/extdata/tables/table_completeness.csv")
 #'
-#' library(rnaturalearth)
-#' library(dplyr)
-#' library(ggplot2)
-#' library(sf)
+#' plot_map_sampling(data_rangers)
+#' ggplot2::ggsave(filename = "inst/extdata/figures/figure_sampling.pdf")
+#' ggplot2::ggsave(filename = "inst/extdata/figures/figure_sampling.png")
 #'
-#' ggplot(data_rangers) +
-#'    geom_sf(mapping = aes(fill = area_PA_total / staff_total, geometry = geometry),
-#'           colour = "white", size = 0.1) +
-#'    scale_fill_fermenter(palette = 2,
-#'                         breaks = c(0, 10, 100, 1000, 10000), trans = "log10",
-#'                         guide = guide_colorsteps(title = expression(paste(km^{2}, "/staff")),
-#'                                                  title.vjust = 1, barwidth = 20,
-#'                                                  label.theme = element_text(angle = 0),
-#'                                                  label.hjust = 0.5, label.vjust = 1)) +
-#'    theme_minimal() +
-#'    theme(legend.position = "bottom", panel.grid = element_line(colour = "black", size = 0.3),
-#'          plot.title = element_text(size = 20, hjust = 0.5)) +
-#'    labs(title = "Protected Area per Staff")
 #' }
