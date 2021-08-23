@@ -59,4 +59,51 @@ plot_map_sampling <- function(data, proj = "+proj=moll") {
                    panel.grid = ggplot2::element_blank()) +
     ggplot2::coord_sf(expand = FALSE, crs = proj)
 
-  }
+}
+
+#' Plot the map for the reliability score
+#'
+#' @inheritParams plot_map_sampling
+#' @export
+#'
+#' @examples
+#' plot_map_reliability(data_rangers)
+#'
+plot_map_reliability <- function(data, proj = "+proj=moll") {
+
+  ## applying projection:
+  data$geometry <- sf::st_transform(data$geometry, crs = proj)
+
+  ## binning variable of interest for plotting:
+  data |>
+    dplyr::mutate(reliability2 = cut(.data$reliability, breaks = c(0, 9, 12, 14, 16, 18, 20),
+                                     labels = c("0-9", "10-12", "13-14", "15-16", "17-18", "19-20")),
+                  reliability2 = forcats::fct_rev(droplevels(.data$reliability2))) -> data
+
+  #browser()
+  #table(data$reliability2)
+
+  ## creating world border:
+  sf::st_graticule(ndiscr = 10000, margin = 10e-6) |>
+    dplyr::filter(.data$degree %in% c(-180, 180)) |>
+    sf::st_transform(crs = proj) |>
+    #sf::st_convex_hull() %>% # if need to use fill to color oceans
+    dplyr::summarise(geometry = sf::st_union(.data$geometry)) -> border
+
+  ## plotting:
+  ggplot2::ggplot() +
+    ggplot2::geom_sf(data = border, fill = NA, size = 0.1, colour = "black") +
+    ggplot2::geom_sf(mapping = ggplot2::aes(fill = .data$reliability2, geometry = .data$geometry),
+                     data = data, colour = "black", size = 0.05) +
+    ggplot2::scale_fill_manual(values = c(scales::brewer_pal(type = "seq", palette = 2, direction = -1)(length(unique(data$reliability2)) - 1)),
+                               labels = c(levels(data$reliability2), "no data"),
+                               na.value = "grey50",
+                               guide = ggplot2::guide_legend(title = "Reliability score (/20)")) +
+    ggplot2::theme_void() +
+    ggplot2::theme(legend.position = "left",
+                   legend.box.spacing = ggplot2::unit(2.5, "cm"),
+                   #panel.grid = ggplot2::element_line(colour = "GREY", size = 0.3),
+                   panel.grid = ggplot2::element_blank()) +
+    ggplot2::coord_sf(expand = FALSE, crs = proj)
+
+}

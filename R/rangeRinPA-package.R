@@ -26,7 +26,17 @@
 #'                        file = "inst/extdata/tables/table_completeness.csv")
 #'
 #' plot_map_sampling(data_rangers)
-#' ggplot2::ggsave(filename = "inst/extdata/figures/figure_sampling.pdf")
-#' ggplot2::ggsave(filename = "inst/extdata/figures/figure_sampling.png")
+#' ggplot2::ggsave(filename = "inst/extdata/figures/figure_sampling.pdf",
+#'                 width = ggplot2::unit(15, "cm"))
+#' ggplot2::ggsave(filename = "inst/extdata/figures/figure_sampling.png",
+#'                 width = ggplot2::unit(15, "cm"))
+#'
+#' plot_map_reliability(data_rangers)
+#' ggplot2::ggsave(filename = "inst/extdata/figures/figure_reliability.pdf",
+#'                 width = ggplot2::unit(15, "cm"))
+#' ggplot2::ggsave(filename = "inst/extdata/figures/figure_reliability.png",
+#'                 width = ggplot2::unit(15, "cm"))
+#'
+#'
 #'
 #' }
