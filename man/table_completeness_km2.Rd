@@ -4,12 +4,12 @@
 \alias{table_completeness_km2}
 \title{Create completeness table (km2)}
 \usage{
-table_completeness_km2(data, outliers = "GRL")
+table_completeness_km2(data, outliers = NULL)
 }
 \arguments{
 \item{data}{the complete dataset}
 
-\item{outliers}{a vector with the iso code for the countries/territories to discard (default = \code{"GRL"})}
+\item{outliers}{a vector with the iso code for the countries/territories to discard (default = \code{NULL})}
 }
 \value{
 a tibble

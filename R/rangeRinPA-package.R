@@ -22,11 +22,14 @@
 #' }
 #'
 #'
-#' readr::write_excel_csv(table_completeness(data_rangers, outliers = NULL),
-#'                        file = "inst/extdata/tables/table_completeness.csv")
+#' readr::write_excel_csv(table_completeness_obs(data_rangers, outliers = NULL),
+#'                        file = "inst/extdata/tables/table_completeness_obs.csv")
 #'
-#' readr::write_excel_csv(table_completeness_km2(data_rangers),
+#' readr::write_excel_csv(table_completeness_km2(data_rangers, outliers = NULL), # or NULL or "GRL"?
 #'                        file = "inst/extdata/tables/table_completeness_km2.csv")
+#'
+#' readr::write_excel_csv(table_completeness_vars(data_rangers, outliers = NULL),
+#'                        file = "inst/extdata/tables/table_completeness_vars.csv")
 #'
 #' plot_map_sampling(data_rangers)
 #' ggplot2::ggsave(filename = "inst/extdata/figures/figure_sampling.pdf",

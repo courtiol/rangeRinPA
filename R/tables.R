@@ -1,17 +1,17 @@
-#' Create completeness table (numbers)
+#' Create completeness table (observations)
 #'
 #' This function creates the table that indicate how many countries and territories have ranger staff and other staff documented in our data.
 #'
 #' @param data the complete dataset
-#' @param outliers a vector with the iso code for the countries/territories to discard (default = `"GRL"`)
+#' @param outliers a vector with the iso code for the countries/territories to discard (default = `NULL`)
 #'
 #' @return a tibble
 #' @export
 #'
 #' @examples
-#' table_completeness(data_rangers)
+#' table_completeness_obs(data_rangers)
 #'
-table_completeness <- function(data, outliers = "GRL") {
+table_completeness_obs <- function(data, outliers = NULL) {
 
   data %>%
     dplyr::filter(!.data$countryname_iso %in% !!outliers) -> data
@@ -58,7 +58,7 @@ table_completeness <- function(data, outliers = "GRL") {
 #'
 #' This function creates the table that indicate the surface of protected areas with ranger staff and other staff documented in our data.
 #'
-#' @inheritParams table_completeness
+#' @inheritParams table_completeness_obs
 #'
 #' @return a tibble
 #' @export
@@ -66,7 +66,7 @@ table_completeness <- function(data, outliers = "GRL") {
 #' @examples
 #' table_completeness_km2(data_rangers)
 #'
-table_completeness_km2 <- function(data, outliers = "GRL") {
+table_completeness_km2 <- function(data, outliers = NULL) {
 
   data %>%
     dplyr::filter(!.data$countryname_iso %in% !!outliers) -> data
@@ -107,3 +107,57 @@ table_completeness_km2 <- function(data, outliers = "GRL") {
                                     km2_unsurveyed = sum(tab$km2_unsurveyed))) %>%
     dplyr::mutate(both = .data$km2_surveyed + .data$km2_unsurveyed)
 }
+
+
+#' Create completeness table (variables)
+#'
+#' This function creates the table that indicate for each variable, how much information is available.
+#'
+#' @inheritParams table_completeness_obs
+#'
+#' @return a tibble
+#' @export
+#'
+#' @examples
+#' table_completeness_vars(data_rangers)
+#'
+table_completeness_vars <- function(data, outliers = NULL) {
+
+  data %>%
+    dplyr::filter(!.data$countryname_iso %in% !!outliers) -> data
+
+  var_table <- function(name, var) {
+   tibble::tibble(variable = c(name),
+                  nb_known = c(sum(!is.na(data[, var]))),
+                  nb_unknown = c(sum(is.na(data[, var]))),
+                  proportion_nb_known = .data$nb_known / (.data$nb_known + .data$nb_unknown),
+                  total_PA_known = c(sum(data$PA_area_surveyed[!is.na(data[, var])])),
+                  total_PA_unknown = c(sum(data$PA_area_unsurveyed[is.na(data[, var])])),
+                  proportion_total_PA_known = .data$total_PA_known / (.data$total_PA_known + .data$total_PA_unknown))
+  }
+
+  dplyr::bind_rows(
+    var_table(name = "Number of ranger staff", var = "staff_rangers"),
+    var_table(name = "Number of other staff", var = "staff_others"),
+    var_table(name = "Number of total staff", var = "staff_total"),
+    var_table(name = "Latitude", var = "lat"),
+    var_table(name = "Longitude", var = "long"),
+    var_table(name = "Area", var = "area_country"),
+    var_table(name = "Population density", var = "pop_density"),
+    var_table(name = "GDP", var = "GDP_2019"),
+    var_table(name = "GDP per capita", var = "GDP_capita"),
+    var_table(name = "GDP growth rate", var = "GDP_growth"),
+    var_table(name = "Percentage of rural inhabitants", var = "rural_pct"),
+    var_table(name = "Percentage of unemployed inhabitants", var = "unemployment"),
+    var_table(name = "Percentage of area covered with forests", var = "area_forest_pct"),
+    var_table(name = "Surface of protected area", var = "area_PA_total"),
+    var_table(name = "Proportion of protected areas in IUCN categories I & II", var = "IUCN_1_2_prop"),
+    var_table(name = "Proportion of protected areas in IUCN categories I-IV", var = "IUCN_1_4_prop"),
+    var_table(name = "Surface of protected area", var = "EVI"),
+    var_table(name = "Surface of protected area", var = "EPI_2020"),
+    var_table(name = "Surface of protected area", var = "SPI")
+  )
+
+}
+
+
