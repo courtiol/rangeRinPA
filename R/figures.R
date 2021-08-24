@@ -107,3 +107,23 @@ plot_map_reliability <- function(data, proj = "+proj=moll") {
     ggplot2::coord_sf(expand = FALSE, crs = proj)
 
 }
+
+
+#' Plot the reliability score against the sampling intensity
+#'
+#' @inheritParams plot_map_sampling
+#' @export
+#'
+#' @examples
+#' plot_reliability_vs_sampling(data_rangers)
+#'
+plot_reliability_vs_sampling <- function(data){
+  ggplot2::ggplot(data) +
+    ggplot2::aes(y = .data$reliability, x = .data$sampled_coverage) +
+    ggplot2::geom_jitter(width = 0.75, height = 0.1, shape = 1) +
+    ggplot2::scale_x_continuous(breaks = seq(0, 100, 5), minor_breaks = 0:100) +
+    ggplot2::scale_y_continuous(breaks = 10:20, minor_breaks = NULL) +
+    ggplot2::theme_bw() +
+    ggplot2::labs(x = "Protected Areas sampled (%)", y = "Reliability score (/20)")
+}
+

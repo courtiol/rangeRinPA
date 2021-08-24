@@ -37,6 +37,11 @@
 #' ggplot2::ggsave(filename = "inst/extdata/figures/figure_reliability.png",
 #'                 width = ggplot2::unit(15, "cm"))
 #'
+#' plot_reliability_vs_sampling(data_rangers)
+#' ggplot2::ggsave(filename = "inst/extdata/figures/figure_reliability_vs_design.pdf",
+#'                 width = ggplot2::unit(8, "cm"))
+#' ggplot2::ggsave(filename = "inst/extdata/figures/figure_reliability_vs_design.png",
+#'                 width = ggplot2::unit(8, "cm"))
 #'
 #'
 #' }
