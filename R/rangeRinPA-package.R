@@ -17,19 +17,26 @@
 #' @examples
 #' \dontrun{
 #'
-#' if (require("skimr")) {
-#'   skim(data_rangers)
-#' }
 #'
+#' ## Table S1 A
 #'
 #' readr::write_excel_csv(table_completeness_obs(data_rangers, outliers = NULL),
 #'                        file = "inst/extdata/tables/table_completeness_obs.csv")
 #'
+#'
+#' ## Table S1 B
+#'
 #' readr::write_excel_csv(table_completeness_km2(data_rangers, outliers = NULL), # or NULL or "GRL"?
 #'                        file = "inst/extdata/tables/table_completeness_km2.csv")
 #'
+#'
+#' ## Table S1 C
+#'
 #' readr::write_excel_csv(table_completeness_vars(data_rangers, outliers = NULL),
 #'                        file = "inst/extdata/tables/table_completeness_vars.csv")
+#'
+#'
+#' ## Figure XX
 #'
 #' plot_map_sampling(data_rangers)
 #' ggplot2::ggsave(filename = "inst/extdata/figures/figure_sampling.pdf",
@@ -37,11 +44,17 @@
 #' ggplot2::ggsave(filename = "inst/extdata/figures/figure_sampling.png",
 #'                 width = ggplot2::unit(15, "cm"))
 #'
+#'
+#' ## Figure XX
+#'
 #' plot_map_reliability(data_rangers)
 #' ggplot2::ggsave(filename = "inst/extdata/figures/figure_reliability.pdf",
 #'                 width = ggplot2::unit(15, "cm"))
 #' ggplot2::ggsave(filename = "inst/extdata/figures/figure_reliability.png",
 #'                 width = ggplot2::unit(15, "cm"))
+#'
+#'
+#' ## Figure XX
 #'
 #' plot_reliability_vs_sampling(data_rangers)
 #' ggplot2::ggsave(filename = "inst/extdata/figures/figure_reliability_vs_design.pdf",
@@ -49,7 +62,9 @@
 #' ggplot2::ggsave(filename = "inst/extdata/figures/figure_reliability_vs_design.png",
 #'                 width = ggplot2::unit(8, "cm"))
 #'
-#' # Spain example for imputation:
+#'
+#' ## Numerical example to explain how imputation is done (in SI):
+#'
 #' data_rangers %>%
 #'   dplyr::filter(countryname_eng == "Spain") %>%
 #'   dplyr::select(.data$staff_rangers,
