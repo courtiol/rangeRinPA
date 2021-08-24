@@ -19,7 +19,7 @@
 #'
 run_LMM_workflow <- function(data, rerank = TRUE, Ncpu = 2,  coef = 0, rep_feature_select = 1000, rep_finetune = 1000, rep_simu = 10000) {
 
-  data <- fill_PA_area(data, coef = coef)
+  set.seed(123)
 
   record <- list(meta = tibble::tibble(start = Sys.time(),
                                        Ncpu = Ncpu,
@@ -31,6 +31,8 @@ run_LMM_workflow <- function(data, rerank = TRUE, Ncpu = 2,  coef = 0, rep_featu
 
   cat("Step 1 + 2: General data preparation & preparation of initial training datasets\n")
 
+  data <- fill_PA_area(data, coef = coef) ## Imputation step
+
   formula_rangers_full <- staff_rangers_log ~ PA_area_log + lat + long + area_country_log + area_forest_pct + pop_density_log + GDP_2019_log + GDP_capita_log +
     GDP_growth + unemployment_log + EVI + SPI + EPI_2020 + IUCN_1_4_prop + IUCN_1_2_prop + Matern(1|long + lat)
   formula_others_full <- stats::update(formula_rangers_full, staff_others_log ~ .)
@@ -38,7 +40,7 @@ run_LMM_workflow <- function(data, rerank = TRUE, Ncpu = 2,  coef = 0, rep_featu
 
   data_initial_training_rangers <- build_initial_training_data(data,
                                                                formula = formula_rangers_full,
-                                                               survey = "complete_known",
+                                                               survey = "complete_known",  # note: complete_known includes imputed PAs!
                                                                spatial = TRUE)
   data_initial_training_others  <- build_initial_training_data(data,
                                                                formula = formula_others_full,
@@ -51,11 +53,14 @@ run_LMM_workflow <- function(data, rerank = TRUE, Ncpu = 2,  coef = 0, rep_featu
 
   record <- c(record,
               list(rangers = tibble::tibble(initial_training_nrow = nrow(data_initial_training_rangers),
-                                   initial_training_ncol = ncol(data_initial_training_rangers)),
+                                            initial_training_ncol = ncol(data_initial_training_rangers),
+                                            initial_PA_included =  sum(data_initial_training_rangers$PA_area_surveyed)),
                    others = tibble::tibble(initial_training_nrow = nrow(data_initial_training_others),
-                                   initial_training_ncol = ncol(data_initial_training_others)),
+                                           initial_training_ncol = ncol(data_initial_training_others),
+                                           initial_PA_included =  sum(data_initial_training_others$PA_area_surveyed)),
                    all = tibble::tibble(initial_training_nrow = nrow(data_initial_training_all),
-                                initial_training_ncol = ncol(data_initial_training_all))))
+                                        initial_training_ncol = ncol(data_initial_training_all),
+                                        initial_PA_included =  sum(data_initial_training_all$PA_area_surveyed))))
 
 
   cat("Step 3: Selection of predictor variables\n")

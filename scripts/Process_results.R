@@ -24,7 +24,7 @@ res |>
   subset(select = c(who, type, coef, formula, spatial)) |>
   as.data.frame()
 
-## Tables showing predicitons:
+## Tables showing predictions:
 res |>
   unnest(pred_details) |>
   group_by(who, continent) |>

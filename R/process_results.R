@@ -20,7 +20,7 @@
 #'
 #' extract_results(list_results_LMM = list(LMM_small_test),
 #'                 list_results_RF  = list(RF_small_test)) %>%
-#'   tidyr::unnest_wider(PA_areas_pct)
+#'   tidyr::unnest_wider(PA_areas)
 #' }
 #'
 extract_results <- function(list_results_LMM = list(), list_results_RF = list(), data = NULL) {
@@ -68,10 +68,11 @@ extract_results_internal <- function(what, who, type, data) {
   }
 
   country_info %>%
-    dplyr::summarise(PA_area_known = sum(.data$PA_area_known),
-                     PA_area_imputed = sum(.data$PA_area_imputed),
-                     PA_area_predicted = sum(.data$PA_area_predicted),
-                     PA_area_unknown = sum(.data$PA_area_unknown)) -> .PA_areas
+    dplyr::summarise(PA_area_known     = ifelse("PA_area_known" %in% colnames(country_info), sum(country_info$PA_area_known), 0), #using .data$ crashes... why?? dplyr bug?
+                     PA_area_imputed   = ifelse("PA_area_imputed" %in% colnames(country_info), sum(country_info$PA_area_imputed), 0),
+                     PA_area_predicted = ifelse("PA_area_predicted" %in% colnames(country_info), sum(country_info$PA_area_predicted), 0),
+                     PA_area_unknown   = ifelse("PA_area_unknown" %in% colnames(country_info), sum(country_info$PA_area_unknown), 0)
+                     ) -> .PA_areas
 
   #.PA_areas %>%
   #  dplyr::summarise(PA_area_total = sum(dplyr::c_across())) -> .PA_area_total

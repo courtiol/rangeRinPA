@@ -45,7 +45,7 @@ RF_small_test <- run_RF_workflow(data = data_rangers, Ncpu = 2, coef = 0,
 
 extract_results(list_results_LMM = list(LMM_small_test),
                 list_results_RF  = list(RF_small_test)) \%>\%
-  tidyr::unnest_wider(PA_areas_pct)
+  tidyr::unnest_wider(PA_areas)
 }
 
 }
