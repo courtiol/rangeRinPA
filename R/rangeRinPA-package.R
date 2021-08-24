@@ -22,8 +22,11 @@
 #' }
 #'
 #'
-#' readr::write_excel_csv(table_completeness(data_rangers),
+#' readr::write_excel_csv(table_completeness(data_rangers, outliers = NULL),
 #'                        file = "inst/extdata/tables/table_completeness.csv")
+#'
+#' readr::write_excel_csv(table_completeness_km2(data_rangers),
+#'                        file = "inst/extdata/tables/table_completeness_km2.csv")
 #'
 #' plot_map_sampling(data_rangers)
 #' ggplot2::ggsave(filename = "inst/extdata/figures/figure_sampling.pdf",

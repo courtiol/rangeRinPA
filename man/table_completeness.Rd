@@ -2,12 +2,14 @@
 % Please edit documentation in R/tables.R
 \name{table_completeness}
 \alias{table_completeness}
-\title{Create completeness table}
+\title{Create completeness table (numbers)}
 \usage{
-table_completeness(data)
+table_completeness(data, outliers = "GRL")
 }
 \arguments{
 \item{data}{the complete dataset}
+
+\item{outliers}{a vector with the iso code for the countries/territories to discard (default = \code{"GRL"})}
 }
 \value{
 a tibble
