@@ -43,5 +43,15 @@
 #' ggplot2::ggsave(filename = "inst/extdata/figures/figure_reliability_vs_design.png",
 #'                 width = ggplot2::unit(8, "cm"))
 #'
+#' # Spain example for imputation:
+#' data_rangers %>%
+#'   dplyr::filter(countryname_eng == "Spain") %>%
+#'   dplyr::select(.data$staff_rangers,
+#'                 .data$PA_area_surveyed,
+#'                 .data$PA_area_unsurveyed) -> data_spain_before_imputation
+#'  data_spain_before_imputation
+#'  fill_PA_area(data_spain_before_imputation, coef = 1)
+#'  fill_PA_area(data_spain_before_imputation, coef = 0.5)
+#'
 #'
 #' }
