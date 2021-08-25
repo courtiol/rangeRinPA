@@ -67,21 +67,43 @@ extract_results_internal <- function(what, who, type, data) {
      country_info <- what[[who]]$country_info[[1]]
   }
 
+  ## Add levels to prevent auto-drop when a type is missing:
   country_info %>%
-    dplyr::summarise(PA_area_known     = ifelse("PA_area_known" %in% colnames(country_info), sum(country_info$PA_area_known), 0), #using .data$ crashes... why?? dplyr bug?
-                     PA_area_imputed   = ifelse("PA_area_imputed" %in% colnames(country_info), sum(country_info$PA_area_imputed), 0),
-                     PA_area_predicted = ifelse("PA_area_predicted" %in% colnames(country_info), sum(country_info$PA_area_predicted), 0),
-                     PA_area_unknown   = ifelse("PA_area_unknown" %in% colnames(country_info), sum(country_info$PA_area_unknown), 0)
+    dplyr::mutate(type = factor(.data$type, levels = c("known", "predicted", "unknown"))) -> country_info
+
+
+  if (!"PA_area_known" %in% colnames(country_info)) {
+    country_info$PA_area_known <- 0
+  }
+
+  if (!"PA_area_imputed" %in% colnames(country_info)) {
+    country_info$PA_area_imputed <- 0
+  }
+
+  if (!"PA_area_predicted" %in% colnames(country_info)) {
+    country_info$PA_area_predicted <- 0
+    }
+
+  if (!"PA_area_unknown" %in% colnames(country_info)) {
+    country_info$PA_area_unknown <- 0
+  }
+
+  country_info %>%
+    dplyr::summarise(PA_area_known     = sum(.data$PA_area_known),
+                     PA_area_imputed   = sum(.data$PA_area_imputed),
+                     PA_area_predicted = sum(.data$PA_area_predicted),
+                     PA_area_unknown   = sum(.data$PA_area_unknown)
                      ) -> .PA_areas
 
   #.PA_areas %>%
   #  dplyr::summarise(PA_area_total = sum(dplyr::c_across())) -> .PA_area_total
 
   country_info %>%
-    dplyr::group_by(.data$type, .add = TRUE) %>%
+    dplyr::group_by(.data$type, .add = TRUE, .drop = FALSE) %>%
     dplyr::summarise(dplyr::across(tidyselect::starts_with("staff"), \(x) sum(delog1p(x), na.rm = TRUE), .names = "staff")) %>%
     dplyr::ungroup() %>%
     tidyr::pivot_wider(names_from = .data$type, values_from = .data$staff) -> .predictions
+
 
   tibble::tibble(type = type,
                  coef = what$meta$coef_population,
