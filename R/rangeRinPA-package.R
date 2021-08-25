@@ -17,49 +17,63 @@
 #' @examples
 #' \dontrun{
 #'
+#' ## Set and create all directories to store files
+#'
+#' path <- "inst/extdata/" ## set the path where you want to store all created files
+#' if (! dir.exists(path)) stop("You must use an existing path")
+#'
+#' path_tables <- paste0(path, "tables/")
+#' if (! dir.exists(path_tables)) dir.create(path_tables)
+#'
+#' path_figures <- paste0(path, "figures/")
+#' if (! dir.exists(path_figures)) dir.create(path_figures)
+#'
+#' path_predictions <- paste0(path, "predictions/")
+#' if (! dir.exists(path_predictions)) dir.create(path_predictions)
+#'
 #'
 #' ## Table S1 A
 #'
 #' readr::write_excel_csv(table_completeness_obs(data_rangers, outliers = NULL),
-#'                        file = "inst/extdata/tables/table_completeness_obs.csv")
+#'                        file = paste0(path_tables, "table_completeness_obs.csv"))
 #'
 #'
 #' ## Table S1 B
 #'
 #' readr::write_excel_csv(table_completeness_km2(data_rangers, outliers = NULL), # or NULL or "GRL"?
-#'                        file = "inst/extdata/tables/table_completeness_km2.csv")
+#'                        file = paste0(path_tables, "table_completeness_km2.csv"))
 #'
 #'
 #' ## Table S1 C
 #'
 #' readr::write_excel_csv(table_completeness_vars(data_rangers, outliers = NULL),
-#'                        file = "inst/extdata/tables/table_completeness_vars.csv")
+#'                        file = paste0(path_tables, "table_completeness_vars.csv"))
 #'
 #'
 #' ## Figure XX
 #'
 #' plot_map_sampling(data_rangers)
-#' ggplot2::ggsave(filename = "inst/extdata/figures/figure_sampling.pdf",
+#' ggplot2::ggsave(filename = paste0(path_figures, "figure_sampling.pdf"),
 #'                 width = ggplot2::unit(15, "cm"))
-#' ggplot2::ggsave(filename = "inst/extdata/figures/figure_sampling.png",
+#' ggplot2::ggsave(filename = paste0(path_figures, "figure_sampling.png"),
 #'                 width = ggplot2::unit(15, "cm"))
 #'
 #'
 #' ## Figure XX
 #'
 #' plot_map_reliability(data_rangers)
-#' ggplot2::ggsave(filename = "inst/extdata/figures/figure_reliability.pdf",
+#' ggplot2::ggsave(filename = paste0(path_figures, "figure_reliability.pdf"),
 #'                 width = ggplot2::unit(15, "cm"))
-#' ggplot2::ggsave(filename = "inst/extdata/figures/figure_reliability.png",
+#' ggplot2::ggsave(filename = paste0(path_figures, "figure_reliability.png"),
 #'                 width = ggplot2::unit(15, "cm"))
 #'
 #'
 #' ## Figure XX
 #'
 #' plot_reliability_vs_sampling(data_rangers)
-#' ggplot2::ggsave(filename = "inst/extdata/figures/figure_reliability_vs_design.pdf",
+#' ggplot2::ggsave(filename = paste0(path_figures, "figure_reliability_vs_design.pdf"),
 #'                 width = ggplot2::unit(8, "cm"))
-#' ggplot2::ggsave(filename = "inst/extdata/figures/figure_reliability_vs_design.png",
+#' ggplot2::ggsave(filename = paste0(path_figures, "figure_reliability_vs_design.png"),
 #'                 width = ggplot2::unit(8, "cm"))
 #'
 #'
@@ -74,5 +88,78 @@
 #'  fill_PA_area(data_spain_before_imputation, coef = 1)
 #'  fill_PA_area(data_spain_before_imputation, coef = 0.5)
 #'
+#'
+#' ### Predictions
+#'
+#' # Ncpu <- 2L
+#' Ncpu <- 120 ## define the number of CPUs to use
+#'
+#'
+#' ## Run all RF workflows and save results
+#'
+#' RF_000 <- run_RF_workflow(data = data_rangers, Ncpu = Ncpu, coef = 0, rep_feature_select = 2, rep_finetune = 2, rep_simu = 2)
+#' save(RF_000, file = paste0(path_predictions, "RF_000.Rdata"))
+#'
+#' RF_025 <- run_RF_workflow(data = data_rangers, Ncpu = Ncpu, coef = 0.25, rep_feature_select = 2, rep_finetune = 2, rep_simu = 2)
+#' save(RF_025, file = paste0(path_predictions, "RF_025.Rdata"))
+#'
+#' RF_050 <- run_RF_workflow(data = data_rangers, Ncpu = Ncpu, coef = 0.50, rep_feature_select = 2, rep_finetune = 2, rep_simu = 2)
+#' save(RF_050, file = paste0(path_predictions, "RF_050.Rdata"))
+#'
+#' RF_075 <- run_RF_workflow(data = data_rangers, Ncpu = Ncpu, coef = 0.75, rep_feature_select = 2, rep_finetune = 2, rep_simu = 2)
+#' save(RF_075,file = paste0(path_predictions, "RF_075.Rdata"))
+#'
+#' RF_100 <- run_RF_workflow(data = data_rangers, Ncpu = Ncpu, coef = 1, rep_feature_select = 2, rep_finetune = 2, rep_simu = 2)
+#' save(RF_100, file = paste0(path_predictions, "RF_100.Rdata"))
+#'
+#'
+#' ## Run all RF workflows and save results
+#'
+#' LMM_000 <- run_LMM_workflow(data = data_rangers, Ncpu = Ncpu, coef = 0, rep_feature_select = 2, rep_finetune = 2, rep_simu = 2)
+#' save(LMM_000, file = paste0(path_predictions, "LMM_000.Rdata"))
+#'
+#' LMM_025 <- run_LMM_workflow(data = data_rangers, Ncpu = Ncpu, coef = 0.25, rep_feature_select = 2, rep_finetune = 2, rep_simu = 2)
+#' save(LMM_025, file = paste0(path_predictions, "LMM_025.Rdata"))
+#'
+#' LMM_050 <- run_LMM_workflow(data = data_rangers, Ncpu = Ncpu, coef = 0.50, rep_feature_select = 2, rep_finetune = 2, rep_simu = 2)
+#' save(LMM_050, file = paste0(path_predictions, "LMM_050.Rdata"))
+#'
+#' LMM_075 <- run_LMM_workflow(data = data_rangers, Ncpu = Ncpu, coef = 0.75, rep_feature_select = 2, rep_finetune = 2, rep_simu = 2)
+#' save(LMM_075, file = paste0(path_predictions, "LMM_075.Rdata"))
+#'
+#' LMM_100 <- run_LMM_workflow(data = data_rangers, Ncpu = Ncpu, coef = 1, rep_feature_select = 2, rep_finetune = 2, rep_simu = 2)
+#' save(LMM_100, file = paste0(path_predictions, "LMM_100.Rdata"))
+#'
+#'
+#' ## Load all results saved on disk (useful only if all objects created above are not already in memory)
+#'
+#' files_to_load <- c("LMM_000.Rdata", "LMM_025.Rdata", "LMM_050.Rdata", "LMM_075.Rdata",
+#'                    "LMM_100.Rdata", "RF_000.Rdata", "RF_025.Rdata", "RF_050.Rdata",
+#'                    "RF_075.Rdata", "RF_100.Rdata")
+#'
+#' sapply(paste0(path_predictions, files_to_load), function(file) load(file, envir = .GlobalEnv))
+#'
+#'
+#' ## Table S2
+#'
+#' extract_training_info(list_results_LMM = list(LMM_000, LMM_025, LMM_050, LMM_075, LMM_100),
+#'                       list_results_RF = list(RF_000, RF_025, RF_050, RF_075, RF_100),
+#'                       data = data_rangers) -> training_info
+#'
+#' training_info %>% # remove duplicates
+#'   dplyr::group_by(who) %>%
+#'   dplyr::slice(1) %>%
+#'   dplyr::select(-.data$type, -.data$coef, -.data$ncol) %>%
+#'   dplyr::ungroup() -> training_info_clean
+#'
+#'  readr::write_excel_csv(training_info_clean,
+#'                         file = paste0(path_tables, "table_training_sets.csv"))
+#'
+#'
+#' ## Table SXX
+#'
+#' extract_results(list_results_LMM = list(LMM_000, LMM_025, LMM_050, LMM_075, LMM_100),
+#'                 list_results_RF = list(RF_000, RF_025, RF_050, RF_075, RF_100),
+#'                 data = data_rangers) -> results_predictions
 #'
 #' }

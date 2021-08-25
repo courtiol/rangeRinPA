@@ -30,17 +30,17 @@ extract_results <- function(list_results_LMM = list(), list_results_RF = list(),
     rangers_list_LMM <- lapply(list_results_LMM, function(x) extract_results_internal(what = x, who = "rangers", type = "LMM", data = data))
     others_list_LMM  <- lapply(list_results_LMM, function(x) extract_results_internal(what = x, who = "others", type = "LMM", data = data))
     all_list_LMM     <- lapply(list_results_LMM, function(x) extract_results_internal(what = x, who = "all", type = "LMM", data = data))
-    rbind(cbind(who = "rangers", as.data.frame(do.call("rbind", rangers_list_LMM))),
-          cbind(who = "others",  as.data.frame(do.call("rbind", others_list_LMM))),
-          cbind(who = "all",     as.data.frame(do.call("rbind", all_list_LMM)))) -> d_LMM
+    rbind(cbind(who = "Rangers", as.data.frame(do.call("rbind", rangers_list_LMM))),
+          cbind(who = "Others",  as.data.frame(do.call("rbind", others_list_LMM))),
+          cbind(who = "All",     as.data.frame(do.call("rbind", all_list_LMM)))) -> d_LMM
   }
   if (length(list_results_RF) > 0) {
     rangers_list_RF <- lapply(list_results_RF, function(x) extract_results_internal(what = x, who = "rangers", type = "RF", data = data))
     others_list_RF  <- lapply(list_results_RF, function(x) extract_results_internal(what = x, who = "others", type = "RF", data = data))
     all_list_RF     <- lapply(list_results_RF, function(x) extract_results_internal(what = x, who = "all", type = "RF", data = data))
-    rbind(cbind(who = "rangers", as.data.frame(do.call("rbind", rangers_list_RF))),
-          cbind(who = "others",  as.data.frame(do.call("rbind", others_list_RF))),
-          cbind(who = "all",     as.data.frame(do.call("rbind", all_list_RF)))) -> d_RF
+    rbind(cbind(who = "Rangers", as.data.frame(do.call("rbind", rangers_list_RF))),
+          cbind(who = "Others",  as.data.frame(do.call("rbind", others_list_RF))),
+          cbind(who = "All",     as.data.frame(do.call("rbind", all_list_RF)))) -> d_RF
   }
   if (ncol(d_LMM) > 0 && ncol(d_RF) > 0) {
     d <- rbind(d_LMM, d_RF)
@@ -50,7 +50,7 @@ extract_results <- function(list_results_LMM = list(), list_results_RF = list(),
     d <- d_RF
   }
 
-  d$who <- as.factor(d$who)
+  d$who <- factor(d$who, levels = c("Rangers", "Others", "All"))
   tibble::as_tibble(d)
 }
 
@@ -201,17 +201,17 @@ extract_training_info <- function(list_results_LMM = list(), list_results_RF = l
     rangers_list_LMM <- lapply(list_results_LMM, function(x) extract_training_info_internal(what = x, who = "rangers", type = "LMM", data = data))
     others_list_LMM  <- lapply(list_results_LMM, function(x) extract_training_info_internal(what = x, who = "others", type = "LMM", data = data))
     all_list_LMM     <- lapply(list_results_LMM, function(x) extract_training_info_internal(what = x, who = "all", type = "LMM", data = data))
-    rbind(cbind(who = "rangers", type = "LMM", as.data.frame(do.call("rbind", rangers_list_LMM))),
-          cbind(who = "others",  type = "LMM", as.data.frame(do.call("rbind", others_list_LMM))),
-          cbind(who = "all",     type = "LMM", as.data.frame(do.call("rbind", all_list_LMM)))) -> d_LMM
+    rbind(cbind(who = "Rangers", type = "LMM", as.data.frame(do.call("rbind", rangers_list_LMM))),
+          cbind(who = "Others",  type = "LMM", as.data.frame(do.call("rbind", others_list_LMM))),
+          cbind(who = "All",     type = "LMM", as.data.frame(do.call("rbind", all_list_LMM)))) -> d_LMM
   }
   if (length(list_results_RF) > 0) {
     rangers_list_RF <- lapply(list_results_RF, function(x) extract_training_info_internal(what = x, who = "rangers", type = "RF", data = data))
     others_list_RF  <- lapply(list_results_RF, function(x) extract_training_info_internal(what = x, who = "others", type = "RF", data = data))
     all_list_RF     <- lapply(list_results_RF, function(x) extract_training_info_internal(what = x, who = "all", type = "RF", data = data))
-    rbind(cbind(who = "rangers", type = "RF", as.data.frame(do.call("rbind", rangers_list_RF))),
-          cbind(who = "others",  type = "RF", as.data.frame(do.call("rbind", others_list_RF))),
-          cbind(who = "all",     type = "RF", as.data.frame(do.call("rbind", all_list_RF)))) -> d_RF
+    rbind(cbind(who = "Rangers", type = "RF", as.data.frame(do.call("rbind", rangers_list_RF))),
+          cbind(who = "Others",  type = "RF", as.data.frame(do.call("rbind", others_list_RF))),
+          cbind(who = "All",     type = "RF", as.data.frame(do.call("rbind", all_list_RF)))) -> d_RF
   }
   if (ncol(d_LMM) > 0 && ncol(d_RF) > 0) {
     d <- rbind(d_LMM, d_RF)
@@ -221,8 +221,21 @@ extract_training_info <- function(list_results_LMM = list(), list_results_RF = l
     d <- d_RF
   }
 
-  d$who <- as.factor(d$who)
-  tibble::as_tibble(d)
+  d$who <- factor(d$who, levels = c("Rangers", "Others", "All"))
+  d <- tibble::as_tibble(d)
+
+  if (!is.null(data)) {
+    d$total_obs <- nrow(data) - 1 # - 1 for Greenland
+    d$total_PA <- sum(data$area_PA_total[data$countryname_iso != "GRL"])
+    d$obs_coverage <- d$initial_training_nrow / d$total_obs
+    d$PA_coverage <- d$initial_PA_included / d$total_PA
+    d %>%
+      dplyr::rename(PA = .data$initial_PA_included) -> d
+  }
+
+  d %>%
+    dplyr::rename(obs = .data$initial_training_nrow,
+                  ncol = .data$initial_training_ncol)
 }
 
 
