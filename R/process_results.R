@@ -104,7 +104,6 @@ extract_results_internal <- function(what, who, type, data) {
     dplyr::ungroup() %>%
     tidyr::pivot_wider(names_from = .data$type, values_from = .data$staff) -> .predictions
 
-
   tibble::tibble(type = type,
                  coef = what$meta$coef_population,
                  rerank = what$meta$rerank,
@@ -174,3 +173,74 @@ single_summary_internal <- function(result, who, resp, data) {
                    by = c("country_UN_continent", "type", "total", "Ncountry", "PA_area_surveyed", "PA_area_unsurveyed"))
 
 }
+
+
+#' Extract training data info
+#'
+#' @inheritParams extract_results
+#'
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' LMM_small_test <- run_LMM_workflow(data = data_rangers, Ncpu = 2, coef = 0,
+#'                                      rep_feature_select = 2, rep_finetune = 2, rep_simu = 2)
+#'
+#' RF_small_test <- run_RF_workflow(data = data_rangers, Ncpu = 2, coef = 0,
+#'                                    rep_feature_select = 2, rep_finetune = 2, rep_simu = 2,
+#'                                    grid_type = "coarse")
+#'
+#' extract_training_info(list_results_LMM = list(LMM_small_test),
+#'                 list_results_RF  = list(RF_small_test))
+#' }
+#'
+extract_training_info <- function(list_results_LMM = list(), list_results_RF = list(), data = NULL) {
+  d_LMM <- d_RF <- data.frame()
+
+  if (length(list_results_LMM) > 0) {
+    rangers_list_LMM <- lapply(list_results_LMM, function(x) extract_training_info_internal(what = x, who = "rangers", type = "LMM", data = data))
+    others_list_LMM  <- lapply(list_results_LMM, function(x) extract_training_info_internal(what = x, who = "others", type = "LMM", data = data))
+    all_list_LMM     <- lapply(list_results_LMM, function(x) extract_training_info_internal(what = x, who = "all", type = "LMM", data = data))
+    rbind(cbind(who = "rangers", type = "LMM", as.data.frame(do.call("rbind", rangers_list_LMM))),
+          cbind(who = "others",  type = "LMM", as.data.frame(do.call("rbind", others_list_LMM))),
+          cbind(who = "all",     type = "LMM", as.data.frame(do.call("rbind", all_list_LMM)))) -> d_LMM
+  }
+  if (length(list_results_RF) > 0) {
+    rangers_list_RF <- lapply(list_results_RF, function(x) extract_training_info_internal(what = x, who = "rangers", type = "RF", data = data))
+    others_list_RF  <- lapply(list_results_RF, function(x) extract_training_info_internal(what = x, who = "others", type = "RF", data = data))
+    all_list_RF     <- lapply(list_results_RF, function(x) extract_training_info_internal(what = x, who = "all", type = "RF", data = data))
+    rbind(cbind(who = "rangers", type = "RF", as.data.frame(do.call("rbind", rangers_list_RF))),
+          cbind(who = "others",  type = "RF", as.data.frame(do.call("rbind", others_list_RF))),
+          cbind(who = "all",     type = "RF", as.data.frame(do.call("rbind", all_list_RF)))) -> d_RF
+  }
+  if (ncol(d_LMM) > 0 && ncol(d_RF) > 0) {
+    d <- rbind(d_LMM, d_RF)
+  } else if (ncol(d_LMM) > 0) {
+    d <- d_LMM
+  } else if (ncol(d_RF) > 0) {
+    d <- d_RF
+  }
+
+  d$who <- as.factor(d$who)
+  tibble::as_tibble(d)
+}
+
+
+#' @describeIn extract_training_info an internal function fetching the info on training datasets
+#' @export
+#'
+extract_training_info_internal <- function(what, who, type, data) {
+
+  if (!is.null(data)) {
+    what[[who]] -> data_info
+  } else {
+     data_info <- what[[who]]
+  }
+
+  coef <- what[["meta"]]$coef_population
+
+  data_info %>%
+    dplyr::select(.data$initial_training_nrow, .data$initial_training_ncol, .data$initial_PA_included) %>%
+    dplyr::mutate(coef = coef, .before = 1L)
+}
+
