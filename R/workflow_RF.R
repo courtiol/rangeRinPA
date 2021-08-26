@@ -17,10 +17,10 @@
 #' \dontrun{
 #'   RF_small_test <- run_RF_workflow(data = data_rangers, Ncpu = 2, coef = 0,
 #'                                    rep_feature_select = 2, rep_finetune = 2, rep_simu = 2,
-#'                                    grid_type = "coarse")
+#'                                    grid_type = "coarse", n_trees = 100)
 #' }
 #'
-run_RF_workflow <- function(data, rerank = TRUE, Ncpu = 2,  coef = 0, rep_feature_select = 1000, rep_finetune = 1000, rep_simu = 10000, n_trees = 1000, grid_type = "fine") {
+run_RF_workflow <- function(data, rerank = TRUE, Ncpu = 2,  coef = 0, rep_feature_select = 1000, rep_finetune = 1000, rep_simu = 10000, n_trees = 10000, grid_type = "fine") {
 
   set.seed(123)
 

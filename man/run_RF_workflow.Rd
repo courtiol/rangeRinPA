@@ -12,7 +12,7 @@ run_RF_workflow(
   rep_feature_select = 1000,
   rep_finetune = 1000,
   rep_simu = 10000,
-  n_trees = 1000,
+  n_trees = 10000,
   grid_type = "fine"
 )
 }
@@ -45,7 +45,7 @@ Run the full workflow for RF
 \dontrun{
   RF_small_test <- run_RF_workflow(data = data_rangers, Ncpu = 2, coef = 0,
                                    rep_feature_select = 2, rep_finetune = 2, rep_simu = 2,
-                                   grid_type = "coarse")
+                                   grid_type = "coarse", n_trees = 100)
 }
 
 }

@@ -19,7 +19,7 @@ Plot the output of the fine tuning for RF/ETs fits
 ## Note: this example takes some time to run!
 RF_test <- run_RF_workflow(data = data_rangers, Ncpu = 2, coef = 0,
                            rep_feature_select = 2, rep_finetune = 10, rep_simu = 2,
-                           grid_type = "fine")
+                           grid_type = "fine", n_trees = 100)
 
 plot_finetuning(result = RF_test, who = "rangers")
 }

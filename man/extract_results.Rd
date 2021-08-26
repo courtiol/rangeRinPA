@@ -37,11 +37,13 @@ Extract and format the results produced by the worflow
 \examples{
 \dontrun{
 LMM_small_test <- run_LMM_workflow(data = data_rangers, Ncpu = 2, coef = 0,
-                                     rep_feature_select = 2, rep_finetune = 2, rep_simu = 2)
+                                   rep_feature_select = 2, rep_finetune = 2, rep_simu = 2,
+                                   n_trees = 100)
 
 RF_small_test <- run_RF_workflow(data = data_rangers, Ncpu = 2, coef = 0,
-                                   rep_feature_select = 2, rep_finetune = 2, rep_simu = 2,
-                                   grid_type = "coarse")
+                                 rep_feature_select = 2, rep_finetune = 2, rep_simu = 2,
+                                 grid_type = "coarse",
+                                 n_trees = 100)
 
 extract_results(list_results_LMM = list(LMM_small_test),
                 list_results_RF  = list(RF_small_test)) \%>\%

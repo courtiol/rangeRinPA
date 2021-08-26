@@ -140,7 +140,7 @@ plot_reliability_vs_sampling <- function(data){
 #' ## Note: this example takes some time to run!
 #' RF_test <- run_RF_workflow(data = data_rangers, Ncpu = 2, coef = 0,
 #'                            rep_feature_select = 2, rep_finetune = 10, rep_simu = 2,
-#'                            grid_type = "fine")
+#'                            grid_type = "fine", n_trees = 100)
 #'
 #' plot_finetuning(result = RF_test, who = "rangers")
 #' }
