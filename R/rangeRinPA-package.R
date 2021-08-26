@@ -168,6 +168,24 @@
 #'                         file = paste0(path_tables, "table_training_sets_final_temp.csv"))
 #'
 #'
+#' ## Table S4
+#' extract_finetuning(list_results_LMM = list(LMM_000, LMM_025, LMM_050, LMM_075, LMM_100),
+#'                    list_results_RF = list(RF_000, RF_025, RF_050, RF_075, RF_100),
+#'                    data = data_rangers) -> fine_tunning_selected
+#'
+#'  readr::write_excel_csv(fine_tunning_selected,
+#'                         file = paste0(path_tables, "table_fine_tuning_temp.csv"))
+#'
+#'
+#' ## Figure XX fine tuning
+#'
+#' plot_finetuning(result = RF_100, who = "rangers")
+#' ggplot2::ggsave(filename = paste0(path_figures, "figure_finetuning_temp.pdf"),
+#'                 width = ggplot2::unit(8, "cm"))
+#' ggplot2::ggsave(filename = paste0(path_figures, "figure_finetuning_temp.png"),
+#'                 width = ggplot2::unit(8, "cm"))
+#'
+#'
 #' ## Table SXX
 #'
 #' extract_results(list_results_LMM = list(LMM_000, LMM_025, LMM_050, LMM_075, LMM_100),
@@ -175,12 +193,5 @@
 #'                 data = data_rangers) -> results_predictions
 #'
 #'
-#' ## Figure fine tuning
-#'
-#' plot_finetuning(result = RF_100, who = "rangers")
-#' ggplot2::ggsave(filename = paste0(path_figures, "figure_finetuning.pdf"),
-#'                 width = ggplot2::unit(8, "cm"))
-#' ggplot2::ggsave(filename = paste0(path_figures, "figure_finetuning.png"),
-#'                 width = ggplot2::unit(8, "cm"))
-#'
+
 #' }

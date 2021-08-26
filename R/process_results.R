@@ -276,3 +276,85 @@ extract_training_info_internal <- function(which, what, who, type, data) {
   }
 }
 
+
+#' Extract and format the finetuning results produced by the worflow
+#'
+#' @inheritParams extract_results
+#'
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' LMM_small_test <- run_LMM_workflow(data = data_rangers, Ncpu = 2, coef = 0,
+#'                                    rep_feature_select = 2, rep_finetune = 2, rep_simu = 2)
+#'
+#' RF_small_test <- run_RF_workflow(data = data_rangers, Ncpu = 2, coef = 0,
+#'                                  rep_feature_select = 2, rep_finetune = 2, rep_simu = 2,
+#'                                  grid_type = "coarse", n_trees = 100)
+#'
+#' extract_finetuning(list_results_LMM = list(LMM_small_test),
+#'                    list_results_RF  = list(RF_small_test))
+#' }
+#'
+extract_finetuning <- function(list_results_LMM = list(), list_results_RF = list(), data = NULL) {
+  d_LMM <- d_RF <- data.frame()
+
+  if (length(list_results_LMM) > 0) {
+    rangers_list_LMM <- lapply(list_results_LMM, function(x) extract_finetuning_internal(what = x, who = "rangers", type = "LMM", data = data))
+    others_list_LMM  <- lapply(list_results_LMM, function(x) extract_finetuning_internal(what = x, who = "others", type = "LMM", data = data))
+    all_list_LMM     <- lapply(list_results_LMM, function(x) extract_finetuning_internal(what = x, who = "all", type = "LMM", data = data))
+    rbind(cbind(who = "Rangers", as.data.frame(do.call("rbind", rangers_list_LMM))),
+          cbind(who = "Others",  as.data.frame(do.call("rbind", others_list_LMM))),
+          cbind(who = "All",     as.data.frame(do.call("rbind", all_list_LMM)))) -> d_LMM
+  }
+  if (length(list_results_RF) > 0) {
+    rangers_list_RF <- lapply(list_results_RF, function(x) extract_finetuning_internal(what = x, who = "rangers", type = "RF", data = data))
+    others_list_RF  <- lapply(list_results_RF, function(x) extract_finetuning_internal(what = x, who = "others", type = "RF", data = data))
+    all_list_RF     <- lapply(list_results_RF, function(x) extract_finetuning_internal(what = x, who = "all", type = "RF", data = data))
+    rbind(cbind(who = "Rangers", as.data.frame(do.call("rbind", rangers_list_RF))),
+          cbind(who = "Others",  as.data.frame(do.call("rbind", others_list_RF))),
+          cbind(who = "All",     as.data.frame(do.call("rbind", all_list_RF)))) -> d_RF
+  }
+  if (ncol(d_LMM) > 0 && ncol(d_RF) > 0) {
+    d <- rbind(d_LMM, d_RF)
+  } else if (ncol(d_LMM) > 0) {
+    d <- d_LMM
+  } else if (ncol(d_RF) > 0) {
+    d <- d_RF
+  }
+
+  d$who <- factor(d$who, levels = c("Rangers", "Others", "All"))
+  tibble::as_tibble(d)
+}
+
+
+#' @describeIn extract_finetuning an internal function fetching the info on finetuning
+#' @export
+#'
+extract_finetuning_internal <- function(what, who, type, data) {
+
+  if (!is.null(data)) {
+    what[[who]] -> data_info
+  } else {
+     data_info <- what[[who]]
+  }
+
+  if (type == "LMM") {
+    fine_tunning_res <- tibble::tibble(method =  data_info$fine_tuning[[1]][["result_mean"]] %>% dplyr::slice_min(.data$RMSE) %>% dplyr::pull(.data$method),
+                                       mtry = NA, splitrule = NA, min.node.size = NA, replace = NA, sample.fraction = NA)
+  } else if (type == "RF") {
+    fine_tunning_res <- tibble::tibble(method = NA,
+                                       mtry = sub(pattern = "function (p) \n", replacement = "",
+                                                  x = as.character(data_info$best_tuning[[1]]$mtry), fixed = TRUE),
+                                       splitrule = data_info$best_tuning[[1]]$splitrule,
+                                       min.node.size = data_info$best_tuning[[1]]$min.node.size,
+                                       replace = data_info$best_tuning[[1]]$replace,
+                                       sample.fraction = data_info$best_tuning[[1]]$sample.fraction)
+  } else {
+    stop("argument type must be 'LMM' or 'RF'>!")
+  }
+
+   tibble::tibble(type = type,
+                  coef = what$meta$coef_population) %>%
+     dplyr::bind_cols(fine_tunning_res)
+}

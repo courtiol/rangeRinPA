@@ -1,0 +1,43 @@
+﻿"who","type","coef","method","mtry","splitrule","min.node.size","replace","sample.fraction"
+"Rangers","LMM",0,"REML",NA,NA,NA,NA,NA
+"Rangers","LMM",0.25,"REML",NA,NA,NA,NA,NA
+"Rangers","LMM",0.5,"REML",NA,NA,NA,NA,NA
+"Rangers","LMM",0.75,"REML",NA,NA,NA,NA,NA
+"Rangers","LMM",1,"REML",NA,NA,NA,NA,NA
+"Others","LMM",0,"REML",NA,NA,NA,NA,NA
+"Others","LMM",0.25,"REML",NA,NA,NA,NA,NA
+"Others","LMM",0.5,"ML",NA,NA,NA,NA,NA
+"Others","LMM",0.75,"ML",NA,NA,NA,NA,NA
+"Others","LMM",1,"ML",NA,NA,NA,NA,NA
+"All","LMM",0,"REML",NA,NA,NA,NA,NA
+"All","LMM",0.25,"REML",NA,NA,NA,NA,NA
+"All","LMM",0.5,"ML",NA,NA,NA,NA,NA
+"All","LMM",0.75,"ML",NA,NA,NA,NA,NA
+"All","LMM",1,"REML",NA,NA,NA,NA,NA
+"Rangers","RF",0,NA,"function (n) 
+n","variance",6,FALSE,0.632
+"Rangers","RF",0.25,NA,"function (n) 
+n","variance",10,TRUE,1
+"Rangers","RF",0.5,NA,"function (n) 
+n","variance",1,TRUE,0.632
+"Rangers","RF",0.75,NA,"function (n) 
+n","extratrees",2,FALSE,1
+"Rangers","RF",1,NA,"p","extratrees",4,FALSE,1
+"Others","RF",0,NA,"function (n) 
+n","variance",7,FALSE,0.632
+"Others","RF",0.25,NA,"function (n) 
+n","variance",7,FALSE,0.632
+"Others","RF",0.5,NA,"function (n) 
+n","variance",7,FALSE,0.632
+"Others","RF",0.75,NA,"function (n) 
+n","variance",8,FALSE,0.632
+"Others","RF",1,NA,"p","variance",8,FALSE,1
+"All","RF",0,NA,"function (n) 
+1","variance",10,FALSE,1
+"All","RF",0.25,NA,"function (n) 
+n","extratrees",4,FALSE,1
+"All","RF",0.5,NA,"function (n) 
+n","extratrees",4,FALSE,1
+"All","RF",0.75,NA,"function (n) 
+1","variance",3,FALSE,1
+"All","RF",1,NA,"1","variance",10,FALSE,1
