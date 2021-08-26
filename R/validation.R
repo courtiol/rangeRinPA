@@ -27,7 +27,7 @@ validate_LMM <- function(formula, data, rep = 10, Ncpu = 1, spatial = FALSE, see
   } else stopifnot(!spatial)
 
   metrics <- parallel::mclapply(seq_len(rep), function(i) {
-    data_list <- prepare_data(formula = formula, data = data, test_prop = 0.1,
+    data_list <- prepare_data(formula = formula, data = data, test_prop = 0.2, # 20% out 80% in
                               keep.var =  c("long", "lat"), seed = seed + i)
     newfit <- spaMM::fitme(formula = formula, data = data_list$data_train, ...)
     predicted <- spaMM::predict.HLfit(newfit, newdata = data_list$data_test,
@@ -81,7 +81,7 @@ validate_RF <- function(formula, data, rep = 10, Ncpu = 1, spatial = FALSE, seed
   }
   if (method == "CV") {
     metrics <- parallel::mclapply(seq_len(rep), function(i) {
-      data_list <- prepare_data(formula = formula, data = data, test_prop = 0.1,
+      data_list <- prepare_data(formula = formula, data = data, test_prop = 0.2, # 20% out 80% in
                                 keep.var =  c("long", "lat"), seed = seed + i)
       newfit <- ranger::ranger(formula = formula, data = data_list$data_train, num.threads = 1, ...)
       predicted <- stats::predict(newfit, data = data_list$data_test, num.threads = 1)$predictions
