@@ -378,14 +378,14 @@ prepare_grid_finetuning <- function(grid_type = "fine") {
                                              splitrule = c("variance", "extratrees"),
                                              min.node.size = 1:10,
                                              sample.fraction = c(0.632, 1),
-                                             mtry = c(function(n) 1, function(n) floor(n/3), function(n) n),
+                                             mtry = c(function(p) 1, function(p) floor(p/3), function(p) p),
                                              stringsAsFactors = FALSE) # important!
   } else if (grid_type == "coarse") {
     param_grid_for_finetuning <- expand.grid(replace = c(TRUE, FALSE),
                                          splitrule = c("variance", "extratrees"),
                                          min.node.size = c(1, 10),
                                          sample.fraction = c(0.632, 1),
-                                         mtry = c(function(n) 1, function(n) n),
+                                         mtry = c(function(p) 1, function(p) p),
                                          stringsAsFactors = FALSE) # important!
   } else {
     stop("grid_type unknown!")

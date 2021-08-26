@@ -127,3 +127,49 @@ plot_reliability_vs_sampling <- function(data){
     ggplot2::labs(x = "Protected Areas sampled (%)", y = "Reliability score (/20)")
 }
 
+
+#' Plot the output of the fine tuning for RF/ETs fits
+#'
+#' @param result the output of a call to [`run_RF_workflow()`]
+#' @param who `"rangers"` (default), `"others"` or `"all"`
+#'
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' ## Note: this example takes some time to run!
+#' RF_test <- run_RF_workflow(data = data_rangers, Ncpu = 2, coef = 0,
+#'                            rep_feature_select = 2, rep_finetune = 10, rep_simu = 2,
+#'                            grid_type = "fine")
+#'
+#' plot_finetuning(result = RF_test, who = "rangers")
+#' }
+#'
+plot_finetuning <- function(result, who = "rangers") {
+
+  finetune_res_mean <- result[[who]]$fine_tuning[[1]][["mean"]]
+  finetune_res_SE <- result[[who]]$fine_tuning[[1]][["SE"]]
+
+  finetune_res_mean %>%
+    dplyr::mutate(splitrule = dplyr::if_else(.data$splitrule == "extratrees", "splitrule = 'extratrees'", "splitrule = 'variance'"),
+                  replace = dplyr::if_else(.data$replace, "replace = TRUE", "replace = FALSE")) %>%
+    dplyr::bind_cols(SE = finetune_res_SE$RMSE) %>%
+    dplyr::mutate(RMSE_upr = .data$RMSE + .data$SE,
+                  RMSE_lwr = .data$RMSE - .data$SE) -> finetune_res
+
+  finetune_res %>%
+    dplyr::distinct(dplyr::across(!.data$mtry), .keep_all = TRUE) %>% ## remove duplicate caused by similar effective value for mtry
+    ggplot2::ggplot() +
+      ggplot2::aes(y = .data$RMSE, x = .data$min.node.size,
+                   shape = sub("function (n) \n", "", paste(.data$mtry), fixed = TRUE),
+                   colour = paste(.data$sample.fraction),
+                   ymin = .data$RMSE_upr, ymax = .data$RMSE_lwr) +
+      ggplot2::geom_point(size = 2) +
+      ggplot2::geom_line(alpha = 0.7) +
+      ggplot2::geom_errorbar(width = 0) +
+      ggplot2::geom_hline(yintercept = min(finetune_res$RMSE), linetype = "dashed") +
+      ggplot2::theme_bw() +
+      ggplot2::facet_grid(.data$splitrule ~ .data$replace) +
+      ggplot2::labs(colour = "sample.fraction", shape = "mtry") +
+      ggplot2::theme()
+}

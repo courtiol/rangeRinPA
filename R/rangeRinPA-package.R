@@ -174,4 +174,13 @@
 #'                 list_results_RF = list(RF_000, RF_025, RF_050, RF_075, RF_100),
 #'                 data = data_rangers) -> results_predictions
 #'
+#'
+#' ## Figure fine tuning
+#'
+#' plot_finetuning(result = RF_100, who = "rangers")
+#' ggplot2::ggsave(filename = paste0(path_figures, "figure_finetuning.pdf"),
+#'                 width = ggplot2::unit(8, "cm"))
+#' ggplot2::ggsave(filename = paste0(path_figures, "figure_finetuning.png"),
+#'                 width = ggplot2::unit(8, "cm"))
+#'
 #' }

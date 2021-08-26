@@ -69,19 +69,19 @@ run_RF_workflow <- function(data, rerank = TRUE, Ncpu = 2,  coef = 0, rep_featur
   fit_data_initial_training_rangers_full <- ranger::ranger(formula_rangers_full,
                                                            data = data_initial_training_rangers,
                                                            splitrule = "extratrees", replace = FALSE,
-                                                           mtry = function(n) n, min.node.size = 1, sample.fraction = 1,
+                                                           mtry = function(p) p, min.node.size = 1, sample.fraction = 1,
                                                            num.trees = n_trees,
                                                            importance = "impurity")
   fit_data_initial_training_others_full  <- ranger::ranger(formula_others_full,
                                                            data = data_initial_training_others,
                                                            splitrule = "extratrees", replace = FALSE,
-                                                           mtry = function(n) n, min.node.size = 1, sample.fraction = 1,
+                                                           mtry = function(p) p, min.node.size = 1, sample.fraction = 1,
                                                            num.trees = n_trees,
                                                            importance = "impurity")
   fit_data_initial_training_all_full     <- ranger::ranger(formula_all_full,
                                                            data = data_initial_training_all,
                                                            splitrule = "extratrees", replace = FALSE,
-                                                           mtry = function(n) n, min.node.size = 1, sample.fraction = 1,
+                                                           mtry = function(p) p, min.node.size = 1, sample.fraction = 1,
                                                            num.trees = n_trees,
                                                            importance = "impurity")
 
@@ -93,7 +93,7 @@ run_RF_workflow <- function(data, rerank = TRUE, Ncpu = 2,  coef = 0, rep_featur
     rep = rep_feature_select, Ncpu = Ncpu,
     target = "staff_rangers_log",
     splitrule = "extratrees", replace = FALSE,
-    mtry = function(n) n, min.node.size = 1, sample.fraction = 1,
+    mtry = function(p) p, min.node.size = 1, sample.fraction = 1,
     num.trees = n_trees,
     importance = "impurity")
 
@@ -105,7 +105,7 @@ run_RF_workflow <- function(data, rerank = TRUE, Ncpu = 2,  coef = 0, rep_featur
     rep = rep_feature_select, Ncpu = Ncpu,
     target = "staff_others_log",
     splitrule = "extratrees", replace = FALSE,
-    mtry = function(n) n, min.node.size = 1, sample.fraction = 1,
+    mtry = function(p) p, min.node.size = 1, sample.fraction = 1,
     num.trees = n_trees,
     importance = "impurity")
 
@@ -117,7 +117,7 @@ run_RF_workflow <- function(data, rerank = TRUE, Ncpu = 2,  coef = 0, rep_featur
     rep = rep_feature_select, Ncpu = Ncpu,
     target = "staff_total_log",
     splitrule = "extratrees", replace = FALSE,
-    mtry = function(n) n, min.node.size = 1, sample.fraction = 1,
+    mtry = function(p) p, min.node.size = 1, sample.fraction = 1,
     num.trees = n_trees,
     importance = "impurity")
 
