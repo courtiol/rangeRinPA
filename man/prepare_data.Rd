@@ -33,7 +33,7 @@ prepare_data(
 Create train and test datasets given a formula and data
 }
 \examples{
-prepare_data(log(staff_rangers + 1) ~ log(GDP_2019) + Matern(1|lat + long),
+prepare_data(log(staff_rangers + 1) ~ log(GDP_2019) + Matern(1|long + lat),
              data = data_rangers, test_prop = 0.1)
 
 }

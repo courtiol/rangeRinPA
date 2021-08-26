@@ -134,9 +134,15 @@ run_LMM_workflow <- function(data, rerank = TRUE, Ncpu = 2,  coef = 0, rep_featu
   record$rangers$final_training_nrow <- nrow(data_final_training_rangers)
   record$others$final_training_nrow <- nrow(data_final_training_others)
   record$all$final_training_nrow <- nrow(data_final_training_all)
+
   record$rangers$final_training_ncol <- ncol(data_final_training_rangers)
   record$others$final_training_ncol <- ncol(data_final_training_others)
   record$all$final_training_ncol <- ncol(data_final_training_all)
+
+  record$rangers$final_PA_included <- sum(data_final_training_rangers$PA_area_surveyed)
+  record$others$final_PA_included <- sum(data_final_training_others$PA_area_surveyed)
+  record$all$final_PA_included <- sum(data_final_training_all$PA_area_surveyed)
+
 
   cat("Step 5: Selection of function inputs (fine tuning)\n")
 
@@ -158,6 +164,7 @@ run_LMM_workflow <- function(data, rerank = TRUE, Ncpu = 2,  coef = 0, rep_featu
   record$rangers$fine_tuning <- list(finetuning_rangers)
   record$rangers$fitting_method <- finetuning_rangers$best_method
   record$others$fine_tuning <- list(finetuning_others)
+
   record$others$fitting_method <- finetuning_others$best_method
   record$all$fine_tuning <- list(finetuning_all)
   record$all$fitting_method <- finetuning_all$best_method

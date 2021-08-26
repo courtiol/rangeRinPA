@@ -23,7 +23,7 @@ validate_LMM <- function(formula, data, rep = 10, Ncpu = 1, spatial = FALSE, see
   target <- as.character(formula[[2]])
 
   if (spatial) {
-    formula <- stats::update.formula(formula, . ~ . + Matern(1 |long + lat))
+    formula <- stats::update.formula(formula, . ~ . + Matern(1|long + lat))
   } else stopifnot(!spatial)
 
   metrics <- parallel::mclapply(seq_len(rep), function(i) {

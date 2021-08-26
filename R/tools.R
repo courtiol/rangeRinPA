@@ -59,7 +59,7 @@ check_losses <- function(vars, data, resp_var = "staff_rangers_log", PA_var = "P
 #' @export
 #'
 #' @examples
-#' prepare_data(log(staff_rangers + 1) ~ log(GDP_2019) + Matern(1|lat + long),
+#' prepare_data(log(staff_rangers + 1) ~ log(GDP_2019) + Matern(1|long + lat),
 #'              data = data_rangers, test_prop = 0.1)
 #'
 prepare_data <- function(formula, data, test_prop = 0, keep.var = NULL, drop_na = TRUE, spatial = FALSE, seed = NULL) {
@@ -338,27 +338,22 @@ extract_PA_areas <- function(data_final_pred, resp, data) {
   res_c <- dplyr::bind_cols(data_final_pred$data_known[, c("countryname_eng", resp)], type = "known")
   res <- dplyr::bind_rows(res_a, res_b, res_c)
 
-  if (nrow(data_final_pred$data_known) > 1L) {
-    data_final_pred$data_known %>%
-      dplyr::select(.data$countryname_eng, PA_area_known = .data$PA_area_surveyed_notfilled) %>%
-      dplyr::right_join(res, by = "countryname_eng") -> res
+  data_final_pred$data_known %>%
+    dplyr::select(.data$countryname_eng, PA_area_known = .data$PA_area_surveyed_notfilled) %>%
+    dplyr::right_join(res, by = "countryname_eng") -> res
 
-    data_final_pred$data_known %>%
-      dplyr::select(.data$countryname_eng, PA_area_imputed = .data$PA_area_unsurveyed_notfilled) %>%
-      dplyr::right_join(res, by = "countryname_eng") -> res
-  }
+  data_final_pred$data_known %>%
+    dplyr::select(.data$countryname_eng, PA_area_imputed = .data$PA_area_unsurveyed_notfilled) %>%
+    dplyr::right_join(res, by = "countryname_eng") -> res
 
-  if (nrow(data_final_pred$data_predictable) > 1L) {
-    data_final_pred$data_predictable %>%
-      dplyr::select(.data$countryname_eng, PA_area_predicted = .data$PA_area_surveyed) %>%
-      dplyr::right_join(res, by = "countryname_eng") -> res
-  }
+  data_final_pred$data_predictable %>%
+    dplyr::select(.data$countryname_eng, PA_area_predicted = .data$PA_area_surveyed) %>%
+    dplyr::right_join(res, by = "countryname_eng") -> res
 
-  if (nrow(data_final_pred$data_not_predictable) > 1L) {
-    data_final_pred$data_not_predictable %>%
-      dplyr::select(.data$countryname_eng, PA_area_unknown = .data$PA_area_surveyed) %>%
-      dplyr::right_join(res, by = "countryname_eng") -> res
-  }
+  data_final_pred$data_not_predictable %>%
+    dplyr::select(.data$countryname_eng, PA_area_unknown = .data$PA_area_surveyed) %>%
+    dplyr::right_join(res, by = "countryname_eng") -> res
+
 
   res %>%
     dplyr::mutate(dplyr::across(tidyselect::starts_with("PA_area"), tidyr::replace_na, replace = 0))

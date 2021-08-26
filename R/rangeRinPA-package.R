@@ -91,8 +91,8 @@
 #'
 #' ### Predictions
 #'
-#' # Ncpu <- 2L
-#' Ncpu <- 120 ## define the number of CPUs to use
+#' Ncpu <- 2L
+#' # Ncpu <- 120 ## define the number of CPUs to use
 #'
 #'
 #' ## Run all RF workflows and save results
@@ -142,18 +142,30 @@
 #'
 #' ## Table S2
 #'
-#' extract_training_info(list_results_LMM = list(LMM_000, LMM_025, LMM_050, LMM_075, LMM_100),
+#' extract_training_info(which = "initial",
+#'                       list_results_LMM = list(LMM_000, LMM_025, LMM_050, LMM_075, LMM_100),
 #'                       list_results_RF = list(RF_000, RF_025, RF_050, RF_075, RF_100),
-#'                       data = data_rangers) -> training_info
+#'                       data = data_rangers) -> training_info_initial
 #'
-#' training_info %>% # remove duplicates
+#' training_info_initial %>% # remove duplicates
 #'   dplyr::group_by(who) %>%
 #'   dplyr::slice(1) %>%
 #'   dplyr::select(-.data$type, -.data$coef, -.data$ncol) %>%
-#'   dplyr::ungroup() -> training_info_clean
+#'   dplyr::ungroup() -> training_info_initial_clean
 #'
-#'  readr::write_excel_csv(training_info_clean,
-#'                         file = paste0(path_tables, "table_training_sets.csv"))
+#'  readr::write_excel_csv(training_info_initial_clean,
+#'                         file = paste0(path_tables, "table_training_sets_initial.csv"))
+#'
+#' ## Table S3
+#'
+#' extract_training_info(which = "final",
+#'                       list_results_LMM = list(LMM_000, LMM_025, LMM_050, LMM_075, LMM_100),
+#'                       list_results_RF = list(RF_000, RF_025, RF_050, RF_075, RF_100),
+#'                       data = data_rangers) -> training_info_final
+#'
+#'
+#'  readr::write_excel_csv(training_info_final,
+#'                         file = paste0(path_tables, "table_training_sets_final_temp.csv"))
 #'
 #'
 #' ## Table SXX

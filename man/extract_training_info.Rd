@@ -6,14 +6,17 @@
 \title{Extract training data info}
 \usage{
 extract_training_info(
+  which,
   list_results_LMM = list(),
   list_results_RF = list(),
   data = NULL
 )
 
-extract_training_info_internal(what, who, type, data)
+extract_training_info_internal(which, what, who, type, data)
 }
 \arguments{
+\item{which}{either \code{"initial"} or \code{"final"} depending on which training dataset to summarise}
+
 \item{list_results_LMM}{a list of objects produced by \code{\link[=run_LMM_workflow]{run_LMM_workflow()}}}
 
 \item{list_results_RF}{a list of objects produced by \code{\link[=run_RF_workflow]{run_RF_workflow()}}}

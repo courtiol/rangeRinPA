@@ -178,6 +178,7 @@ single_summary_internal <- function(result, who, resp, data) {
 #' Extract training data info
 #'
 #' @inheritParams extract_results
+#' @param which either `"initial"` or `"final"` depending on which training dataset to summarise
 #'
 #' @export
 #'
@@ -194,21 +195,21 @@ single_summary_internal <- function(result, who, resp, data) {
 #'                 list_results_RF  = list(RF_small_test))
 #' }
 #'
-extract_training_info <- function(list_results_LMM = list(), list_results_RF = list(), data = NULL) {
+extract_training_info <- function(which, list_results_LMM = list(), list_results_RF = list(), data = NULL) {
   d_LMM <- d_RF <- data.frame()
 
   if (length(list_results_LMM) > 0) {
-    rangers_list_LMM <- lapply(list_results_LMM, function(x) extract_training_info_internal(what = x, who = "rangers", type = "LMM", data = data))
-    others_list_LMM  <- lapply(list_results_LMM, function(x) extract_training_info_internal(what = x, who = "others", type = "LMM", data = data))
-    all_list_LMM     <- lapply(list_results_LMM, function(x) extract_training_info_internal(what = x, who = "all", type = "LMM", data = data))
+    rangers_list_LMM <- lapply(list_results_LMM, function(x) extract_training_info_internal(which = which, what = x, who = "rangers", type = "LMM", data = data))
+    others_list_LMM  <- lapply(list_results_LMM, function(x) extract_training_info_internal(which = which, what = x, who = "others", type = "LMM", data = data))
+    all_list_LMM     <- lapply(list_results_LMM, function(x) extract_training_info_internal(which = which, what = x, who = "all", type = "LMM", data = data))
     rbind(cbind(who = "Rangers", type = "LMM", as.data.frame(do.call("rbind", rangers_list_LMM))),
           cbind(who = "Others",  type = "LMM", as.data.frame(do.call("rbind", others_list_LMM))),
           cbind(who = "All",     type = "LMM", as.data.frame(do.call("rbind", all_list_LMM)))) -> d_LMM
   }
   if (length(list_results_RF) > 0) {
-    rangers_list_RF <- lapply(list_results_RF, function(x) extract_training_info_internal(what = x, who = "rangers", type = "RF", data = data))
-    others_list_RF  <- lapply(list_results_RF, function(x) extract_training_info_internal(what = x, who = "others", type = "RF", data = data))
-    all_list_RF     <- lapply(list_results_RF, function(x) extract_training_info_internal(what = x, who = "all", type = "RF", data = data))
+    rangers_list_RF <- lapply(list_results_RF, function(x) extract_training_info_internal(which = which, what = x, who = "rangers", type = "RF", data = data))
+    others_list_RF  <- lapply(list_results_RF, function(x) extract_training_info_internal(which = which, what = x, who = "others", type = "RF", data = data))
+    all_list_RF     <- lapply(list_results_RF, function(x) extract_training_info_internal(which = which, what = x, who = "all", type = "RF", data = data))
     rbind(cbind(who = "Rangers", type = "RF", as.data.frame(do.call("rbind", rangers_list_RF))),
           cbind(who = "Others",  type = "RF", as.data.frame(do.call("rbind", others_list_RF))),
           cbind(who = "All",     type = "RF", as.data.frame(do.call("rbind", all_list_RF)))) -> d_RF
@@ -224,25 +225,35 @@ extract_training_info <- function(list_results_LMM = list(), list_results_RF = l
   d$who <- factor(d$who, levels = c("Rangers", "Others", "All"))
   d <- tibble::as_tibble(d)
 
+  if (which == "initial") {
+    d %>%
+      dplyr::rename(PA = .data$initial_PA_included,
+                    obs = .data$initial_training_nrow,
+                    ncol = .data$initial_training_ncol) -> d
+  } else if (which == "final") {
+    d %>%
+      dplyr::rename(PA = .data$final_PA_included,
+                    obs = .data$final_training_nrow,
+                    ncol = .data$final_training_ncol) -> d
+  } else {
+    stop("Argument `which =` should be either 'initial' or 'final'!")
+  }
+
   if (!is.null(data)) {
     d$total_obs <- nrow(data) - 1 # - 1 for Greenland
     d$total_PA <- sum(data$area_PA_total[data$countryname_iso != "GRL"])
-    d$obs_coverage <- d$initial_training_nrow / d$total_obs
-    d$PA_coverage <- d$initial_PA_included / d$total_PA
-    d %>%
-      dplyr::rename(PA = .data$initial_PA_included) -> d
+    d$obs_coverage <- d$obs / d$total_obs
+    d$PA_coverage <- d$PA / d$total_PA
   }
 
-  d %>%
-    dplyr::rename(obs = .data$initial_training_nrow,
-                  ncol = .data$initial_training_ncol)
+  d
 }
 
 
 #' @describeIn extract_training_info an internal function fetching the info on training datasets
 #' @export
 #'
-extract_training_info_internal <- function(what, who, type, data) {
+extract_training_info_internal <- function(which, what, who, type, data) {
 
   if (!is.null(data)) {
     what[[who]] -> data_info
@@ -252,8 +263,16 @@ extract_training_info_internal <- function(what, who, type, data) {
 
   coef <- what[["meta"]]$coef_population
 
+  if (which == "initial") {
   data_info %>%
     dplyr::select(.data$initial_training_nrow, .data$initial_training_ncol, .data$initial_PA_included) %>%
     dplyr::mutate(coef = coef, .before = 1L)
+  } else if (which == "final") {
+  data_info %>%
+    dplyr::select(.data$final_training_nrow, .data$final_training_ncol, .data$final_PA_included) %>%
+    dplyr::mutate(coef = coef, .before = 1L)
+  } else {
+    stop("Argument `which =` should be either 'initial' or 'final'!")
+  }
 }
 
