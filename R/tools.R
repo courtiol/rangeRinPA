@@ -126,6 +126,33 @@ globalVariables("where") ## since not properly exported from tidyselect...
 
 #' Compare predictions and observations using various metrics
 #'
+#' We use the the root mean square error (RMSE) as default in this package, but we were also
+#' interested in exploring alternative metrics to quantify various aspects of the prediction
+#' accuracy by cross validation: 1) the mean error (ME), 2) the mean absolute error (MAE), 3) the
+#' R-squared, 4) the concordance correlation coefficient (CCC; Lin 1989; Steichen & Cox, 2002). We
+#' also defined a metric which we call the root sum error (RSE) aiming at quantifying the prediction
+#' uncertainty directly on the total numbers of staff instead of on the prediction for individual
+#' country/territory. The rationale for considering this additional metric is to measure the
+#' prediction uncertainty at the scale we are actually interested in (a tally across
+#' countries/territories and not prediction for a particular country/territory). Indeed, our
+#' predictions are a priori not independent and thus the (expected) squared prediction error of the
+#' sum is not the sum of (expected) squared errors for each response.  We finally computed Moran's I
+#' statistics (Moran 1950) via its implementation in the R package ape (Paradis & Schliep 2019) to
+#' quantify the amount of spatial autocorrelation in cross validation residuals.
+#'
+#' @references Lin, L. I. 1989. A concordance correlation coefficient to evaluate reproducibility.
+#' Biometrics 45: 255–268.
+#'
+#' Steichen, T. J., & Cox, N. J. (2002). A note on the concordance correlation coefficient. The
+#' Stata Journal, 2(2), 183-189.
+#'
+#' Moran, P. A. (1950). Notes on continuous stochastic phenomena. Biometrika, 37(1/2), 17-23.
+#'
+#' Paradis E. & Schliep K. 2019. ape 5.0: an environment for modern phylogenetics and evolutionary
+#' analyses in R. Bioinformatics 35: 526-528.
+#'
+#'
+#'
 #' @param pred a vector of predicted values
 #' @param obs a vector of observed values
 #' @param inv.dist a matrix of inverse distance between points (optional but needed to compute Moran's I)
