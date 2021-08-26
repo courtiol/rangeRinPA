@@ -23,6 +23,9 @@
 #' extract_results(list_results_LMM = list(LMM_small_test),
 #'                 list_results_RF  = list(RF_small_test)) %>%
 #'   tidyr::unnest_wider(PA_areas)
+#'
+#' plot_features_selected(list_results_LMM = list(LMM_small_test),
+#'                        list_results_RF  = list(RF_small_test), data = data_rangers)
 #' }
 #'
 extract_results <- function(list_results_LMM = list(), list_results_RF = list(), data = NULL) {

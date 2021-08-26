@@ -128,7 +128,7 @@ plot_reliability_vs_sampling <- function(data){
 }
 
 
-#' Plot the output of the fine tuning for RF/ETs fits
+#' Plot the influence of the fine tuning parameters for RF/ETs fits on the RMSE
 #'
 #' @param result the output of a call to [`run_RF_workflow()`]
 #' @param who `"rangers"` (default), `"others"` or `"all"`
@@ -166,10 +166,92 @@ plot_finetuning <- function(result, who = "rangers") {
                    ymin = .data$RMSE_upr, ymax = .data$RMSE_lwr) +
       ggplot2::geom_point(size = 2) +
       ggplot2::geom_line(alpha = 0.7) +
-      ggplot2::geom_errorbar(width = 0) +
+      #ggplot2::geom_errorbar(width = 0) +
       ggplot2::geom_hline(yintercept = min(finetune_res$RMSE), linetype = "dashed") +
       ggplot2::theme_bw() +
       ggplot2::facet_grid(.data$splitrule ~ .data$replace) +
       ggplot2::labs(colour = "sample.fraction", shape = "mtry") +
       ggplot2::theme()
 }
+
+
+#' Plot the influence of the selection of predictors on the RMSE
+#'
+#' @inheritParams plot_finetuning
+#'
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' ## Note: this example takes some time to run!
+#' RF_test <- run_RF_workflow(data = data_rangers, Ncpu = 2, coef = 0,
+#'                            rep_feature_select = 2, rep_finetune = 10, rep_simu = 2,
+#'                            grid_type = "fine", n_trees = 100)
+#'
+#' plot_features_selection(result = RF_test, who = "rangers")
+#' }
+#'
+plot_features_selection <- function(result, who = "rangers") {
+
+  selected_features_res <- result[[who]][["selected_features"]][[1]]
+
+  selected_features_res %>%
+    ggplot2::ggplot() +
+      ggplot2::aes(y = .data$RMSE, x = .data$k,
+                   shape = factor(.data$spatial, levels = c("TRUE", "FALSE")),
+                   colour = factor(.data$spatial, levels = c("TRUE", "FALSE"))
+                   ) +
+      ggplot2::geom_point(size = 2) +
+      ggplot2::geom_line(alpha = 0.7) +
+      ggplot2::geom_hline(yintercept = min(selected_features_res$RMSE), linetype = "dashed") +
+      ggplot2::scale_x_continuous(breaks = 1:19, minor_breaks = NULL) +
+      ggplot2::theme_bw() +
+      ggplot2::labs(shape = "spatial autocorrelation", colour = "spatial autocorrelation") +
+      ggplot2::theme()
+}
+
+
+#' Plot the output of the selection of predictors fits
+#'
+#' @inheritParams extract_results
+#' @param size the size of the points on the plot
+#'
+#' @export
+#'
+#' @examples
+#' # see ?extract_results for example
+#'
+plot_features_selected <- function(list_results_LMM, list_results_RF, data, size = 4) {
+
+  res <- extract_results(list_results_LMM = list_results_LMM, list_results_RF = list_results_RF, data = data)
+
+  all_predictors <- c("PA_area_log", "pop_density_log", "area_country_log", "long", "lat", "area_forest_pct","GDP_2019_log", "GDP_capita_log",
+                      "GDP_growth", "unemployment_log", "EVI", "SPI", "EPI_2020", "IUCN_1_4_prop", "IUCN_1_2_prop", "spatial_autocorr.")
+
+  res$predictor <- list(all_predictors)
+  res$predictor_included <- lapply(res$formula, \(x) all_predictors %in% all.vars(stats::as.formula(x)[-2]))
+
+  res %>%
+    tidyr::unnest(c(.data$predictor, .data$predictor_included)) -> res_long
+
+  res_long$predictor_included[res_long$spatial & res_long$predictor == "spatial_autocorr."] <- TRUE
+
+  res_long$predictor <- gsub(pattern = "_", replacement = " ", x = res_long$predictor, fixed = TRUE)
+
+  res_long$predictor <- factor(res_long$predictor, levels = rev(gsub(pattern = "_", replacement = " ", x = all_predictors, fixed = TRUE)))
+
+  res_long %>%
+    dplyr::mutate(type = dplyr::if_else(.data$type == "LMM", "LMM", "RF/ETs")) -> res_long
+
+  ggplot2::ggplot(res_long) +
+    ggplot2::aes(y = .data$predictor, x = .data$coef, shape = factor(.data$predictor_included, levels = c("TRUE", "FALSE"))) +
+    ggplot2::geom_point(size = size) +
+    ggplot2::scale_shape_manual(values = c("circle", "circle open")) +
+    ggplot2::labs(x = "Relative density of staff in unsurveyed area", y = "Candidate predictor", shape = "Predictor selected") +
+    ggplot2::facet_grid(.data$who ~ .data$type) +
+    ggplot2::scale_x_continuous(breaks = seq(0, 1, 0.25), minor_breaks = NULL) +
+    ggplot2::theme_bw() +
+    ggplot2::theme(legend.position = "bottom")
+
+}
+

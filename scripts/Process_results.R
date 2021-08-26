@@ -125,33 +125,6 @@ ggsave("./scripts/figures/PA_area_earth.png", width = 10, height = 4.5)
 
 
 
-## Plot of retained predictors:
-all_predictors <- c( "PA_area_log", "pop_density_log", "area_country_log", "long", "lat", "area_forest_pct","GDP_2019_log", "GDP_capita_log",
-                    "GDP_growth", "unemployment_log", "EVI", "SPI", "EPI_2020", "IUCN_1_4_prop", "IUCN_1_2_prop")
-
-res$predictor <- list(all_predictors)
-res$predictor_included <- lapply(res$formula, \(x) all_predictors %in% all.vars(as.formula(x)[-2]))
-
-res %>%
-  unnest(c(predictor, predictor_included)) -> res_long
-
-res_long$predictor <- factor(res_long$predictor, levels = rev(all_predictors))
-
-ggplot(res_long) +
-  aes(y = predictor, x = coef, shape = factor(predictor_included, levels = c("TRUE", "FALSE"))) +
-  geom_point(size = 5) +
-  scale_shape_manual(values = c("circle", "circle open")) +
-  labs(x = "Relative density of staff in unsurveyed area", y = "Candidate predictor", shape = "Predictor selected") +
-  facet_grid(who ~ type) +
-  theme_bw() +
-  theme(legend.position = "bottom")
-ggsave("./scripts/figures/predictors_presence.pdf", scale = 1, height = 10, width = 8)
-ggsave("./scripts/figures/predictors_presence.png", scale = 1, height = 10, width = 8)
-
-## Table of models for which spatial autocorrelation is selected:
-res[res$spatial, ]
-
-
 ## Plot of tallies:
 ggplot(res) +
   aes(y = point_pred, x = as.factor(coef), fill = type, ymin = lwr, ymax = upr) +

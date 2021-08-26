@@ -177,6 +177,26 @@
 #'                         file = paste0(path_tables, "table_fine_tuning_temp.csv"))
 #'
 #'
+#' ## Figure XX selected features
+#'
+#' plot_features_selected(list_results_LMM = list(LMM_000, LMM_025, LMM_050, LMM_075, LMM_100),
+#'                        list_results_RF  = list(RF_000, RF_025, RF_050, RF_075, RF_100),
+#'                        data = data_rangers)
+#' ggplot2::ggsave(filename = paste0(path_figures, "figure_features_selected_temp.pdf"),
+#'                 width = ggplot2::unit(8, "cm"), height = ggplot2::unit(10, "cm"))
+#' ggplot2::ggsave(filename = paste0(path_figures, "figure_features_selected_temp.png"),
+#'                 width = ggplot2::unit(8, "cm"), height = ggplot2::unit(10, "cm"))
+
+#'
+#' ## Figure XX feature selection (influence on RMSE)
+#'
+#' plot_features_selection(result = RF_100, who = "rangers")
+#' ggplot2::ggsave(filename = paste0(path_figures, "figure_features_selection_temp.pdf"),
+#'                 width = ggplot2::unit(8, "cm"))
+#' ggplot2::ggsave(filename = paste0(path_figures, "figure_features_selection_temp.png"),
+#'                 width = ggplot2::unit(8, "cm"))
+#'
+#'
 #' ## Figure XX fine tuning
 #'
 #' plot_finetuning(result = RF_100, who = "rangers")
