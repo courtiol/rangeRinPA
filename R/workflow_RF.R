@@ -9,6 +9,7 @@
 #' @param rep_finetune the number of replicates for fine tuning (default = 1000)
 #' @param rep_simu the number of simulation replicates (default = 10000)
 #' @param n_trees the number of trees in the random forest
+#' @param outliers a vector with the iso code for the countries/territories to discard (default = `c("GRL", "ATA")`)
 #'
 #' @return a list with all the output information
 #' @export
@@ -20,7 +21,7 @@
 #'                                    grid_type = "coarse", n_trees = 100)
 #' }
 #'
-run_RF_workflow <- function(data, rerank = TRUE, Ncpu = 2,  coef = 0, rep_feature_select = 1000, rep_finetune = 1000, rep_simu = 10000, n_trees = 10000, grid_type = "fine") {
+run_RF_workflow <- function(data, rerank = TRUE, Ncpu = 2,  coef = 0, rep_feature_select = 1000, rep_finetune = 1000, rep_simu = 10000, n_trees = 10000, grid_type = "fine", outliers = c("GRL", "ATA")) {
 
   set.seed(123)
 
@@ -36,6 +37,11 @@ run_RF_workflow <- function(data, rerank = TRUE, Ncpu = 2,  coef = 0, rep_featur
   cat("Step 1 + 2: General data preparation & preparation of initial training datasets\n")
 
   data <- fill_PA_area(data, coef = coef) ## Imputation step
+
+    data_all <- data ## backup of data with outliers
+
+  data %>%
+    dplyr::filter(!.data$countryname_iso %in% !!outliers) -> data ## Remove outliers
 
   formula_rangers_full <- staff_rangers_log ~ PA_area_log + lat + long + area_country_log + area_forest_pct + pop_density_log + GDP_2019_log + GDP_capita_log +
     GDP_growth + unemployment_log + EVI + SPI + EPI_2020 + IUCN_1_4_prop + IUCN_1_2_prop
@@ -238,7 +244,7 @@ run_RF_workflow <- function(data, rerank = TRUE, Ncpu = 2,  coef = 0, rep_featur
                                   importance = "impurity", quantreg = TRUE)
 
 
-  cat("Step 7: Preparation of datasets for predictions & simulations\n")
+  cat("Step 7: Preparation of datasets for predictions\n")
 
   data_final_pred_rangers <- build_final_pred_data(
     data = data,
@@ -301,7 +307,7 @@ run_RF_workflow <- function(data, rerank = TRUE, Ncpu = 2,  coef = 0, rep_featur
   record$all$tally_total <- tallies_all[3, "value"]
 
 
-  cat("Step 8b: Simulations\n")
+  cat("Step 8b: prediction intervals for the sums\n")
 
   predictions_rangers <- parallel::mclapply(seq_len(rep_simu), function(i) {
     sim_rangers <- stats::predict(fit_final_rangers,

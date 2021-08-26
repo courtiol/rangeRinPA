@@ -11,7 +11,8 @@ run_LMM_workflow(
   coef = 0,
   rep_feature_select = 1000,
   rep_finetune = 1000,
-  rep_simu = 10000
+  rep_simu = 10000,
+  outliers = c("GRL", "ATA")
 )
 }
 \arguments{
@@ -28,6 +29,8 @@ run_LMM_workflow(
 \item{rep_finetune}{the number of replicates for fine tuning (default = 1000)}
 
 \item{rep_simu}{the number of simulation replicates (default = 10000)}
+
+\item{outliers}{a vector with the iso code for the countries/territories to discard (default = \code{c("GRL", "ATA")})}
 }
 \value{
 a list with all the output information
