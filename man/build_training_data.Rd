@@ -14,17 +14,17 @@
 \alias{handle_na}
 \title{Build the training datasets}
 \usage{
-build_initial_training_data(data, formula, survey, spatial = FALSE)
+build_initial_training_data(data, formula, survey, spatial = FALSE, outliers)
 
-build_final_training_data(data, formula, survey, spatial = FALSE)
+build_final_training_data(data, formula, survey, spatial = FALSE, outliers)
 
-build_final_pred_data(data, formula, survey, spatial = FALSE)
+build_final_pred_data(data, formula, survey, spatial = FALSE, outliers)
 
 build_data(data, formula, type, spatial = FALSE)
 
 handle_PA_area(data, survey, formula = NULL, keep_details = FALSE)
 
-handle_outliers(data)
+handle_outliers(data, outliers)
 
 handle_transform(data)
 
@@ -45,6 +45,8 @@ handle_na(data, response, NA_in_resp = NULL, NA_in_preds = NULL)
 according to the choice, the variable PA_area is also adjusted.}
 
 \item{spatial}{whether or not keeping predictor for fitting spatial effects (default = FALSE)}
+
+\item{outliers}{a vector with the name of the countries/territories to discard}
 
 \item{type}{either "prediction" or "training"}
 

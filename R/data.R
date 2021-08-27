@@ -375,6 +375,7 @@ fill_PA_area <- function(data, coef) {
 #' @param NA_in_preds whether or not to keep only NA (TRUE) or discard them all (FALSE) in predictor variables (default = NULL -> do nothin)
 #' @param keep_details whether or not to keep variables used for construction (default = FALSE)
 #' @param type either "prediction" or "training"
+#' @param outliers a vector with the name of the countries/territories to discard
 #'
 #' @return a tibble
 #' @name build_training_data
@@ -404,9 +405,9 @@ NULL
 #' @describeIn build_training_data build the initial training datasets
 #' @export
 #'
-build_initial_training_data <- function(data, formula, survey, spatial = FALSE) {
+build_initial_training_data <- function(data, formula, survey, spatial = FALSE, outliers) {
   data <- build_data(data = data, formula = formula, type = "training", spatial = spatial)
-  data <- handle_outliers(data = data)
+  data <- handle_outliers(data = data, outliers = outliers)
   data <- handle_PA_area(data = data, survey = survey, formula = formula, keep_details = TRUE)
   data <- handle_transform(data = data)
   data <- handle_na(data = data, response = paste0(as.character(formula)[[2]], "_log"))
@@ -418,10 +419,10 @@ build_initial_training_data <- function(data, formula, survey, spatial = FALSE) 
 #' @describeIn build_training_data build the final training datasets
 #' @export
 #'
-build_final_training_data <- function(data, formula, survey, spatial = FALSE) {
+build_final_training_data <- function(data, formula, survey, spatial = FALSE, outliers) {
   data <- build_data(data = data, formula = formula, type = "training", spatial = spatial)
   data <- handle_PA_area(data = data, survey = survey, formula = formula, keep_details = TRUE)
-  data <- handle_outliers(data = data)
+  data <- handle_outliers(data = data, outliers = outliers)
   data <- handle_transform(data = data)
   data <- handle_order(data)
   data
@@ -430,7 +431,7 @@ build_final_training_data <- function(data, formula, survey, spatial = FALSE) {
 #' @describeIn build_training_data build the final prediction datasets
 #' @export
 #'
-build_final_pred_data <- function(data, formula, survey, spatial = FALSE) {
+build_final_pred_data <- function(data, formula, survey, spatial = FALSE, outliers) {
   data_list <- build_data(data = data, formula = formula, type = "prediction", spatial = spatial)
   for (data in names(data_list)) {
     if (data == "data_known") {
@@ -443,7 +444,7 @@ build_final_pred_data <- function(data, formula, survey, spatial = FALSE) {
       } else {
         stop("wrong survey argument")
       }
-      data_list[[data]] <- handle_outliers(data = data_list[[data]])
+      data_list[[data]] <- handle_outliers(data = data_list[[data]], outliers = outliers)
     }
     data_list[[data]] <- handle_transform(data = data_list[[data]])
     data_list[[data]] <- handle_order(data_list[[data]])
@@ -530,9 +531,9 @@ handle_PA_area <- function(data, survey, formula = NULL, keep_details = FALSE) {
 #' @describeIn build_training_data internal function to handle outliers while building the datasets
 #' @export
 #'
-handle_outliers <- function(data) {
+handle_outliers <- function(data, outliers) {
   data %>%
-    dplyr::filter(.data$countryname_eng != "Greenland")
+    dplyr::filter(!.data$countryname_eng %in% outliers)
 }
 
 

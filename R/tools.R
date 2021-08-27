@@ -345,7 +345,8 @@ delog1p <- function(var) {
 #' d <- build_final_pred_data(data = dat,
 #'                            formula = staff_rangers_log ~ GDP_2019,
 #'                            survey = "complete_known",
-#'                            spatial = TRUE)
+#'                            spatial = TRUE,
+#'                            outliers = "ATA")
 #' d$data_predictable$staff_rangers_log_predicted <- 0
 #' extract_PA_areas(d, "staff_rangers_log", dat)
 #'

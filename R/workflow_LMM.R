@@ -7,7 +7,7 @@
 #' @param rep_feature_select the number of replicates for the feature selection (default = 1000)
 #' @param rep_finetune the number of replicates for fine tuning (default = 1000)
 #' @param rep_simu the number of simulation replicates (default = 10000)
-#' @param outliers a vector with the iso code for the countries/territories to discard (default = `c("GRL", "ATA")`)
+#' @param outliers a vector with the names of the countries/territories to discard (default = `"Greenland`)
 #'
 #' @return a list with all the output information
 #' @export
@@ -18,7 +18,7 @@
 #'                                      rep_feature_select = 2, rep_finetune = 2, rep_simu = 2)
 #' }
 #'
-run_LMM_workflow <- function(data, rerank = TRUE, Ncpu = 2,  coef = 0, rep_feature_select = 1000, rep_finetune = 1000, rep_simu = 10000, outliers = c("GRL", "ATA")) {
+run_LMM_workflow <- function(data, rerank = TRUE, Ncpu = 2,  coef = 0, rep_feature_select = 1000, rep_finetune = 1000, rep_simu = 10000, outliers = "Greenland") {
 
   set.seed(123)
 
@@ -34,11 +34,6 @@ run_LMM_workflow <- function(data, rerank = TRUE, Ncpu = 2,  coef = 0, rep_featu
 
   data <- fill_PA_area(data, coef = coef) ## Imputation step
 
-  data_all <- data ## backup of data with outliers
-
-  data %>%
-    dplyr::filter(!.data$countryname_iso %in% !!outliers) -> data ## Remove outliers
-
   formula_rangers_full <- staff_rangers_log ~ PA_area_log + lat + long + area_country_log + area_forest_pct + pop_density_log + GDP_2019_log + GDP_capita_log +
     GDP_growth + unemployment_log + EVI + SPI + EPI_2020 + IUCN_1_4_prop + IUCN_1_2_prop + Matern(1|long + lat)
   formula_others_full <- stats::update(formula_rangers_full, staff_others_log ~ .)
@@ -47,15 +42,18 @@ run_LMM_workflow <- function(data, rerank = TRUE, Ncpu = 2,  coef = 0, rep_featu
   data_initial_training_rangers <- build_initial_training_data(data,
                                                                formula = formula_rangers_full,
                                                                survey = "complete_known",  # note: complete_known includes imputed PAs!
-                                                               spatial = TRUE)
+                                                               spatial = TRUE,
+                                                               outliers = outliers)
   data_initial_training_others  <- build_initial_training_data(data,
                                                                formula = formula_others_full,
                                                                survey = "complete_known",
-                                                               spatial = TRUE)
+                                                               spatial = TRUE,
+                                                               outliers = outliers)
   data_initial_training_all     <- build_initial_training_data(data,
                                                                formula = formula_all_full,
                                                                survey = "complete_known",
-                                                               spatial = TRUE)
+                                                               spatial = TRUE,
+                                                               outliers = outliers)
 
   record <- c(record,
               list(rangers = tibble::tibble(initial_training_nrow = nrow(data_initial_training_rangers),
@@ -125,17 +123,20 @@ run_LMM_workflow <- function(data, rerank = TRUE, Ncpu = 2,  coef = 0, rep_featu
   data_final_training_rangers <- build_final_training_data(data = data,
                                                            formula = selected_formula_rangers,
                                                            survey = "complete_known",
-                                                           spatial = record$rangers$selected_spatial)
+                                                           spatial = record$rangers$selected_spatial,
+                                                           outliers = outliers)
 
   data_final_training_others <- build_final_training_data(data = data,
                                                           formula = selected_formula_others,
                                                           survey = "complete_known",
-                                                          spatial = record$others$selected_spatial)
+                                                          spatial = record$others$selected_spatial,
+                                                          outliers = outliers)
 
   data_final_training_all <- build_final_training_data(data = data,
                                                        formula = selected_formula_all,
                                                        survey = "complete_known",
-                                                       spatial = record$all$selected_spatial)
+                                                       spatial = record$all$selected_spatial,
+                                                       outliers = outliers)
 
   record$rangers$final_training_nrow <- nrow(data_final_training_rangers)
   record$others$final_training_nrow <- nrow(data_final_training_others)
@@ -196,23 +197,32 @@ run_LMM_workflow <- function(data, rerank = TRUE, Ncpu = 2,  coef = 0, rep_featu
 
   cat("Step 7: Preparation of datasets for predictions\n")
 
+  data %>%
+    dplyr::filter(.data$area_PA_total == 0) %>%
+    dplyr::pull(.data$countryname_eng) -> dont_predict
+
+  message(paste(c("The number of staff for the following countries/territories are not predicted since no PA exist in these locations according to WDPA:", dont_predict), collapse = "\n"))
+
   data_final_pred_rangers <- build_final_pred_data(
     data = data,
     formula = selected_formula_rangers,
     survey = "complete_known",
-    spatial = record$rangers$selected_spatial)
+    spatial = record$rangers$selected_spatial,
+    outliers = c(outliers, dont_predict))
 
   data_final_pred_others <- build_final_pred_data(
     data = data,
     formula = selected_formula_others,
     survey = "complete_known",
-    spatial = record$others$selected_spatial)
+    spatial = record$others$selected_spatial,
+    outliers = c(outliers, dont_predict))
 
   data_final_pred_all <- build_final_pred_data(
     data = data,
     formula = selected_formula_all,
     survey = "complete_known",
-    spatial = record$all$selected_spatial)
+    spatial = record$all$selected_spatial,
+    outliers = c(outliers, dont_predict))
 
   record$rangers$nrow_obs_or_imputed <- length(data_final_pred_rangers$data_known$PA_area_surveyed)
   record$others$nrow_obs_or_imputed <- length(data_final_pred_others$data_known$PA_area_surveyed)

@@ -21,7 +21,8 @@ dat <- fill_PA_area(data_rangers, coef = 0.5)
 d <- build_final_pred_data(data = dat,
                            formula = staff_rangers_log ~ GDP_2019,
                            survey = "complete_known",
-                           spatial = TRUE)
+                           spatial = TRUE,
+                           outliers = "ATA")
 d$data_predictable$staff_rangers_log_predicted <- 0
 extract_PA_areas(d, "staff_rangers_log", dat)
 

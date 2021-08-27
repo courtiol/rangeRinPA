@@ -8,13 +8,13 @@ run_RF_workflow(
   data,
   rerank = TRUE,
   Ncpu = 2,
-  coef = 0,
+  coef = 1,
   rep_feature_select = 1000,
   rep_finetune = 1000,
   rep_simu = 10000,
   n_trees = 10000,
   grid_type = "fine",
-  outliers = c("GRL", "ATA")
+  outliers = "Greenland"
 )
 }
 \arguments{
@@ -36,7 +36,7 @@ run_RF_workflow(
 
 \item{grid_type}{The type of grid to use for finetuning the RF ("fine", the default, or "coarse")}
 
-\item{outliers}{a vector with the iso code for the countries/territories to discard (default = \code{c("GRL", "ATA")})}
+\item{outliers}{a vector with the names of the countries/territories to discard (default = \verb{"Greenland})}
 }
 \value{
 a list with all the output information

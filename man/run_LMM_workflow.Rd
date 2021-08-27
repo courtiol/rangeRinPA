@@ -12,7 +12,7 @@ run_LMM_workflow(
   rep_feature_select = 1000,
   rep_finetune = 1000,
   rep_simu = 10000,
-  outliers = c("GRL", "ATA")
+  outliers = "Greenland"
 )
 }
 \arguments{
@@ -30,7 +30,7 @@ run_LMM_workflow(
 
 \item{rep_simu}{the number of simulation replicates (default = 10000)}
 
-\item{outliers}{a vector with the iso code for the countries/territories to discard (default = \code{c("GRL", "ATA")})}
+\item{outliers}{a vector with the names of the countries/territories to discard (default = \verb{"Greenland})}
 }
 \value{
 a list with all the output information
