@@ -83,7 +83,7 @@ validate_RF <- function(formula, data, rep = 10, Ncpu = 1, spatial = FALSE, seed
     metrics <- parallel::mclapply(seq_len(rep), function(i) {
       data_list <- prepare_data(formula = formula, data = data, test_prop = 0.2, # 20% out 80% in
                                 keep.var =  c("long", "lat"), seed = seed + i)
-      newfit <- ranger::ranger(formula = formula, data = data_list$data_train, num.threads = 1, ...)
+      newfit <- ranger::ranger(formula = formula, data = data_list$data_train, num.threads = 1, verbose = FALSE, ...)
       predicted <- stats::predict(newfit, data = data_list$data_test, num.threads = 1)$predictions
       observed <- data_list$data_test[, target, drop = TRUE]
       inv.dist <- NULL
@@ -93,14 +93,13 @@ validate_RF <- function(formula, data, rep = 10, Ncpu = 1, spatial = FALSE, seed
                                      inv = TRUE)
       }
       compute_metrics(predicted, observed, inv.dist = inv.dist)
-      #NOTE: num.threads = 1 is an attempt not to use multiple threads since we do parallelisation at a higher level, but does not seem to work :-(
     }, mc.cores = Ncpu)
     out <- cbind(CV_test = seq_len(rep), as.data.frame(do.call("rbind", metrics)))
     } else if (method == "OOB") {
       if (rep > 1) {
         warning("Argument rep ignore when method = 'OOB', you can influence repetitions using the argument num.trees passed to ranger() instead")
       }
-      newfit <- ranger::ranger(formula = formula, data = data, num.threads = Ncpu, keep.inbag = TRUE, seed = seed, ...)
+      newfit <- ranger::ranger(formula = formula, data = data, num.threads = Ncpu, keep.inbag = TRUE, seed = seed, verbose = FALSE, ...)
       inbag <- do.call(cbind, newfit$inbag.counts)
       preds <- stats::predict(newfit, data = data, predict.all = TRUE, num.threads = Ncpu)$predictions
       preds <- preds * ifelse(inbag == 0, NA, 1)
@@ -126,7 +125,7 @@ validate_RF <- function(formula, data, rep = 10, Ncpu = 1, spatial = FALSE, seed
     if (method == "OOB") {
       fit_fulldata <- newfit
     } else if (method == "CV") {
-      fit_fulldata <- ranger::ranger(formula = formula, data = data, num.threads = Ncpu, keep.inbag = TRUE, seed = seed, ...)
+      fit_fulldata <- ranger::ranger(formula = formula, data = data, num.threads = Ncpu, keep.inbag = TRUE, seed = seed, verbose = FALSE, ...)
     }
     attr(out, "fit_fulldata") <- fit_fulldata
   }
