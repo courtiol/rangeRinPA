@@ -168,6 +168,7 @@ plot_finetuning <- function(result, who = "rangers") {
       ggplot2::geom_line(alpha = 0.7) +
       #ggplot2::geom_errorbar(width = 0) +
       ggplot2::geom_hline(yintercept = min(finetune_res$RMSE), linetype = "dashed") +
+      ggplot2::scale_x_continuous(breaks = 1:10, minor_breaks = NULL) +
       ggplot2::theme_bw() +
       ggplot2::facet_grid(.data$splitrule ~ .data$replace) +
       ggplot2::labs(colour = "sample.fraction", shape = "mtry") +
@@ -254,4 +255,34 @@ plot_features_selected <- function(list_results_LMM, list_results_RF, data, size
     ggplot2::theme(legend.position = "bottom")
 
 }
+
+
+#' Plot tallies across methods
+#'
+#' @inheritParams extract_results
+#' @export
+#'
+#' @examples
+#' # see ?rangeRinPA
+#'
+plot_tallies_across_methods <- function(list_results_LMM, list_results_RF, data) {
+
+  res <- extract_results(list_results_LMM = list_results_LMM, list_results_RF = list_results_RF, data = data)
+
+  ggplot2::ggplot(res) +
+    ggplot2::aes(y = .data$point_pred, x = as.factor(.data$coef), fill = .data$type,
+                 ymin = pmin(.data$lwr, .data$point_pred), ymax = .data$upr) +
+    ggplot2::geom_col(position = "dodge", colour = "black", size = 0.2) +
+    ggplot2::geom_linerange(position = ggplot2::position_dodge(width = 0.9), size = 0.5) +
+    ggplot2::scale_y_continuous(breaks = (0:10) * 1e5, minor_breaks = (0:200) * 1e4, labels = scales::comma) +
+    ggsci::scale_fill_npg(guide = ggplot2::guide_legend(reverse = TRUE), alpha = 0.8) + # values = c("#52734D", "#FEFFDE", "#91C788")
+    ggplot2::theme_minimal() +
+    ggplot2::coord_flip() +
+    ggplot2::labs(x = "Coefficient used for imputation",
+                  y = "Estimated worldwide total number of staff",
+                  fill = "Statistical framework used for predictions:") +
+    ggplot2::facet_wrap(~ .data$who, scales = "free") +
+    ggplot2::theme(legend.position = "bottom")
+}
+
 

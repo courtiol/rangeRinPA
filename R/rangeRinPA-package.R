@@ -214,6 +214,19 @@
 #'                 list_results_RF = list(RF_000, RF_025, RF_050, RF_075, RF_100),
 #'                 data = data_rangers) -> results_predictions
 #'
+#' results_predictions %>%
+#'   dplyr::select(1:3, "point_pred", "lwr", "upr") %>%
+#'   tidyr::pivot_wider(values_from = c("point_pred", "lwr", "upr"), names_from = "type")
 #'
-
+#'
+#' ## Figure XX tallies per methods
+#'
+#' plot_tallies_across_methods(list_results_LMM = list(LMM_000, LMM_025, LMM_050, LMM_075, LMM_100),
+#'                             list_results_RF = list(RF_000, RF_025, RF_050, RF_075, RF_100),
+#'                             data = data_rangers)
+#' ggplot2::ggsave(filename = paste0(path_figures, "figure_tallies_across_methods_temp.pdf"),
+#'                 width = ggplot2::unit(14, "cm"))
+#' ggplot2::ggsave(filename = paste0(path_figures, "figure_tallies_across_methods_temp.png"),
+#'                 width = ggplot2::unit(14, "cm"))
+#'
 #' }
