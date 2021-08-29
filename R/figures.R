@@ -302,7 +302,7 @@ plot_tallies_across_continents <- function(list_results_LMM, list_results_RF, da
   res %>%
     dplyr::filter(.data$type == "LMM", .data$coef == 1) %>%
     dplyr::select(.data$who, .data$pred_details) %>%
-    tidyr::unnest_wider(.data$pred_details) %>%
+    tidyr::unnest_wider(col = .data$pred_details) %>%
     tidyr::unnest(-.data$who) %>%
     tidyr::pivot_longer(cols = c("known", "imputed", "predicted")) |>
     dplyr::mutate(name = factor(.data$name, levels = c("predicted", "imputed", "known"))) %>%
