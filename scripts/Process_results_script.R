@@ -19,10 +19,6 @@ extract_results(list_results_LMM = list(LMM_000, LMM_025, LMM_050, LMM_075, LMM_
     mutate(who = str_to_title(who),
            who = factor(who, levels = c("All", "Rangers", "Others"))) -> res
 
-## Table showing selected predictors:
-res |>
-  subset(select = c(who, type, coef, formula, spatial)) |>
-  as.data.frame()
 
 ## Tables showing predictions:
 res |>
@@ -123,24 +119,6 @@ PA_areas_breakdown_long_pct_world |>
 ggsave("./scripts/figures/PA_area_earth.pdf", width = 10, height = 4.5)
 ggsave("./scripts/figures/PA_area_earth.png", width = 10, height = 4.5)
 
-
-
-## Plot of tallies:
-ggplot(res) +
-  aes(y = point_pred, x = as.factor(coef), fill = type, ymin = lwr, ymax = upr) +
-  geom_col(position = "dodge", colour = "black", size = 0.2) +
-  geom_linerange(position = position_dodge(width = 0.9), size = 0.5) +
-  scale_y_continuous(breaks = (0:10) * 1e5, minor_breaks = (0:200) * 1e4, labels = scales::comma) +
-  scale_fill_npg(guide = guide_legend(reverse = TRUE), alpha = 0.8) + # values = c("#52734D", "#FEFFDE", "#91C788")
-  theme_minimal() +
-  coord_flip() +
-  labs(x = "Relative staff density in unsurveyed PA from surveyed country/territory",
-       y = "Predicted number of staff",
-       fill = "workforce") +
-  facet_wrap(~ who, scales = "free") +
-  theme(legend.position = "bottom")
-ggsave("./scripts/figures/predictions_across_analyses.pdf", width = 14, height = 9)
-ggsave("./scripts/figures/predictions_across_analyses.png", width = 14, height = 9)
 
 ## Plot predictors:
 options("ggrepel.max.overlaps" = Inf)
