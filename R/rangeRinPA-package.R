@@ -95,49 +95,70 @@
 #'
 #' #Ncpu <- 2L
 #' Ncpu <- 120 ## define the number of CPUs to use
+#' n_trees <- 2000
 #'
 #'
-#' ## Run all RF workflows and save results
+#' ## Run all LMM workflows and save results
 #'
 #' LMM_100 <- run_LMM_workflow(data = data_rangers, Ncpu = Ncpu, coef = 1)
 #' save(LMM_100, file = paste0(path_predictions, "LMM_100.Rdata"))
+#' rm(LMM_100)
+#' gc()
 #'
 #' LMM_075 <- run_LMM_workflow(data = data_rangers, Ncpu = Ncpu, coef = 0.75)
 #' save(LMM_075, file = paste0(path_predictions, "LMM_075.Rdata"))
+#' rm(LMM_075)
+#' gc()
 #'
 #' LMM_050 <- run_LMM_workflow(data = data_rangers, Ncpu = Ncpu, coef = 0.50)
 #' save(LMM_050, file = paste0(path_predictions, "LMM_050.Rdata"))
+#' rm(LMM_050)
+#' gc()
 #'
 #' LMM_025 <- run_LMM_workflow(data = data_rangers, Ncpu = Ncpu, coef = 0.25)
 #' save(LMM_025, file = paste0(path_predictions, "LMM_025.Rdata"))
+#' rm(LMM_025)
+#' gc()
 #'
 #' LMM_000 <- run_LMM_workflow(data = data_rangers, Ncpu = Ncpu, coef = 0)
 #' save(LMM_000, file = paste0(path_predictions, "LMM_000.Rdata"))
+#' rm(LMM_000)
+#' gc()
 #'
 #'
 #' ## Run all RF workflows and save results
 #'
-#' RF_100 <- run_RF_workflow(data = data_rangers, Ncpu = Ncpu, coef = 1)
-#' save(RF_100, file = paste0(path_predictions, "RF_100.Rdata"))
+#' RF_100 <- run_RF_workflow(data = data_rangers, Ncpu = Ncpu, coef = 1, n_trees = n_trees)
+#' save(RF_100, file = paste0(path_predictions, paste0("RF_100_", n_trees, ".Rdata")))
+#' rm(RF_100)
+#' gc()
 #'
-#' RF_075 <- run_RF_workflow(data = data_rangers, Ncpu = Ncpu, coef = 0.75)
-#' save(RF_075,file = paste0(path_predictions, "RF_075.Rdata"))
+#' RF_075 <- run_RF_workflow(data = data_rangers, Ncpu = Ncpu, coef = 0.75, n_trees = n_trees)
+#' save(RF_075,file = paste0(path_predictions, paste0("RF_075_", n_trees, ".Rdata")))
+#' rm(RF_075)
+#' gc()
 #'
-#' RF_050 <- run_RF_workflow(data = data_rangers, Ncpu = Ncpu, coef = 0.50)
-#' save(RF_050, file = paste0(path_predictions, "RF_050.Rdata"))
+#' RF_050 <- run_RF_workflow(data = data_rangers, Ncpu = Ncpu, coef = 0.50, n_trees = n_trees)
+#' save(RF_050, file = paste0(path_predictions, paste0("RF_050_", n_trees, ".Rdata")))
+#' rm(RF_050)
+#' gc()
 #'
-#' RF_025 <- run_RF_workflow(data = data_rangers, Ncpu = Ncpu, coef = 0.25)
-#' save(RF_025, file = paste0(path_predictions, "RF_025.Rdata"))
+#' RF_025 <- run_RF_workflow(data = data_rangers, Ncpu = Ncpu, coef = 0.25, n_trees = n_trees)
+#' save(RF_025, file = paste0(path_predictions, paste0("RF_025_", n_trees, ".Rdata")))
+#' rm(RF_025)
+#' gc()
 #'
-#' RF_000 <- run_RF_workflow(data = data_rangers, Ncpu = Ncpu, coef = 0)
-#' save(RF_000, file = paste0(path_predictions, "RF_000.Rdata"))
+#' RF_000 <- run_RF_workflow(data = data_rangers, Ncpu = Ncpu, coef = 0, n_trees = n_trees)
+#' save(RF_000, file = paste0(path_predictions, paste0("RF_000_", n_trees, ".Rdata")))
+#' rm(RF_000)
+#' gc()
 #'
 #'
 #' ## Load all results saved on disk (useful only if all objects created above are not already in memory)
 #'
 #' files_to_load <- c("LMM_000.Rdata", "LMM_025.Rdata", "LMM_050.Rdata", "LMM_075.Rdata",
-#'                    "LMM_100.Rdata", "RF_000.Rdata", "RF_025.Rdata", "RF_050.Rdata",
-#'                    "RF_075.Rdata", "RF_100.Rdata")
+#'                    "LMM_100.Rdata", paste0(c("RF_000_", "RF_025_", "RF_050_", "RF_075_", "RF_100_"),
+#'                    n_trees, ".Rdata"))
 #'
 #' sapply(paste0(path_predictions, files_to_load), function(file) load(file, envir = .GlobalEnv))
 #'
@@ -166,8 +187,8 @@
 #'                       data = data_rangers) -> training_info_final
 #'
 #'
-#'  readr::write_excel_csv(training_info_final,
-#'                         file = paste0(path_tables, "table_training_sets_final_temp.csv"))
+#' readr::write_excel_csv(training_info_final,
+#'                        file = paste0(path_tables, "table_training_sets_final_temp.csv"))
 #'
 #'
 #' ## Table S4
