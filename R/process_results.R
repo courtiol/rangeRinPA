@@ -26,6 +26,7 @@
 #'
 #' plot_features_selected(list_results_LMM = list(LMM_small_test),
 #'                        list_results_RF  = list(RF_small_test), data = data_rangers)
+#'
 #' }
 #'
 extract_results <- function(list_results_LMM = list(), list_results_RF = list(), data = NULL) {
@@ -184,6 +185,7 @@ single_summary_internal <- function(result, who, resp, data) {
 #'
 #' @inheritParams extract_results
 #' @param which either `"initial"` or `"final"` depending on which training dataset to summarise
+#' @inheritParams run_LMM_workflow
 #'
 #' @export
 #'
@@ -201,7 +203,7 @@ single_summary_internal <- function(result, who, resp, data) {
 #'                 list_results_RF  = list(RF_small_test))
 #' }
 #'
-extract_training_info <- function(which, list_results_LMM = list(), list_results_RF = list(), data = NULL) {
+extract_training_info <- function(which, list_results_LMM = list(), list_results_RF = list(), data = NULL, outliers = "Greenland") {
   d_LMM <- d_RF <- data.frame()
 
   if (length(list_results_LMM) > 0) {
@@ -246,8 +248,8 @@ extract_training_info <- function(which, list_results_LMM = list(), list_results
   }
 
   if (!is.null(data)) {
-    d$total_obs <- nrow(data) - 1 # - 1 for Greenland
-    d$total_PA <- sum(data$area_PA_total[data$countryname_iso != "GRL"])
+    d$total_obs <- nrow(data[!data$countryname_eng %in% outliers, ])
+    d$total_PA <- sum(data$area_PA_total[!data$countryname_eng %in% outliers])
     d$obs_coverage <- d$obs / d$total_obs
     d$PA_coverage <- d$PA / d$total_PA
   }

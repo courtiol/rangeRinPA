@@ -9,7 +9,8 @@ extract_training_info(
   which,
   list_results_LMM = list(),
   list_results_RF = list(),
-  data = NULL
+  data = NULL,
+  outliers = "Greenland"
 )
 
 extract_training_info_internal(which, what, who, type, data)
@@ -22,6 +23,8 @@ extract_training_info_internal(which, what, who, type, data)
 \item{list_results_RF}{a list of objects produced by \code{\link[=run_RF_workflow]{run_RF_workflow()}}}
 
 \item{data}{a dataset with info on continents if breakdown by continent is required (optional)}
+
+\item{outliers}{a vector with the names of the countries/territories to discard (default = \verb{"Greenland})}
 
 \item{what}{an object produced by \code{\link[=run_LMM_workflow]{run_LMM_workflow()}} or \code{\link[=run_RF_workflow]{run_RF_workflow()}}}
 

@@ -51,6 +51,7 @@ extract_results(list_results_LMM = list(LMM_small_test),
 
 plot_features_selected(list_results_LMM = list(LMM_small_test),
                        list_results_RF  = list(RF_small_test), data = data_rangers)
+
 }
 
 }
