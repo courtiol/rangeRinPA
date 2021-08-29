@@ -21,6 +21,7 @@ Imports:
     googlesheets4,
     magrittr,
     ranger,
+    rlang,
     rgeos,
     rnaturalearth
 Suggests:

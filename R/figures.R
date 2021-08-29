@@ -286,3 +286,51 @@ plot_tallies_across_methods <- function(list_results_LMM, list_results_RF, data)
 }
 
 
+#' Plot detail about estimations
+#'
+#' @inheritParams extract_results
+#' @param per_continent a logical indicating whether to breakdown the bar plot per continent (default = `TRUE`)
+#' @export
+#'
+#' @examples
+#' # see ?rangeRinPA
+#'
+plot_tallies_across_continents <- function(list_results_LMM, list_results_RF, data, per_continent = TRUE) {
+
+  res <- extract_results(list_results_LMM = list_results_LMM, list_results_RF = list_results_RF, data = data)
+
+  res %>%
+    dplyr::filter(.data$type == "LMM", .data$coef == 1) %>%
+    dplyr::select(.data$who, .data$pred_details) %>%
+    tidyr::unnest_wider(.data$pred_details) %>%
+    tidyr::unnest(-.data$who) %>%
+    tidyr::pivot_longer(cols = c("known", "imputed", "predicted")) |>
+    dplyr::mutate(name = factor(.data$name, levels = c("predicted", "imputed", "known"))) %>%
+    dplyr::group_by(.data$who, .data$continent) %>%
+    dplyr::ungroup() -> breakdown
+
+  if (per_continent) {
+    breakdown %>%
+      dplyr::group_by(.data$who, .data$name) %>%
+      dplyr::summarise(value = sum(.data$value)) %>%
+      dplyr::mutate(continent = "World") %>%
+      dplyr::bind_rows(breakdown) -> breakdown
+  }
+
+  breakdown %>%
+    dplyr::filter(.data$who != "All") %>%
+    dplyr::mutate(continent = dplyr::case_when(.data$continent == "Latin America & Caribbean" ~ "Latin America &\nCarribbean",
+                                               .data$continent == "Northern America" ~ "Northern\nAmerica",
+                                               TRUE ~ .data$continent)) %>%
+    ggplot2::ggplot() +
+      ggplot2::aes(y = .data$value, x = .data$who, fill = .data$name) +
+      ggplot2::geom_col() +
+      {if (per_continent) ggplot2::facet_wrap(~ .data$continent, nrow = 1) } +
+      ggplot2::scale_y_continuous(breaks = (0:10) * 1e5, minor_breaks = (0:200) * 1e4, labels = scales::comma) +
+      ggsci::scale_fill_npg() +
+      ggplot2::theme_minimal() +
+      ggplot2::labs(fill = "Type of data:", y = "Number of staff", x = NULL) +
+      ggplot2::theme(plot.title.position = "plot",
+                     legend.position = "bottom")
+
+}

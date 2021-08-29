@@ -250,4 +250,26 @@
 #' ggplot2::ggsave(filename = paste0(path_figures, "figure_tallies_across_methods_temp.png"),
 #'                 width = ggplot2::unit(14, "cm"))
 #'
+#'
+#' ## Figure XX tallies per continent
+#'
+#' plot_tallies_across_continents(list_results_LMM = list(LMM_000, LMM_025, LMM_050, LMM_075, LMM_100),
+#'                                list_results_RF = list(RF_000, RF_025, RF_050, RF_075, RF_100),
+#'                                data = data_rangers)
+#' ggplot2::ggsave(filename = paste0(path_figures, "figure_tallies_across_continents_temp.pdf"),
+#'                 width = ggplot2::unit(8, "cm"))
+#' ggplot2::ggsave(filename = paste0(path_figures, "figure_tallies_across_continents_temp.png"),
+#'                 width = ggplot2::unit(8, "cm"))
+#'
+#' ## Figure XX tallies for World
+#'
+#' plot_tallies_across_continents(list_results_LMM = list(LMM_000, LMM_025, LMM_050, LMM_075, LMM_100),
+#'                                list_results_RF = list(RF_000, RF_025, RF_050, RF_075, RF_100),
+#'                                data = data_rangers,
+#'                                per_continent = FALSE)
+#' ggplot2::ggsave(filename = paste0(path_figures, "figure_tallies_world_temp.pdf"),
+#'                 width = ggplot2::unit(4, "cm"))
+#' ggplot2::ggsave(filename = paste0(path_figures, "figure_tallies_world_temp.png"),
+#'                 width = ggplot2::unit(4, "cm"))
+#'
 #' }
