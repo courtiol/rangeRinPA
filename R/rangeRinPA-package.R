@@ -272,4 +272,18 @@
 #' ggplot2::ggsave(filename = paste0(path_figures, "figure_tallies_world_temp.png"),
 #'                 width = ggplot2::unit(4, "cm"))
 #'
+#'
+#' ## Figure XX PA per data type
+#'
+#' plot_PA_by_data_type(list_results_LMM = list(LMM_000, LMM_025, LMM_050, LMM_075, LMM_100),
+#'                      list_results_RF = list(RF_000, RF_025, RF_050, RF_075, RF_100),
+#'                      data = data_rangers)
+#' ggplot2::ggsave(filename = paste0(path_figures, "figure_PA_by_data_type_temp.pdf"),
+#'                 width = ggplot2::unit(11, "cm"))
+#' ggplot2::ggsave(filename = paste0(path_figures, "figure_PA_by_data_type_temp.png"),
+#'                 width = ggplot2::unit(11, "cm"))
+#'
+#'
+#'
+#'
 #' }

@@ -334,3 +334,45 @@ plot_tallies_across_continents <- function(list_results_LMM, list_results_RF, da
                      legend.position = "bottom")
 
 }
+
+
+#' Plot detail about estimations in terms of PA
+#'
+#' @inheritParams extract_results
+#' @export
+#'
+#' @examples
+#' # see ?rangeRinPA
+#'
+plot_PA_by_data_type <- function(list_results_LMM, list_results_RF, data) {
+
+  res <- extract_results(list_results_LMM = list_results_LMM, list_results_RF = list_results_RF, data = data)
+
+  res %>%
+    dplyr::filter(.data$type == "LMM", .data$coef == 1) %>%
+    dplyr::select(.data$who, .data$PA_areas) %>%
+    tidyr::unnest_wider(.data$PA_areas) %>%
+    tidyr::unnest(-.data$who) %>%
+    tidyr::pivot_longer(cols = tidyselect::starts_with("PA")) %>%
+    dplyr::mutate(name = sapply(.data$name, \(x) sub(pattern = "PA_area_", replacement = "", x))) %>%
+    dplyr::mutate(name = factor(.data$name, levels = c("unknown", "predicted", "imputed", "known"))) %>%
+    dplyr::group_by(.data$who, .data$continent) %>%
+    dplyr::mutate(total = sum(.data$value),
+                  value = .data$value / .data$total,
+                  who = factor(.data$who, levels = c("Rangers", "Others", "All"))) %>%
+    dplyr::ungroup() -> PA_areas_breakdown
+
+  PA_areas_breakdown %>%
+    ggplot2::ggplot() +
+      ggplot2::aes(y = .data$value, x = .data$total/2, fill = .data$name, width = .data$total) +
+      ggplot2::geom_bar(stat = "identity") +
+      ggplot2::facet_grid(.data$who ~ .data$continent, switch = "y") +
+      ggplot2::coord_polar(theta = "y", start = 0, direction = 1) +
+      ggplot2::theme_void() +
+      ggsci::scale_fill_npg() +
+      ggplot2::labs(fill = "Staff:") +
+      ggplot2::theme(plot.title.position = "plot",
+                     legend.position = "bottom",
+                     plot.margin = ggplot2::margin(t = 1, l = 0.5, unit = "cm"))
+}
+
