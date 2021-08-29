@@ -15,7 +15,7 @@ path_predictions <- paste0(path, "predictions/")
 if (!dir.exists(path_predictions)) dir.create(path_predictions)
 
 
-Ncpu <- 100
+Ncpu <- 50
 
 LMM_100 <- run_LMM_workflow(data = data_rangers, Ncpu = Ncpu, coef = 1)
 save(LMM_100, file = paste0(path_predictions, "LMM_100.Rdata"))
@@ -42,7 +42,7 @@ save(LMM_000, file = paste0(path_predictions, "LMM_000.Rdata"))
 rm(LMM_000)
 gc()
 
-n_trees <- 2000
+n_trees <- 5000
 
 RF_100 <- run_RF_workflow(data = data_rangers, Ncpu = Ncpu, coef = 1, n_trees = n_trees)
 save(RF_100, file = paste0(path_predictions, paste0("RF_100_", n_trees, ".Rdata")))
