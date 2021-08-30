@@ -354,6 +354,7 @@ run_RF_workflow <- function(data, rerank = TRUE, Ncpu = 2,  coef = 1, rep_featur
       tallies <- compute_tally(data_pred, data_all = data, who = who, coef_population = coef)
       stats::setNames(tallies$sum_total, nm = tallies$continent)
       }, mc.cores = Ncpu)) %>%
+      as.data.frame() %>%
       tibble::as_tibble(rownames = "continent") %>%
       tidyr::pivot_longer(cols = -.data$continent, names_to = "simu")
   }
