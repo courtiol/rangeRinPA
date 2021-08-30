@@ -294,12 +294,14 @@ plot_tallies_across_methods <- function(list_results_LMM, list_results_RF, data)
 #' @examples
 #' # see ?rangeRinPA
 #'
-plot_tallies_across_continents <- function(list_results_LMM, list_results_RF, data) {
+plot_tallies_across_continents <- function(what, data) {
 
-  res <- extract_results(list_results_LMM = list_results_LMM, list_results_RF = list_results_RF, data = data)
+  if (length(what) != 4) stop("Wrong input: 'what' should be a list produced by a workflow function")
+
+  res <- extract_results(list_results_LMM = list(what)) ## note: works also when input is from RF, makes no difference
 
   res %>%
-    dplyr::filter(.data$who != "All", .data$type == "LMM", .data$coef == 1) -> res_focus
+    dplyr::filter(.data$who != "All") -> res_focus
 
   res_focus %>%
     dplyr::select(.data$who, .data$pred_details) %>%
@@ -349,12 +351,13 @@ plot_tallies_across_continents <- function(list_results_LMM, list_results_RF, da
 #' @examples
 #' # see ?rangeRinPA
 #'
-plot_PA_by_data_type <- function(list_results_LMM, list_results_RF, data) {
+plot_PA_by_data_type <- function(what, data) {
 
-  res <- extract_results(list_results_LMM = list_results_LMM, list_results_RF = list_results_RF, data = data)
+  if (length(what) != 4) stop("Wrong input: 'what' should be a list produced by a workflow function")
+
+  res <- extract_results(list_results_LMM = list(what), data = data) ## note: works also when input is from RF, makes no difference
 
   res %>%
-    dplyr::filter(.data$type == "LMM", .data$coef == 1) %>%
     dplyr::select(.data$who, .data$PA_areas) %>%
     tidyr::unnest_wider(.data$PA_areas) %>%
     tidyr::unnest(-.data$who) %>%

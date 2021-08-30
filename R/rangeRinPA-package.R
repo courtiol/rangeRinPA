@@ -253,9 +253,7 @@
 #'
 #' ## Figure XX tallies per continent
 #'
-#' plot_tallies_across_continents(list_results_LMM = list(LMM_000, LMM_025, LMM_050, LMM_075, LMM_100),
-#'                                list_results_RF = list(RF_000, RF_025, RF_050, RF_075, RF_100),
-#'                                data = data_rangers)
+#' plot_tallies_across_continents(what = LMM_100, data = data_rangers)
 #' ggplot2::ggsave(filename = paste0(path_figures, "figure_tallies_across_continents_temp.pdf"),
 #'                 width = ggplot2::unit(8, "cm"))
 #' ggplot2::ggsave(filename = paste0(path_figures, "figure_tallies_across_continents_temp.png"),
@@ -264,9 +262,7 @@
 #'
 #' ## Figure XX PA per data type
 #'
-#' plot_PA_by_data_type(list_results_LMM = list(LMM_000, LMM_025, LMM_050, LMM_075, LMM_100),
-#'                      list_results_RF = list(RF_000, RF_025, RF_050, RF_075, RF_100),
-#'                      data = data_rangers)
+#' plot_PA_by_data_type(what = LMM_100, data = data_rangers)
 #' ggplot2::ggsave(filename = paste0(path_figures, "figure_PA_by_data_type_temp.pdf"),
 #'                 width = ggplot2::unit(11, "cm"))
 #' ggplot2::ggsave(filename = paste0(path_figures, "figure_PA_by_data_type_temp.png"),

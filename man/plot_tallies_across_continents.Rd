@@ -4,12 +4,10 @@
 \alias{plot_tallies_across_continents}
 \title{Plot detail about estimations}
 \usage{
-plot_tallies_across_continents(list_results_LMM, list_results_RF, data)
+plot_tallies_across_continents(what, data)
 }
 \arguments{
-\item{list_results_LMM}{a list of objects produced by \code{\link[=run_LMM_workflow]{run_LMM_workflow()}}}
-
-\item{list_results_RF}{a list of objects produced by \code{\link[=run_RF_workflow]{run_RF_workflow()}}}
+\item{what}{an object produced by \code{\link[=run_LMM_workflow]{run_LMM_workflow()}} or \code{\link[=run_RF_workflow]{run_RF_workflow()}}}
 
 \item{data}{a dataset with info on continents if breakdown by continent is required (optional)}
 }

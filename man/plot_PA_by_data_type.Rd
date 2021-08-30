@@ -4,12 +4,10 @@
 \alias{plot_PA_by_data_type}
 \title{Plot detail about estimations in terms of PA}
 \usage{
-plot_PA_by_data_type(list_results_LMM, list_results_RF, data)
+plot_PA_by_data_type(what, data)
 }
 \arguments{
-\item{list_results_LMM}{a list of objects produced by \code{\link[=run_LMM_workflow]{run_LMM_workflow()}}}
-
-\item{list_results_RF}{a list of objects produced by \code{\link[=run_RF_workflow]{run_RF_workflow()}}}
+\item{what}{an object produced by \code{\link[=run_LMM_workflow]{run_LMM_workflow()}} or \code{\link[=run_RF_workflow]{run_RF_workflow()}}}
 
 \item{data}{a dataset with info on continents if breakdown by continent is required (optional)}
 }
