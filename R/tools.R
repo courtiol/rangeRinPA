@@ -304,18 +304,48 @@ add_Matern <- function(formula) {
 #' Compute tally
 #'
 #' @param data the prediction data
+#' @param data_all the dataset of observations
+#' @param who `"rangers"`, `"others"`, or `"all"
+#' @param coef_population  the coefficient used to population rangers in unsurveyed part of surveyed countries (see [`fill_PA_area()`])
 #'
 #' @export
 #'
-compute_tally <- function(data) {
+compute_tally <- function(data, data_all, who, coef_population) {
+
   vars <-  colnames(data$data_predictable)
   resp_predicted <- vars[grep(pattern = "predicted", vars)]
-  resp_observed <- sub(pattern = "_predicted", replacement = "", resp_predicted)
-  sum_predicted <- sum(exp(data$data_predictable[, resp_predicted, drop = TRUE]) - 1)
-  sum_observed <- sum(exp(data$data_known[, resp_observed, drop = TRUE]) - 1)
-  sum_total <- sum_predicted + sum_observed
-  data.frame(sum = c("observed", "predicted", "total"),
-             value = c(sum_observed, sum_predicted, sum_total))
+
+  col_staff_in_data <- paste0("staff_", who)
+  if (col_staff_in_data == "staff_all") {
+    col_staff_in_data <- "staff_total"
+  }
+
+  ## add original PAs
+  data_all %>%
+    dplyr::select(.data$countryname_eng,
+                  original = !!rlang::sym(col_staff_in_data),
+                  .data$PA_area_surveyed_notfilled, .data$PA_area_unsurveyed_notfilled) %>%
+    dplyr::right_join(data$data_known, by = "countryname_eng") -> data$data_known
+
+  data$data_predictable %>%
+    add_continents(data = data_all, levels = c("Africa", "Antarctica", "Asia", "Europe",
+                                               "Latin America & Caribbean", "Northern America", "Oceania")) %>%
+    dplyr::group_by(.data$continent, .drop = FALSE) %>%
+    dplyr::summarise(sum_predicted = sum(exp(!!rlang::sym(resp_predicted)) - 1)) -> .pred
+
+  data$data_known %>%
+    add_continents(data = data_all, levels = c("Africa", "Antarctica", "Asia", "Europe",
+                                               "Latin America & Caribbean", "Northern America", "Oceania")) %>%
+    dplyr::mutate(known = .data$original,
+                  imputed = coef_population * .data$original/.data$PA_area_surveyed_notfilled * .data$PA_area_unsurveyed_notfilled,
+                  known_imputed = .data$known + .data$imputed) %>%
+    dplyr::group_by(.data$continent, .drop = FALSE) %>%
+    dplyr::summarise(sum_known =  sum(.data$known),
+                     sum_imputed = sum(.data$imputed),
+                     sum_known_imputed = sum(.data$known_imputed)) -> .obs
+
+  dplyr::full_join(.pred, .obs, by = "continent") %>%
+    dplyr::mutate(sum_total = .data$sum_predicted + .data$sum_known_imputed)
 }
 
 
@@ -426,16 +456,24 @@ prepare_grid_finetuning <- function(grid_type = "fine") {
 #'
 #' @param tbl The table for which continents must be added
 #' @param data The dataset containing the info on continents
+#' @param levels a list of levels if the variable continent must be turned into a factor
 #'
 #' @export
 #'
 #' @examples
 #' add_continents(data.frame(countryname_eng = c("Turkey", "France")), data_rangers)
 #'
-add_continents <- function(tbl, data) {
+add_continents <- function(tbl, data, levels = NULL) {
   data[, c("countryname_eng", "country_UN_continent")] %>%
     dplyr::right_join(tbl, by = "countryname_eng") %>%
-    dplyr::rename(continent = .data$country_UN_continent)
+    dplyr::rename(continent = .data$country_UN_continent) -> tbl
+
+  if (!is.null(levels)) {
+    tbl %>%
+      dplyr::mutate(continent = factor(.data$continent, levels = levels)) -> tbl
+  }
+
+  tbl
 }
 
 

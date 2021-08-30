@@ -4,10 +4,16 @@
 \alias{compute_tally}
 \title{Compute tally}
 \usage{
-compute_tally(data)
+compute_tally(data, data_all, who, coef_population)
 }
 \arguments{
 \item{data}{the prediction data}
+
+\item{data_all}{the dataset of observations}
+
+\item{who}{\code{"rangers"}, \code{"others"}, or `"all"}
+
+\item{coef_population}{the coefficient used to population rangers in unsurveyed part of surveyed countries (see \code{\link[=fill_PA_area]{fill_PA_area()}})}
 }
 \description{
 Compute tally

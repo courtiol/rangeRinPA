@@ -297,65 +297,117 @@ run_RF_workflow <- function(data, rerank = TRUE, Ncpu = 2,  coef = 1, rep_featur
   cat("Step 8a: Point predictions\n")
 
   ## We compute the tallies:
-
   data_final_pred_rangers$data_predictable$staff_rangers_log_predicted <- stats::predict(
     fit_final_rangers, data = data_final_pred_rangers$data_predictable)$predictions
-  tallies_rangers <- compute_tally(data_final_pred_rangers)
+  record$rangers$tallies_details <- list(compute_tally(data_final_pred_rangers, data_all = data,
+                                                       who = "rangers", coef_population = coef))
 
   data_final_pred_others$data_predictable$staff_others_log_predicted <- stats::predict(
     fit_final_others, data = data_final_pred_others$data_predictable)$predictions
-  tallies_others <- compute_tally(data_final_pred_others)
+  record$others$tallies_details <- list(compute_tally(data_final_pred_others, data_all = data,
+                                                      who = "others", coef_population = coef))
 
   data_final_pred_all$data_predictable$staff_total_log_predicted <- stats::predict(
     fit_final_all, data = data_final_pred_all$data_predictable)$predictions
-  tallies_all <- compute_tally(data_final_pred_all)
+  record$all$tallies_details <- list(compute_tally(data_final_pred_all, data_all = data,
+                                                   who = "all", coef_population = coef))
 
-  record$rangers$tally_obs_or_imputed <- tallies_rangers[1, "value"]
-  record$others$tally_obs_or_imputed <- tallies_others[1, "value"]
-  record$all$tally_obs_or_imputed <- tallies_all[1, "value"]
+  record$rangers$tallies_details[[1]] %>%
+    dplyr::summarise(dplyr::across(-.data$continent, sum)) -> rangers_tally_world
 
-  record$rangers$tally_predicted <- tallies_rangers[2, "value"]
-  record$others$tally_predicted <- tallies_others[2, "value"]
-  record$all$tally_predicted <- tallies_all[2, "value"]
+  record$others$tallies_details[[1]] %>%
+    dplyr::summarise(dplyr::across(-.data$continent, sum)) -> others_tally_world
 
-  record$rangers$tally_total <- tallies_rangers[3, "value"]
-  record$others$tally_total <- tallies_others[3, "value"]
-  record$all$tally_total <- tallies_all[3, "value"]
+  record$all$tallies_details[[1]] %>%
+    dplyr::summarise(dplyr::across(-.data$continent, sum)) -> all_tally_world
+
+  record$rangers$tally_obs <- rangers_tally_world[1, "sum_known", drop = TRUE]
+  record$others$tally_obs <- others_tally_world[1, "sum_known", drop = TRUE]
+  record$all$tally_obs <- all_tally_world[1, "sum_known", drop = TRUE]
+
+  record$rangers$tally_imputed <- rangers_tally_world[1, "sum_imputed", drop = TRUE]
+  record$others$tally_imputed <- others_tally_world[1, "sum_imputed", drop = TRUE]
+  record$all$tally_imputed <- all_tally_world[1, "sum_imputed", drop = TRUE]
+
+  record$rangers$tally_obs_or_imputed <- rangers_tally_world[1, "sum_known_imputed", drop = TRUE]
+  record$others$tally_obs_or_imputed <- others_tally_world[1, "sum_known_imputed", drop = TRUE]
+  record$all$tally_obs_or_imputed <- all_tally_world[1, "sum_known_imputed", drop = TRUE]
+
+  record$rangers$tally_predicted <- rangers_tally_world[1, "sum_predicted", drop = TRUE]
+  record$others$tally_predicted <- others_tally_world[1, "sum_predicted", drop = TRUE]
+  record$all$tally_predicted <- all_tally_world[1, "sum_predicted", drop = TRUE]
+
+  record$rangers$tally_total <- rangers_tally_world[1, "sum_total", drop = TRUE]
+  record$others$tally_total <- others_tally_world[1, "sum_total", drop = TRUE]
+  record$all$tally_total <- all_tally_world[1, "sum_total", drop = TRUE]
 
 
   cat("Step 8b: prediction intervals for the sums\n")
 
-  predictions_rangers <- parallel::mclapply(seq_len(rep_simu), function(i) {
-    sim_rangers <- stats::predict(fit_final_rangers,
-                                  data = data_final_pred_rangers$data_predictable,
-                                  type = "quantiles",
-                                  quantiles = stats::runif(n = nrow(data_final_pred_rangers$data_predictable)))
-    data_final_pred_rangers$data_predictable$staff_rangers_log_predicted <- diag(sim_rangers$predictions)
-    compute_tally(data_final_pred_rangers)[3, "value"]}, mc.cores = Ncpu)
+  run_sim <- function(fit, data_pred, var_name, who) {
+    do.call("cbind", parallel::mclapply(seq_len(rep_simu), function(i) {
+      sim <- stats::predict(fit,
+                            data = data_pred$data_predictable,
+                            type = "quantiles",
+                            quantiles = stats::runif(n = nrow(data_pred$data_predictable)))
+      data_pred$data_predictable[[var_name]] <- diag(sim$predictions)
+      tallies <- compute_tally(data_pred, data_all = data, who = who, coef_population = coef)
+      stats::setNames(tallies$sum_total, nm = tallies$continent)
+      }, mc.cores = Ncpu)) %>%
+      tibble::as_tibble(rownames = "continent") %>%
+      tidyr::pivot_longer(cols = -.data$continent, names_to = "simu")
+  }
 
-  predictions_others <- parallel::mclapply(seq_len(rep_simu), function(i) {
-    sim_others <- stats::predict(fit_final_others,
-                                 data = data_final_pred_others$data_predictable,
-                                 type = "quantiles",
-                                 quantiles = stats::runif(n = nrow(data_final_pred_others$data_predictable)))
-    data_final_pred_others$data_predictable$staff_others_log_predicted <- diag(sim_others$predictions)
-    compute_tally(data_final_pred_others)[3, "value"]}, mc.cores = Ncpu)
+  sim_rangers <- run_sim(fit = fit_final_rangers,
+                         data_pred = data_final_pred_rangers,
+                         var_name = "staff_rangers_log_predicted",
+                         who = "rangers")
 
-  predictions_all <- parallel::mclapply(seq_len(rep_simu), function(i) {
-    sim_all <- stats::predict(fit_final_all,
-                              data = data_final_pred_all$data_predictable,
-                              type = "quantiles",
-                              quantiles = stats::runif(n = nrow(data_final_pred_all$data_predictable)))
-    data_final_pred_all$data_predictable$staff_total_log_predicted <- diag(sim_all$predictions)
-    compute_tally(data_final_pred_all)[3, "value"]}, mc.cores = Ncpu)
+  sim_others <- run_sim(fit = fit_final_others,
+                        data_pred = data_final_pred_others,
+                        var_name = "staff_others_log_predicted",
+                        who = "others")
 
-  record$rangers$lwr <- stats::quantile(unlist(predictions_rangers), probs = 0.025)
-  record$others$lwr <- stats::quantile(unlist(predictions_others), probs = 0.025)
-  record$all$lwr <- stats::quantile(unlist(predictions_all), probs = 0.025)
+  sim_all <- run_sim(fit = fit_final_all,
+                     data_pred = data_final_pred_all,
+                     var_name = "staff_total_log_predicted",
+                     who = "all")
 
-  record$rangers$upr <- stats::quantile(unlist(predictions_rangers), probs = 0.975)
-  record$others$upr <- stats::quantile(unlist(predictions_others), probs = 0.975)
-  record$all$upr <- stats::quantile(unlist(predictions_all), probs = 0.975)
+
+  extract_quant <- function(x, probs) {
+    x %>%
+      dplyr::group_by(.data$simu) %>%
+      dplyr::summarise(tally = sum(.data$value)) %>%
+      dplyr::pull(.data$tally) %>%
+      stats::quantile(probs = probs)
+  }
+
+  record$rangers$lwr <- extract_quant(sim_rangers, probs = 0.025)
+  record$others$lwr  <- extract_quant(sim_others, probs = 0.025)
+  record$all$lwr     <- extract_quant(sim_all, probs = 0.025)
+
+  record$rangers$upr <- extract_quant(sim_rangers, probs = 0.975)
+  record$others$upr  <- extract_quant(sim_others, probs = 0.975)
+  record$all$upr     <- extract_quant(sim_all, probs = 0.975)
+
+  extract_quant_cont <- function(x) {
+    x %>%
+      dplyr::group_by(.data$simu, .data$continent) %>%
+      dplyr::summarise(tally = sum(.data$value)) %>%
+      dplyr::group_by(.data$continent) %>%
+      dplyr::summarise(lwr = stats::quantile(.data$tally, probs = 0.025),
+                       upr = stats::quantile(.data$tally, probs = 0.975))
+  }
+
+  record$rangers$tallies_details[[1]] %>%
+    dplyr::left_join(extract_quant_cont(sim_rangers), by = "continent") -> record$rangers$tallies_details[[1]]
+
+  record$others$tallies_details[[1]] %>%
+    dplyr::left_join(extract_quant_cont(sim_others), by = "continent") -> record$others$tallies_details[[1]]
+
+  record$all$tallies_details[[1]] %>%
+    dplyr::left_join(extract_quant_cont(sim_all), by = "continent") -> record$all$tallies_details[[1]]
+
 
   cat("DONE!\n")
   record$meta$duration_h <- as.double(difftime(Sys.time(), record$meta$start, units = "hours"))
