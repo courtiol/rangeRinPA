@@ -98,7 +98,6 @@ feature_selection_LMM_internal <- function(full_fit, rerank = TRUE, rep = 10, Nc
     res[[i]] <- aggregate_metrics(v)
     res[[i]]$formula <- deparse(new_formula, width.cutoff = 500)
     fit <- attr(v, "fit_fulldata")
-    ##TODO: extract and store AIC (marginal for LM, conditional for LMM)
   }
   cbind(k = k_to_do, as.data.frame(do.call("rbind", res)))
 }
