@@ -4,12 +4,7 @@
 \alias{plot_tallies_across_continents}
 \title{Plot detail about estimations}
 \usage{
-plot_tallies_across_continents(
-  list_results_LMM,
-  list_results_RF,
-  data,
-  per_continent = TRUE
-)
+plot_tallies_across_continents(list_results_LMM, list_results_RF, data)
 }
 \arguments{
 \item{list_results_LMM}{a list of objects produced by \code{\link[=run_LMM_workflow]{run_LMM_workflow()}}}
@@ -17,8 +12,6 @@ plot_tallies_across_continents(
 \item{list_results_RF}{a list of objects produced by \code{\link[=run_RF_workflow]{run_RF_workflow()}}}
 
 \item{data}{a dataset with info on continents if breakdown by continent is required (optional)}
-
-\item{per_continent}{a logical indicating whether to breakdown the bar plot per continent (default = \code{TRUE})}
 }
 \description{
 Plot detail about estimations

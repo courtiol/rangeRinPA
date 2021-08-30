@@ -324,8 +324,10 @@ compute_tally <- function(data, data_all, who, coef_population) {
   data_all %>%
     dplyr::select(.data$countryname_eng,
                   original = !!rlang::sym(col_staff_in_data),
-                  .data$PA_area_surveyed_notfilled, .data$PA_area_unsurveyed_notfilled) %>%
-    dplyr::right_join(data$data_known, by = "countryname_eng") -> data$data_known
+                  .data$PA_area_surveyed, .data$PA_area_unsurveyed) %>%
+    dplyr::right_join(data$data_known %>%
+                        dplyr::select(-.data$PA_area_surveyed, -.data$PA_area_unsurveyed),
+                      by = "countryname_eng") -> data$data_known
 
   data$data_predictable %>%
     add_continents(data = data_all, levels = c("Africa", "Antarctica", "Asia", "Europe",
@@ -337,7 +339,7 @@ compute_tally <- function(data, data_all, who, coef_population) {
     add_continents(data = data_all, levels = c("Africa", "Antarctica", "Asia", "Europe",
                                                "Latin America & Caribbean", "Northern America", "Oceania")) %>%
     dplyr::mutate(known = .data$original,
-                  imputed = coef_population * .data$original/.data$PA_area_surveyed_notfilled * .data$PA_area_unsurveyed_notfilled,
+                  imputed = coef_population * .data$original/.data$PA_area_surveyed * .data$PA_area_unsurveyed,
                   known_imputed = .data$known + .data$imputed) %>%
     dplyr::group_by(.data$continent, .drop = FALSE) %>%
     dplyr::summarise(sum_known =  sum(.data$known),

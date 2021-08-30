@@ -63,6 +63,7 @@ extract_results <- function(list_results_LMM = list(), list_results_RF = list(),
 #' @export
 #'
 extract_results_internal <- function(what, who, type, data) {
+
   if (!is.null(data)) {
     what[[who]]$country_info[[1]] %>%
       add_continents(data = data) %>%
@@ -104,29 +105,6 @@ extract_results_internal <- function(what, who, type, data) {
   #.PA_areas %>%
   #  dplyr::summarise(PA_area_total = sum(dplyr::c_across())) -> .PA_area_total
 
-  ### extract info about staff (a little complex since not extracted by workflow...):
-  colname_in_data <- paste0("staff_", who)
-  if (colname_in_data == "staff_all") {
-    colname_in_data <- "staff_total"
-  }
-
-  data %>%
-    dplyr::select(.data$countryname_eng, .data$staff_rangers, .data$staff_others, .data$staff_total,
-                  .data$PA_area_surveyed, .data$PA_area_unsurveyed) %>%
-    dplyr::right_join(country_info, by = "countryname_eng") %>%
-    dplyr::mutate(tally_known = dplyr::if_else(.data$type == "known", .data[[colname_in_data]], 0),
-                  tally_imputed = what$meta$coef_population * .data$tally_known/.data$PA_area_surveyed * .data$PA_area_unsurveyed,
-                  log_tally = !!rlang::sym(paste0(colname_in_data, "_log")),
-                  tally_predicted = dplyr::if_else(.data$type == "predicted", delog1p(.data$log_tally), 0)) %>%
-    dplyr::select(.data$countryname_eng, .data$continent, .data$tally_known, .data$tally_imputed, .data$tally_predicted) -> .staff
-
-  .staff %>%
-    dplyr::group_by(.data$continent) %>%
-    dplyr::summarise(known = sum(.data$tally_known, na.rm = TRUE),
-                     imputed = sum(.data$tally_imputed, na.rm = TRUE),
-                     predicted = sum(.data$tally_predicted, na.rm = TRUE)) -> .predictions
-
-
   tibble::tibble(type = type,
                  coef = what$meta$coef_population,
                  rerank = what$meta$rerank,
@@ -136,7 +114,7 @@ extract_results_internal <- function(what, who, type, data) {
                  lwr = what[[who]]$lwr[[1]],
                  upr = what[[who]]$upr[[1]],
                  PA_areas = list(.PA_areas),
-                 pred_details = list(.predictions),
+                 pred_details = list(what[[who]]$tallies_details[[1]]),
                  formula = what[[who]]$selected_formula,
                  spatial = what[[who]]$selected_spatial
   )

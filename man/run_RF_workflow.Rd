@@ -46,7 +46,7 @@ Run the full workflow for RF
 }
 \examples{
 \dontrun{
-  RF_small_test <- run_RF_workflow(data = data_rangers, Ncpu = 2, coef = 0,
+  RF_small_test <- run_RF_workflow(data = data_rangers, Ncpu = 2, coef = 1,
                                    rep_feature_select = 2, rep_finetune = 2, rep_simu = 2,
                                    grid_type = "coarse", n_trees = 100)
 }

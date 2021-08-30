@@ -16,7 +16,7 @@
 #'
 #' @examples
 #' \dontrun{
-#'   RF_small_test <- run_RF_workflow(data = data_rangers, Ncpu = 2, coef = 0,
+#'   RF_small_test <- run_RF_workflow(data = data_rangers, Ncpu = 2, coef = 1,
 #'                                    rep_feature_select = 2, rep_finetune = 2, rep_simu = 2,
 #'                                    grid_type = "coarse", n_trees = 100)
 #' }
@@ -36,6 +36,7 @@ run_RF_workflow <- function(data, rerank = TRUE, Ncpu = 2,  coef = 1, rep_featur
 
   cat("Step 1 + 2: General data preparation & preparation of initial training datasets\n")
 
+  data_not_imputed <- data
   data <- fill_PA_area(data, coef = coef) ## Imputation step
 
   formula_rangers_full <- staff_rangers_log ~ PA_area_log + lat + long + area_country_log + area_forest_pct + pop_density_log + GDP_2019_log + GDP_capita_log +
@@ -299,17 +300,17 @@ run_RF_workflow <- function(data, rerank = TRUE, Ncpu = 2,  coef = 1, rep_featur
   ## We compute the tallies:
   data_final_pred_rangers$data_predictable$staff_rangers_log_predicted <- stats::predict(
     fit_final_rangers, data = data_final_pred_rangers$data_predictable)$predictions
-  record$rangers$tallies_details <- list(compute_tally(data_final_pred_rangers, data_all = data,
+  record$rangers$tallies_details <- list(compute_tally(data_final_pred_rangers, data_all = data_not_imputed,
                                                        who = "rangers", coef_population = coef))
 
   data_final_pred_others$data_predictable$staff_others_log_predicted <- stats::predict(
     fit_final_others, data = data_final_pred_others$data_predictable)$predictions
-  record$others$tallies_details <- list(compute_tally(data_final_pred_others, data_all = data,
+  record$others$tallies_details <- list(compute_tally(data_final_pred_others, data_all = data_not_imputed,
                                                       who = "others", coef_population = coef))
 
   data_final_pred_all$data_predictable$staff_total_log_predicted <- stats::predict(
     fit_final_all, data = data_final_pred_all$data_predictable)$predictions
-  record$all$tallies_details <- list(compute_tally(data_final_pred_all, data_all = data,
+  record$all$tallies_details <- list(compute_tally(data_final_pred_all, data_all = data_not_imputed,
                                                    who = "all", coef_population = coef))
 
   record$rangers$tallies_details[[1]] %>%
@@ -351,7 +352,7 @@ run_RF_workflow <- function(data, rerank = TRUE, Ncpu = 2,  coef = 1, rep_featur
                             type = "quantiles",
                             quantiles = stats::runif(n = nrow(data_pred$data_predictable)))
       data_pred$data_predictable[[var_name]] <- diag(sim$predictions)
-      tallies <- compute_tally(data_pred, data_all = data, who = who, coef_population = coef)
+      tallies <- compute_tally(data_pred, data_all = data_not_imputed, who = who, coef_population = coef)
       stats::setNames(tallies$sum_total, nm = tallies$continent)
       }, mc.cores = Ncpu)) %>%
       as.data.frame() %>%
