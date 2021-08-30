@@ -350,7 +350,8 @@ run_RF_workflow <- function(data, rerank = TRUE, Ncpu = 2,  coef = 1, rep_featur
       sim <- stats::predict(fit,
                             data = data_pred$data_predictable,
                             type = "quantiles",
-                            quantiles = stats::runif(n = nrow(data_pred$data_predictable)))
+                            quantiles = stats::runif(n = nrow(data_pred$data_predictable)),
+                            num.threads = 1L)
       data_pred$data_predictable[[var_name]] <- diag(sim$predictions)
       tallies <- compute_tally(data_pred, data_all = data_not_imputed, who = who, coef_population = coef)
       stats::setNames(tallies$sum_total, nm = tallies$continent)
