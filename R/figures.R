@@ -27,7 +27,7 @@ plot_map_sampling <- function(data, proj = "+proj=moll") {
   data$geometry <- sf::st_transform(data$geometry, crs = proj)
 
   ## binning variable of interest for plotting:
-  data |>
+  data %>%
     dplyr::mutate(sampled_coverage2 = cut(.data$sampled_coverage, breaks = c(0.1, seq(0, 100, 20)),
                                           labels = c("0", paste0(floor(min(data$sampled_coverage[data$sampled_coverage > 0 & !is.na(data$sampled_coverage)])), "-20"), "20-40", "40-60", "60-80", "80-100")),
                   sampled_coverage2 = forcats::fct_rev(.data$sampled_coverage2)) -> data
@@ -38,9 +38,9 @@ plot_map_sampling <- function(data, proj = "+proj=moll") {
   #table(data$sampled_coverage2)
 
   ## creating world border:
-  sf::st_graticule(ndiscr = 10000, margin = 10e-6) |>
-    dplyr::filter(.data$degree %in% c(-180, 180)) |>
-    sf::st_transform(crs = proj) |>
+  sf::st_graticule(ndiscr = 10000, margin = 10e-6) %>%
+    dplyr::filter(.data$degree %in% c(-180, 180)) %>%
+    sf::st_transform(crs = proj) %>%
     #sf::st_convex_hull() %>% # if need to use fill to color oceans
     dplyr::summarise(geometry = sf::st_union(.data$geometry)) -> border
 
@@ -75,7 +75,7 @@ plot_map_reliability <- function(data, proj = "+proj=moll") {
   data$geometry <- sf::st_transform(data$geometry, crs = proj)
 
   ## binning variable of interest for plotting:
-  data |>
+  data %>%
     dplyr::mutate(reliability2 = cut(.data$reliability, breaks = c(0, 9, 12, 14, 16, 18, 20),
                                      labels = c("0-9", "10-12", "13-14", "15-16", "17-18", "19-20")),
                   reliability2 = forcats::fct_rev(droplevels(.data$reliability2))) -> data
@@ -84,9 +84,9 @@ plot_map_reliability <- function(data, proj = "+proj=moll") {
   #table(data$reliability2)
 
   ## creating world border:
-  sf::st_graticule(ndiscr = 10000, margin = 10e-6) |>
-    dplyr::filter(.data$degree %in% c(-180, 180)) |>
-    sf::st_transform(crs = proj) |>
+  sf::st_graticule(ndiscr = 10000, margin = 10e-6) %>%
+    dplyr::filter(.data$degree %in% c(-180, 180)) %>%
+    sf::st_transform(crs = proj) %>%
     #sf::st_convex_hull() %>% # if need to use fill to color oceans
     dplyr::summarise(geometry = sf::st_union(.data$geometry)) -> border
 
@@ -286,7 +286,7 @@ plot_tallies_across_methods <- function(list_results_LMM, list_results_RF, data)
 }
 
 
-#' Plot detail about estimations
+#' Plot details about estimations
 #'
 #' @inheritParams extract_results
 #' @export
@@ -343,7 +343,7 @@ plot_tallies_across_continents <- function(what, data) {
 }
 
 
-#' Plot detail about estimations in terms of PA
+#' Plot details about estimations in terms of PA
 #'
 #' @inheritParams extract_results
 #' @export
@@ -382,5 +382,131 @@ plot_PA_by_data_type <- function(what, data) {
       ggplot2::theme(plot.title.position = "plot",
                      legend.position = "bottom",
                      plot.margin = ggplot2::margin(t = 1, l = 0.5, unit = "cm"))
+}
+
+
+
+#' Plot densities of staff
+#'
+#' @inheritParams extract_results
+#' @inheritParams run_RF_workflow
+#' @param ymax the maximal value for the y-axis
+#' @param breaks a vector of number defining the horizontal lines in the plot (i.e. breaks in ggplot jargon)
+#' @export
+#' @examples
+#' # see ?rangeRinPA
+#'
+plot_density_staff <- function(what, who, data, outliers = "Greenland", ymax = 50000, breaks = c(10^(0:3), 2*10^(0:3), 5*10^(0:3))) {
+
+  what[[who]]$country_info[[1]] %>%
+    dplyr::rowwise() %>%
+    dplyr::mutate(PA = sum(dplyr::c_across(tidyselect::starts_with("PA"))),
+                  exp(dplyr::across(tidyselect::ends_with("log"), .names = "value")) - 1) %>%
+    dplyr::select(-tidyselect::starts_with("PA_"), -tidyselect::ends_with("log")) %>%
+    dplyr::mutate(km2_per_staff = .data$PA / .data$value) -> d ## TODO: check who is missing
+
+  order_continents <- rev(c("World", "Latin America \n& Caribbean", "Africa", "Oceania", "Asia", "Europe", "Northern\n America"))
+
+  d %>%
+    dplyr::filter(!is.na(.data$km2_per_staff), !.data$countryname_eng %in% outliers) %>%
+    add_continents(data = data) %>%
+    dplyr::mutate(continent = dplyr::case_when(.data$continent == "Latin America & Caribbean" ~ "Latin America \n& Caribbean",
+                                               .data$continent == "Northern America" ~ "Northern\n America",
+                                               TRUE ~ .data$continent),
+                  continent = factor(.data$continent, levels = order_continents)) -> dd
+
+  ## fix small negative values caused by fitting data on log(x + 1) to near 0 that can be plotted:
+  dd$km2_per_staff[dd$km2_per_staff < 0] <- 0.01
+  dd$km2_per_staff[dd$value <= 0] <- dd$PA[dd$value <= 0]
+  dd$value[dd$value < 0] <- 0
+
+  threshold <- sum(dd$PA)/(sum(dd$value)*1/0.36) # recommendation is that current force is 36% of what is needed
+
+  dd %>%
+    dplyr::mutate(continent = "World") %>%
+    dplyr::mutate(continent = factor(.data$continent, levels =  order_continents)) -> dd_world
+
+  dd %>%
+    dplyr::bind_rows(dd_world) -> dd_all
+
+  dd %>%
+    dplyr::group_by(.data$continent) %>%
+    dplyr::summarise(mean = stats::weighted.mean(.data$km2_per_staff, .data$PA),
+                     good = sum(.data$PA[.data$km2_per_staff <= threshold]),
+                     bad = sum(.data$PA[.data$km2_per_staff > threshold])) -> dd_mean_continents
+
+  dd %>%
+    dplyr::summarise(mean = stats::weighted.mean(.data$km2_per_staff, .data$PA),
+                     good = sum(.data$PA[.data$km2_per_staff <= threshold]),
+                     bad = sum(.data$PA[.data$km2_per_staff > threshold])) %>%
+    dplyr::mutate(continent = "World") -> dd_mean_world
+
+  dd_mean_continents %>%
+    dplyr::bind_rows(dd_mean_world) %>%
+    dplyr::mutate(continent = factor(.data$continent, levels =  order_continents)) -> dd_mean
+
+  dd_mean %>%
+    tidyr::pivot_longer(cols = c("good", "bad")) %>%
+    dplyr::group_nest(.data$continent) %>%
+    dplyr::rowwise() %>%
+    dplyr::mutate(gg = list(ggplot2::ggplot(data) +
+                              ggplot2::aes(y = .data$value, x = "", fill = .data$name) +
+                              ggplot2::geom_bar(stat = "identity", position = "stack", show.legend = FALSE) +
+                              ggplot2::coord_polar(theta = "y", start = 0, direction = 1) +
+                              ggsci::scale_fill_npg() +
+                              ggplot2::labs(title = paste0(round(100*data$value[1] / sum(data$value), 2), "%")) +
+                              ggplot2::theme_void() +
+                              ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5)))) -> data_pies
+
+  dd %>%
+    ggplot2::ggplot() +
+    ggplot2::geom_jitter(ggplot2::aes(y = .data$km2_per_staff, x = .data$continent, size = .data$PA,
+                                  alpha = .data$km2_per_staff < threshold,
+                                  colour = .data$continent, fill = .data$continent,
+                                  shape = .data$type),
+                     position = ggplot2::position_jitter(seed = 1L, width = 0.15, height = 0), data = dd_all) +
+    ggplot2::geom_segment(ggplot2::aes(y = .data$mean, x = .data$continent, yend = threshold, xend = .data$continent),
+                          arrow = ggplot2::arrow(length = ggplot2::unit(0.3, "cm")),
+                          data = dd_mean %>% dplyr::filter(!dplyr::between(.data$mean, 0.8*threshold, 1.2*threshold))) + ## no arrow if close to target
+    ggplot2::geom_point(ggplot2::aes(y = .data$mean, x = .data$continent, fill = .data$continent),
+                        shape = 23, colour = "black", size = 3, data = dd_mean) +
+    ggplot2::geom_hline(yintercept = threshold, colour = "darkgreen") +
+    ggplot2::geom_text(ggplot2::aes(y = .data$mean, x = .data$continent, label = round(.data$mean)),
+                       nudge_x = 0.3, size = 6, data = dd_mean) +
+    ggplot2::geom_text(ggplot2::aes(y = .data$y, x = .data$x), colour = "darkgreen", size = 3, label = "Recommended",
+                       alpha = 0.95,
+                       hjust = 0, vjust = -0.2,
+                       data = data.frame(x = 0, y = threshold)) + # if not in data, coord_trans does not pick it up...
+    ggplot2::geom_text(ggplot2::aes(y = .data$y, x = .data$x), colour = "darkgreen", size = 3, label = "Not-recommended",
+                       alpha = 0.3,
+                       hjust = 0, vjust = 1.1,
+                       data = data.frame(x = 0, y = threshold)) +
+    ggplot2::scale_y_continuous(limits = c(ymax, 0.01), breaks = breaks, minor_breaks = NULL,
+                                labels = scales::label_number(accuracy = 1), trans = "reverse") +
+    ggplot2::scale_x_discrete(position = "top") +
+    ggplot2::scale_shape_manual(values = c(21, 1)) +
+    ggsci::scale_colour_npg() +
+    ggsci::scale_fill_npg() +
+    ggplot2::scale_alpha_discrete(range = c(0.3, 0.95)) +
+    ggplot2::scale_size_continuous(range = c(1, 10)) +
+    ggplot2::coord_trans(y = "pseudo_log") +
+    ggplot2::labs(x = "", y = expression(paste("Protected areas per individual staff (km"^"2", ")")),
+         caption = bquote(Proportion~of~protected~areas~where~each~staff~manages~""<=""*.(round(threshold, 1))~km^2~":")) +
+    ggplot2::theme_minimal() +
+    ggplot2::theme(panel.grid.major.x = ggplot2::element_blank(), plot.caption = ggplot2::element_text(hjust = 0, vjust = 45)) +
+    ggplot2::guides(colour = "none", size = "none", fill = "none", alpha = "none", shape = "none") -> main_plot
+
+  main_plot +
+    patchwork::inset_element(data_pies$gg[[1]], 0.1, 0, 1/6.15, 0.12, align_to = "panel") +
+    patchwork::inset_element(data_pies$gg[[2]], 0.2, 0, 2/6.15, 0.12, align_to = "panel") +
+    patchwork::inset_element(data_pies$gg[[3]], 0.3, 0, 3/6.15, 0.12, align_to = "panel") +
+    patchwork::inset_element(data_pies$gg[[4]], 0.4, 0, 4/6.15, 0.12, align_to = "panel") +
+    patchwork::inset_element(data_pies$gg[[5]], 0.5, 0, 5/6.15, 0.12, align_to = "panel") +
+    patchwork::inset_element(data_pies$gg[[6]], 0.6, 0, 6/6.15, 0.12, align_to = "panel") +
+    patchwork::inset_element(data_pies$gg[[7]], 0.7, 0, 7/6.15, 0.12, align_to = "panel") -> plot_final
+
+  print(plot_final)
+
+  invisible(dd_all %>% dplyr::arrange(dplyr::desc(.data$km2_per_staff)))
 }
 

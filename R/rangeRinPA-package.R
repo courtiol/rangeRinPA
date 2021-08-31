@@ -269,6 +269,21 @@
 #'                 width = ggplot2::unit(11, "cm"))
 #'
 #'
+#' ## Figure XX density rangers
 #'
+#' plot_density_staff(what = LMM_100, who = "rangers", data = data_rangers)
+#' ggplot2::ggsave(filename = paste0(path_figures, "figure_density_rangers.pdf"),
+#'                  width = 15, height = 9, scale = 0.7)
+#' ggplot2::ggsave(filename = paste0(path_figures, "figure_density_rangers.png"),
+#'                  width = 15, height = 9, scale = 0.7)
+#'
+#'
+#' ## Figure XX density others
+#'
+#' plot_density_staff(what = LMM_100, who = "others", data = data_rangers)
+#' ggplot2::ggsave(filename = paste0(path_figures, "figure_density_others.pdf"),
+#'                  width = 15, height = 9, scale = 0.7)
+#' ggplot2::ggsave(filename = paste0(path_figures, "figure_density_others.png"),
+#'                  width = 15, height = 9, scale = 0.7)
 #'
 #' }

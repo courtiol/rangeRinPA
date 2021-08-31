@@ -32,7 +32,7 @@ Suggests:
     gt,
     knitr,
     patchwork,
-    randomForestExplainer,
+    R.utils,
     rmarkdown,
     rnaturalearthdata,
     spaMM,

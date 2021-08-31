@@ -2,7 +2,7 @@
 % Please edit documentation in R/figures.R
 \name{plot_PA_by_data_type}
 \alias{plot_PA_by_data_type}
-\title{Plot detail about estimations in terms of PA}
+\title{Plot details about estimations in terms of PA}
 \usage{
 plot_PA_by_data_type(what, data)
 }
@@ -12,7 +12,7 @@ plot_PA_by_data_type(what, data)
 \item{data}{a dataset with info on continents if breakdown by continent is required (optional)}
 }
 \description{
-Plot detail about estimations in terms of PA
+Plot details about estimations in terms of PA
 }
 \examples{
 # see ?rangeRinPA

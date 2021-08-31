@@ -2,7 +2,7 @@
 % Please edit documentation in R/figures.R
 \name{plot_tallies_across_continents}
 \alias{plot_tallies_across_continents}
-\title{Plot detail about estimations}
+\title{Plot details about estimations}
 \usage{
 plot_tallies_across_continents(what, data)
 }
@@ -12,7 +12,7 @@ plot_tallies_across_continents(what, data)
 \item{data}{a dataset with info on continents if breakdown by continent is required (optional)}
 }
 \description{
-Plot detail about estimations
+Plot details about estimations
 }
 \examples{
 # see ?rangeRinPA
