@@ -4,14 +4,12 @@
 \alias{plot_density_vs_sampling}
 \title{Plot the density of staff against the sampling intensity}
 \usage{
-plot_density_vs_sampling(data, who = "rangers", coef = 1)
+plot_density_vs_sampling(data, who = "rangers")
 }
 \arguments{
 \item{data}{the complete dataset}
 
 \item{who}{\code{"rangers"} (default), \code{"others"} or \code{"all"}}
-
-\item{coef}{the coefficient for the imputation}
 }
 \description{
 Plot the density of staff against the sampling intensity

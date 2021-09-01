@@ -132,13 +132,12 @@ plot_reliability_vs_sampling <- function(data){
 #'
 #' @inheritParams plot_map_sampling
 #' @param who `"rangers"` (default), `"others"` or `"all"`
-#' @param coef the coefficient for the imputation
 #' @export
 #'
 #' @examples
 #' plot_density_vs_sampling(data_rangers)
 #'
-plot_density_vs_sampling <- function(data, who = "rangers", coef = 1) {
+plot_density_vs_sampling <- function(data, who = "rangers") {
 
   if (who == "all") who <- "total"
 
@@ -146,26 +145,13 @@ plot_density_vs_sampling <- function(data, who = "rangers", coef = 1) {
     dplyr::select(.data$countryname_eng, .data$PA_area_surveyed, .data$sampled_coverage,
                   staff = tidyselect::matches(paste0("staff_", who, "$"))) %>%
     dplyr::mutate(coverage_staff = .data$PA_area_surveyed/.data$staff,
-                  coverage_sampling = .data$sampled_coverage) -> d
-
-  data %>%
-    fill_PA_area(coef = coef) -> data_imputed
-
-    d %>%
-      dplyr::mutate(staff = data_imputed %>% dplyr::select(tidyselect::matches(paste0("staff_", who, "$"))) %>% dplyr::pull(),
-                    coverage_staff_imp = .data$PA_area_surveyed/.data$staff) -> d
-
-  d %>%
+                  coverage_sampling = .data$sampled_coverage) %>%
     dplyr::filter(.data$PA_area_surveyed > 100, .data$countryname_eng != "Greenland") %>%
     dplyr::arrange(dplyr::desc(.data$coverage_staff)) -> d
 
   d %>%
     ggplot2::ggplot() +
-      ggplot2::aes(y = .data$coverage_staff, x = .data$coverage_sampling,
-                   yend = .data$coverage_staff_imp,
-                   xend = .data$coverage_sampling) +
-      ggplot2::geom_segment(arrow = ggplot2::arrow(length = ggplot2::unit(0.1, "cm"), ends = "last"),
-                            colour = "darkgrey") +
+      ggplot2::aes(y = .data$coverage_staff, x = .data$coverage_sampling) +
       ggplot2::geom_point(pch = 1) +
       ggplot2::scale_y_continuous(breaks = c(10^(0:3), 2*10^(0:3), 5*10^(0:3)), minor_breaks = NULL,
                                   labels = scales::label_number(accuracy = 1)) +
@@ -357,7 +343,7 @@ plot_tallies_across_continents <- function(what, data) {
   res <- extract_results(list_results_LMM = list(what)) ## note: works also when input is from RF, makes no difference
 
   res %>%
-    dplyr::filter(.data$who != "All") -> res_focus
+    dplyr::filter(.data$who != "Others") -> res_focus
 
   res_focus %>%
     dplyr::select(.data$who, .data$pred_details) %>%
@@ -379,7 +365,7 @@ plot_tallies_across_continents <- function(what, data) {
   breakdown$upr[breakdown$continent == "World"] <- rep(res_focus$upr, each = 3)
 
   breakdown %>%
-    dplyr::filter(.data$who != "All", .data$continent != "Antarctica") %>%
+    dplyr::filter(.data$who != "Others", .data$continent != "Antarctica") %>%
     dplyr::mutate(continent = dplyr::case_when(.data$continent == "Latin America & Caribbean" ~ "Latin America &\nCarribbean",
                                                .data$continent == "Northern America" ~ "Northern\nAmerica",
                                                TRUE ~ .data$continent)) %>%
@@ -391,11 +377,11 @@ plot_tallies_across_continents <- function(what, data) {
       ggplot2::scale_y_continuous(breaks = (0:10) * 1e5, minor_breaks = (0:100) * 1e4,
                                   labels = scales::label_number(accuracy = 1)) +
       ggsci::scale_fill_npg() +
-      ggplot2::theme_minimal() +
+      ggplot2::theme_bw() +
       ggplot2::labs(fill = "Type of data:", y = "Number of staff", x = NULL) +
       ggplot2::theme(plot.title.position = "plot",
                      legend.position = "bottom") +
-      ggplot2::coord_cartesian(ylim = c(0, round(max(breakdown$upr) / 10e4)*10e4))
+      ggplot2::coord_cartesian(ylim = c(0, ceiling(max(breakdown$upr) / 10e4)*10e4))
 
 }
 
@@ -573,6 +559,7 @@ plot_density_staff <- function(what, who, data, outliers = "Greenland", ymax = 5
 #' Plot densities of staff vs area PA
 #'
 #' @inheritParams plot_density_vs_sampling
+#' @param coef the coefficient for the imputation
 #' @export
 #' @examples
 #' plot_density_vs_PA(data = data_rangers, who = "rangers", coef = 1)
