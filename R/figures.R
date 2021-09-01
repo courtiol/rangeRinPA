@@ -124,14 +124,63 @@ plot_reliability_vs_sampling <- function(data){
     ggplot2::scale_x_continuous(breaks = seq(0, 100, 5), minor_breaks = 0:100) +
     ggplot2::scale_y_continuous(breaks = 10:20, minor_breaks = NULL) +
     ggplot2::theme_bw() +
-    ggplot2::labs(x = "Protected Areas sampled (%)", y = "Reliability score (/20)")
+    ggplot2::labs(x = "Protected areas surveyed (%)", y = "Reliability score (/20)")
+}
+
+
+#' Plot the density of staff against the sampling intensity
+#'
+#' @inheritParams plot_map_sampling
+#' @param who `"rangers"` (default), `"others"` or `"all"`
+#' @param coef the coefficient for the imputation
+#' @export
+#'
+#' @examples
+#' plot_density_vs_sampling(data_rangers)
+#'
+plot_density_vs_sampling <- function(data, who = "rangers", coef = 1) {
+
+  if (who == "all") who <- "total"
+
+  data %>%
+    dplyr::select(.data$countryname_eng, .data$PA_area_surveyed, .data$sampled_coverage,
+                  staff = tidyselect::matches(paste0("staff_", who, "$"))) %>%
+    dplyr::mutate(coverage_staff = .data$PA_area_surveyed/.data$staff,
+                  coverage_sampling = .data$sampled_coverage) -> d
+
+  data %>%
+    fill_PA_area(coef = coef) -> data_imputed
+
+    d %>%
+      dplyr::mutate(staff = data_imputed %>% dplyr::select(tidyselect::matches(paste0("staff_", who, "$"))) %>% dplyr::pull(),
+                    coverage_staff_imp = .data$PA_area_surveyed/.data$staff) -> d
+
+  d %>%
+    dplyr::filter(.data$PA_area_surveyed > 100, .data$countryname_eng != "Greenland") %>%
+    dplyr::arrange(dplyr::desc(.data$coverage_staff)) -> d
+
+  d %>%
+    ggplot2::ggplot() +
+      ggplot2::aes(y = .data$coverage_staff, x = .data$coverage_sampling,
+                   yend = .data$coverage_staff_imp,
+                   xend = .data$coverage_sampling) +
+      ggplot2::geom_segment(arrow = ggplot2::arrow(length = ggplot2::unit(0.1, "cm"), ends = "last"),
+                            colour = "darkgrey") +
+      ggplot2::geom_point(pch = 1) +
+      ggplot2::scale_y_continuous(breaks = c(10^(0:3), 2*10^(0:3), 5*10^(0:3)), minor_breaks = NULL,
+                                  labels = scales::label_number(accuracy = 1)) +
+      ggplot2::scale_x_continuous(breaks = seq(0, 100, 5), minor_breaks = 0:100) +
+      ggplot2::coord_trans(y = "log") +
+      ggplot2::labs(x = "Protected areas surveyed (%)",
+                    y = expression(paste("Protected areas per individual staff (km"^"2", ")"))) +
+      ggplot2::theme_bw()
 }
 
 
 #' Plot the influence of the fine tuning parameters for RF/ETs fits on the RMSE
 #'
 #' @param result the output of a call to [`run_RF_workflow()`]
-#' @param who `"rangers"` (default), `"others"` or `"all"`
+#' @inheritParams plot_density_vs_sampling
 #'
 #' @export
 #'
