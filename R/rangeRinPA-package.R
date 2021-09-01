@@ -237,8 +237,39 @@
 #'
 #' results_predictions %>%
 #'   dplyr::select(1:3, "point_pred", "lwr", "upr") %>%
-#'   tidyr::pivot_wider(values_from = c("point_pred", "lwr", "upr"), names_from = "type")
+#'   tidyr::pivot_wider(values_from = c("point_pred", "lwr", "upr"), names_from = "type") %>%
+#'   dplyr::select(.data$who, coef_imputation = .data$coef,
+#'                 tidyselect::contains("LMM"),
+#'                 tidyselect::contains("RF")) -> table_predictions
 #'
+#'  readr::write_excel_csv(table_predictions,
+#'                         file = paste0(path_tables, "table_predictions.csv"))
+#'
+#'
+#' ## Table SXX
+#'
+#' results_predictions %>%
+#'   dplyr::filter(.data$who == "All", .data$type == "LMM", .data$coef == 1) %>%
+#'   dplyr::pull(.data$pred_details) %>%
+#'   `[[`(1) %>%
+#'   dplyr::select(-.data$sum_known_imputed) %>%
+#'   dplyr::rename_with(.fn = \(n) sub("sum_", "", n), tidyselect::starts_with("sum_")) -> table_predictions_all_per_continent
+#'
+#'  readr::write_excel_csv(table_predictions_all_per_continent,
+#'                         file = paste0(path_tables, "table_predictions_all_per_continent.csv"))
+#'
+#'
+#' ## Table SXX
+#'
+#' results_predictions %>%
+#'   dplyr::filter(.data$who == "Rangers", .data$type == "LMM", .data$coef == 1) %>%
+#'   dplyr::pull(.data$pred_details) %>%
+#'   `[[`(1) %>%
+#'   dplyr::select(-.data$sum_known_imputed) %>%
+#'   dplyr::rename_with(.fn = \(n) sub("sum_", "", n), tidyselect::starts_with("sum_")) -> table_predictions_rangers_per_continent
+#'
+#' readr::write_excel_csv(table_predictions_all_per_continent,
+#'                        file = paste0(path_tables, "table_predictions_rangers_per_continent.csv"))
 #'
 #' ## Figure XX tallies per methods
 #'
