@@ -316,4 +316,18 @@
 #' ggplot2::ggsave(filename = paste0(path_figures, "figure_PA_by_data_type_temp.png"),
 #'                 width = ggplot2::unit(11, "cm"))
 #'
+#' ## Figure XX density vs PA
+#' plot_density_vs_PA(data = data_rangers, who = "all", coef = 1)
+#' ggplot2::ggsave(filename = paste0(path_figures, "figure_density_vs_PA_all.pdf"),
+#'                 width = ggplot2::unit(8, "cm"))
+#' ggplot2::ggsave(filename = paste0(path_figures, "figure_density_vs_PA_all.png"),
+#'                 width = ggplot2::unit(8, "cm"))
+#'
+#' #' ## Figure XX density vs PA
+#' plot_density_vs_PA(data = data_rangers, who = "rangers", coef = 1)
+#' ggplot2::ggsave(filename = paste0(path_figures, "figure_density_vs_PA_rangers.pdf"),
+#'                 width = ggplot2::unit(8, "cm"))
+#' ggplot2::ggsave(filename = paste0(path_figures, "figure_density_vs_PA_rangers.png"),
+#'                 width = ggplot2::unit(8, "cm"))
+#'
 #' }

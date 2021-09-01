@@ -569,3 +569,59 @@ plot_density_staff <- function(what, who, data, outliers = "Greenland", ymax = 5
   invisible(dd_all %>% dplyr::arrange(dplyr::desc(.data$km2_per_staff)))
 }
 
+
+#' Plot densities of staff vs area PA
+#'
+#' @inheritParams plot_density_vs_sampling
+#' @export
+#' @examples
+#' plot_density_vs_PA(data = data_rangers, who = "rangers", coef = 1)
+#'
+plot_density_vs_PA <- function(data, who, coef = 1) {
+
+  if (who == "all") who <- "total"
+
+  old_opt <- options("ggrepel.max.overlaps" = Inf)
+
+  ybreaks <- 10^(0:5)
+  xbreaks <- 10^(1:7)
+
+  data %>%
+    fill_PA_area(coef = coef) %>%
+    dplyr::rename(staff = tidyselect::matches(paste0("staff_", who, "$"))) %>%
+    dplyr::mutate(staff = dplyr::if_else(.data$area_PA_total > 0 & .data$staff == 0, 1, .data$staff),
+                  coverage_staff = .data$area_PA_total/.data$staff) %>%
+    tidyr::drop_na(.data$staff) -> d
+
+  fit <- spaMM::fitme(log(coverage_staff + 1) ~ log(area_PA_total + 1), data = d)
+  tibble::tibble(y = exp(spaMM::predict.HLfit(fit)[, 1]) - 1,
+                 x = fit$data$area_PA_total) -> preds
+
+  d %>%
+    ggplot2::ggplot() +
+    ggplot2::aes(y = .data$coverage_staff, x = .data$area_PA_total,
+                 label = .data$countryname_iso, colour = .data$country_UN_continent) +
+    ggplot2::geom_line(ggplot2::aes(y = .data$y, x = .data$x), data = preds, colour = "blue",
+                       size = 2, linetype = "dashed", alpha = 0.5,
+                       inherit.aes = FALSE) +
+    ggrepel::geom_text_repel(key_glyph = "point", alpha = 0.4, size = 3) +
+    ggplot2::geom_point() +
+    ggplot2::coord_trans(y = "log", x = "log") +
+    ggsci::scale_colour_npg() +
+    ggplot2::scale_x_continuous(breaks = xbreaks, minor_breaks = NULL,
+                                limits = c(5, min(xbreaks[xbreaks > max(d$area_PA_total)])),
+                                labels = scales::label_number(accuracy = 1)) +
+    ggplot2::scale_y_continuous(breaks = ybreaks, minor_breaks = NULL,
+                                limits = c(min(d$coverage_staff, na.rm = TRUE), min(ybreaks[ybreaks > max(d$coverage_staff, na.rm = TRUE)])),
+                                labels = scales::label_number(accuracy = 1)) +
+    ggplot2::theme_bw() +
+    ggplot2::theme(legend.position = "bottom") +
+    ggplot2::labs(y = expression(paste("Protected areas per individual staff (km"^"2", ")")),
+         x = expression(paste("Area of protected areas (km"^"2", ")")),
+         colour = "Continent:") -> plot
+
+   options(old_opt) ## restore original options
+
+   plot
+}
+
