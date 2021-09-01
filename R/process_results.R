@@ -6,6 +6,7 @@
 #' @param list_results_LMM a list of objects produced by [`run_LMM_workflow()`]
 #' @param list_results_RF a list of objects produced by [`run_RF_workflow()`]
 #' @param data a dataset with info on continents if breakdown by continent is required (optional)
+#' @inheritParams run_RF_workflow
 #'
 #' @export
 #'
@@ -28,24 +29,24 @@
 #'
 #' }
 #'
-extract_results <- function(list_results_LMM = list(), list_results_RF = list(), data = NULL) {
+extract_results <- function(list_results_LMM = list(), list_results_RF = list(), data = NULL, outliers = NULL) {
   d_LMM <- d_RF <- data.frame()
 
   if (length(list_results_LMM) > 0) {
-    rangers_list_LMM <- lapply(list_results_LMM, function(x) extract_results_internal(what = x, who = "rangers", type = "LMM", data = data))
-    others_list_LMM  <- lapply(list_results_LMM, function(x) extract_results_internal(what = x, who = "others", type = "LMM", data = data))
-    all_list_LMM     <- lapply(list_results_LMM, function(x) extract_results_internal(what = x, who = "all", type = "LMM", data = data))
-    rbind(cbind(who = "Rangers", as.data.frame(do.call("rbind", rangers_list_LMM))),
-          cbind(who = "Others",  as.data.frame(do.call("rbind", others_list_LMM))),
-          cbind(who = "All",     as.data.frame(do.call("rbind", all_list_LMM)))) -> d_LMM
+    rangers_list_LMM <- lapply(list_results_LMM, function(x) extract_results_internal(what = x, who = "rangers", type = "LMM", data = data, outliers = outliers))
+    others_list_LMM  <- lapply(list_results_LMM, function(x) extract_results_internal(what = x, who = "others", type = "LMM", data = data, outliers = outliers))
+    all_list_LMM     <- lapply(list_results_LMM, function(x) extract_results_internal(what = x, who = "all", type = "LMM", data = data, outliers = outliers))
+    rbind(cbind(who = "All",     as.data.frame(do.call("rbind", all_list_LMM))),
+          cbind(who = "Rangers", as.data.frame(do.call("rbind", rangers_list_LMM))),
+          cbind(who = "Others",  as.data.frame(do.call("rbind", others_list_LMM)))) -> d_LMM
   }
   if (length(list_results_RF) > 0) {
-    rangers_list_RF <- lapply(list_results_RF, function(x) extract_results_internal(what = x, who = "rangers", type = "RF", data = data))
-    others_list_RF  <- lapply(list_results_RF, function(x) extract_results_internal(what = x, who = "others", type = "RF", data = data))
-    all_list_RF     <- lapply(list_results_RF, function(x) extract_results_internal(what = x, who = "all", type = "RF", data = data))
-    rbind(cbind(who = "Rangers", as.data.frame(do.call("rbind", rangers_list_RF))),
-          cbind(who = "Others",  as.data.frame(do.call("rbind", others_list_RF))),
-          cbind(who = "All",     as.data.frame(do.call("rbind", all_list_RF)))) -> d_RF
+    rangers_list_RF <- lapply(list_results_RF, function(x) extract_results_internal(what = x, who = "rangers", type = "RF", data = data, outliers = outliers))
+    others_list_RF  <- lapply(list_results_RF, function(x) extract_results_internal(what = x, who = "others", type = "RF", data = data, outliers = outliers))
+    all_list_RF     <- lapply(list_results_RF, function(x) extract_results_internal(what = x, who = "all", type = "RF", data = data, outliers = outliers))
+    rbind(cbind(who = "All",     as.data.frame(do.call("rbind", all_list_RF))),
+          cbind(who = "Rangers", as.data.frame(do.call("rbind", rangers_list_RF))),
+          cbind(who = "Others",  as.data.frame(do.call("rbind", others_list_RF)))) -> d_RF
   }
   if (ncol(d_LMM) > 0 && ncol(d_RF) > 0) {
     d <- rbind(d_LMM, d_RF)
@@ -55,14 +56,14 @@ extract_results <- function(list_results_LMM = list(), list_results_RF = list(),
     d <- d_RF
   }
 
-  d$who <- factor(d$who, levels = c("Rangers", "Others", "All"))
+  d$who <- factor(d$who, levels = c("All", "Rangers", "Others"))
   tibble::as_tibble(d)
 }
 
 #' @describeIn extract_results an internal function fetching the results
 #' @export
 #'
-extract_results_internal <- function(what, who, type, data) {
+extract_results_internal <- function(what, who, type, data, outliers) {
 
   if (!is.null(data)) {
     what[[who]]$country_info[[1]] %>%
@@ -71,6 +72,10 @@ extract_results_internal <- function(what, who, type, data) {
   } else {
      country_info <- what[[who]]$country_info[[1]]
   }
+
+  ### handle outliers:
+  country_info %>%
+    handle_outliers(outliers = outliers) -> country_info
 
   ### extract info about PA:
 
@@ -100,10 +105,9 @@ extract_results_internal <- function(what, who, type, data) {
                      PA_area_imputed   = sum(.data$PA_area_imputed),
                      PA_area_predicted = sum(.data$PA_area_predicted),
                      PA_area_unknown   = sum(.data$PA_area_unknown)
-                     ) -> .PA_areas
-
-  #.PA_areas %>%
-  #  dplyr::summarise(PA_area_total = sum(dplyr::c_across())) -> .PA_area_total
+                     ) %>%
+    dplyr::mutate(PA_area_total = .data$PA_area_known + .data$PA_area_imputed + .data$PA_area_predicted + .data$PA_area_unknown,
+                  PA_area_total_without_unknown = .data$PA_area_known + .data$PA_area_imputed + .data$PA_area_predicted) -> .PA_areas
 
   tibble::tibble(type = type,
                  coef = what$meta$coef_population,
@@ -114,6 +118,8 @@ extract_results_internal <- function(what, who, type, data) {
                  lwr = what[[who]]$lwr[[1]],
                  upr = what[[who]]$upr[[1]],
                  PA_areas = list(.PA_areas),
+                 PA_total = sum(.PA_areas$PA_area_total),
+                 PA_total_without_unknown = sum(.PA_areas$PA_area_total_without_unknown),
                  pred_details = list(what[[who]]$tallies_details[[1]]),
                  formula = what[[who]]$selected_formula,
                  spatial = what[[who]]$selected_spatial
@@ -205,17 +211,17 @@ extract_training_info <- function(which, list_results_LMM = list(), list_results
     rangers_list_LMM <- lapply(list_results_LMM, function(x) extract_training_info_internal(which = which, what = x, who = "rangers", type = "LMM", data = data))
     others_list_LMM  <- lapply(list_results_LMM, function(x) extract_training_info_internal(which = which, what = x, who = "others", type = "LMM", data = data))
     all_list_LMM     <- lapply(list_results_LMM, function(x) extract_training_info_internal(which = which, what = x, who = "all", type = "LMM", data = data))
-    rbind(cbind(who = "Rangers", type = "LMM", as.data.frame(do.call("rbind", rangers_list_LMM))),
-          cbind(who = "Others",  type = "LMM", as.data.frame(do.call("rbind", others_list_LMM))),
-          cbind(who = "All",     type = "LMM", as.data.frame(do.call("rbind", all_list_LMM)))) -> d_LMM
+    rbind(cbind(who = "All",     type = "LMM", as.data.frame(do.call("rbind", all_list_LMM))),
+          cbind(who = "Rangers", type = "LMM", as.data.frame(do.call("rbind", rangers_list_LMM))),
+          cbind(who = "Others",  type = "LMM", as.data.frame(do.call("rbind", others_list_LMM)))) -> d_LMM
   }
   if (length(list_results_RF) > 0) {
     rangers_list_RF <- lapply(list_results_RF, function(x) extract_training_info_internal(which = which, what = x, who = "rangers", type = "RF", data = data))
     others_list_RF  <- lapply(list_results_RF, function(x) extract_training_info_internal(which = which, what = x, who = "others", type = "RF", data = data))
     all_list_RF     <- lapply(list_results_RF, function(x) extract_training_info_internal(which = which, what = x, who = "all", type = "RF", data = data))
-    rbind(cbind(who = "Rangers", type = "RF", as.data.frame(do.call("rbind", rangers_list_RF))),
-          cbind(who = "Others",  type = "RF", as.data.frame(do.call("rbind", others_list_RF))),
-          cbind(who = "All",     type = "RF", as.data.frame(do.call("rbind", all_list_RF)))) -> d_RF
+    rbind(cbind(who = "All",     type = "RF/ETs", as.data.frame(do.call("rbind", all_list_RF))),
+          cbind(who = "Rangers", type = "RF/ETs", as.data.frame(do.call("rbind", rangers_list_RF))),
+          cbind(who = "Others",  type = "RF/ETs", as.data.frame(do.call("rbind", others_list_RF)))) -> d_RF
   }
   if (ncol(d_LMM) > 0 && ncol(d_RF) > 0) {
     d <- rbind(d_LMM, d_RF)
@@ -225,7 +231,7 @@ extract_training_info <- function(which, list_results_LMM = list(), list_results
     d <- d_RF
   }
 
-  d$who <- factor(d$who, levels = c("Rangers", "Others", "All"))
+  d$who <- factor(d$who, levels = c("All", "Rangers", "Others"))
   d <- tibble::as_tibble(d)
 
   if (which == "initial") {
@@ -306,17 +312,17 @@ extract_finetuning <- function(list_results_LMM = list(), list_results_RF = list
     rangers_list_LMM <- lapply(list_results_LMM, function(x) extract_finetuning_internal(what = x, who = "rangers", type = "LMM", data = data))
     others_list_LMM  <- lapply(list_results_LMM, function(x) extract_finetuning_internal(what = x, who = "others", type = "LMM", data = data))
     all_list_LMM     <- lapply(list_results_LMM, function(x) extract_finetuning_internal(what = x, who = "all", type = "LMM", data = data))
-    rbind(cbind(who = "Rangers", as.data.frame(do.call("rbind", rangers_list_LMM))),
-          cbind(who = "Others",  as.data.frame(do.call("rbind", others_list_LMM))),
-          cbind(who = "All",     as.data.frame(do.call("rbind", all_list_LMM)))) -> d_LMM
+    rbind(cbind(who = "All",     as.data.frame(do.call("rbind", all_list_LMM))),
+          cbind(who = "Rangers", as.data.frame(do.call("rbind", rangers_list_LMM))),
+          cbind(who = "Others",  as.data.frame(do.call("rbind", others_list_LMM)))) -> d_LMM
   }
   if (length(list_results_RF) > 0) {
-    rangers_list_RF <- lapply(list_results_RF, function(x) extract_finetuning_internal(what = x, who = "rangers", type = "RF", data = data))
-    others_list_RF  <- lapply(list_results_RF, function(x) extract_finetuning_internal(what = x, who = "others", type = "RF", data = data))
-    all_list_RF     <- lapply(list_results_RF, function(x) extract_finetuning_internal(what = x, who = "all", type = "RF", data = data))
-    rbind(cbind(who = "Rangers", as.data.frame(do.call("rbind", rangers_list_RF))),
-          cbind(who = "Others",  as.data.frame(do.call("rbind", others_list_RF))),
-          cbind(who = "All",     as.data.frame(do.call("rbind", all_list_RF)))) -> d_RF
+    rangers_list_RF <- lapply(list_results_RF, function(x) extract_finetuning_internal(what = x, who = "rangers", type = "RF/ETs", data = data))
+    others_list_RF  <- lapply(list_results_RF, function(x) extract_finetuning_internal(what = x, who = "others", type = "RF/ETs", data = data))
+    all_list_RF     <- lapply(list_results_RF, function(x) extract_finetuning_internal(what = x, who = "all", type = "RF/ETs", data = data))
+    rbind(cbind(who = "All",     as.data.frame(do.call("rbind", all_list_RF))),
+          cbind(who = "Rangers", as.data.frame(do.call("rbind", rangers_list_RF))),
+          cbind(who = "Others",  as.data.frame(do.call("rbind", others_list_RF)))) -> d_RF
   }
   if (ncol(d_LMM) > 0 && ncol(d_RF) > 0) {
     d <- rbind(d_LMM, d_RF)
@@ -326,7 +332,7 @@ extract_finetuning <- function(list_results_LMM = list(), list_results_RF = list
     d <- d_RF
   }
 
-  d$who <- factor(d$who, levels = c("Rangers", "Others", "All"))
+  d$who <- factor(d$who, levels = c( "All", "Rangers", "Others"))
   tibble::as_tibble(d)
 }
 
@@ -345,7 +351,7 @@ extract_finetuning_internal <- function(what, who, type, data) {
   if (type == "LMM") {
     fine_tunning_res <- tibble::tibble(method =  data_info$fine_tuning[[1]][["result_mean"]] %>% dplyr::slice_min(.data$RMSE) %>% dplyr::pull(.data$method),
                                        mtry = NA, splitrule = NA, min.node.size = NA, replace = NA, sample.fraction = NA)
-  } else if (type == "RF") {
+  } else if (type == "RF/ETs") {
     fine_tunning_res <- tibble::tibble(method = NA,
                                        mtry = sub(pattern = "function (p) \n", replacement = "",
                                                   x = as.character(data_info$best_tuning[[1]]$mtry), fixed = TRUE),
@@ -354,7 +360,7 @@ extract_finetuning_internal <- function(what, who, type, data) {
                                        replace = data_info$best_tuning[[1]]$replace,
                                        sample.fraction = data_info$best_tuning[[1]]$sample.fraction)
   } else {
-    stop("argument type must be 'LMM' or 'RF'>!")
+    stop("argument type must be 'LMM' or 'RF/ETs'>!")
   }
 
    tibble::tibble(type = type,

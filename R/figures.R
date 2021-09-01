@@ -52,7 +52,7 @@ plot_map_sampling <- function(data, proj = "+proj=moll") {
     ggplot2::scale_fill_manual(values = c(scales::brewer_pal(type = "seq", palette = 2, direction = -1)(length(unique(data$sampled_coverage2)) - 2), "#FFA500"),
                                labels = c(levels(data$sampled_coverage2), "no terrestrial PAs listed in the WDPA"),
                                na.value = "grey50",
-                               guide = ggplot2::guide_legend(title = "Protected Areas\n sampled (%)")) +
+                               guide = ggplot2::guide_legend(title = "Protected areas\n surveyed (%)")) +
     ggplot2::theme_void() +
     ggplot2::theme(legend.position = "left",
                    #panel.grid = ggplot2::element_line(colour = "GREY", size = 0.3),
@@ -201,7 +201,8 @@ plot_finetuning <- function(result, who = "rangers") {
 
   finetune_res_mean %>%
     dplyr::mutate(splitrule = dplyr::if_else(.data$splitrule == "extratrees", "splitrule = 'extratrees'", "splitrule = 'variance'"),
-                  replace = dplyr::if_else(.data$replace, "replace = TRUE", "replace = FALSE")) %>%
+                  replace = dplyr::if_else(.data$replace, "replace = TRUE", "replace = FALSE"),
+                  replace = factor(.data$replace, levels = c("replace = TRUE", "replace = FALSE"))) %>%
     dplyr::bind_cols(SE = finetune_res_SE$RMSE) %>%
     dplyr::mutate(RMSE_upr = .data$RMSE + .data$SE,
                   RMSE_lwr = .data$RMSE - .data$SE) -> finetune_res
@@ -255,6 +256,9 @@ plot_features_selection <- function(result, who = "rangers") {
       ggplot2::geom_line(alpha = 0.7) +
       ggplot2::geom_hline(yintercept = min(selected_features_res$RMSE), linetype = "dashed") +
       ggplot2::scale_x_continuous(breaks = 1:19, minor_breaks = NULL) +
+      ggplot2::scale_y_continuous(breaks = seq(1, 20, 0.5), minor_breaks = NULL) +
+      ggplot2::coord_cartesian(ylim = c(floor(min(selected_features_res$RMSE) * 2)/2,
+                                        ceiling(max(selected_features_res$RMSE)))) +
       ggplot2::theme_bw() +
       ggplot2::labs(shape = "spatial autocorrelation", colour = "spatial autocorrelation") +
       ggplot2::theme()
@@ -297,7 +301,7 @@ plot_features_selected <- function(list_results_LMM, list_results_RF, data, size
     ggplot2::aes(y = .data$predictor, x = .data$coef, shape = factor(.data$predictor_included, levels = c("TRUE", "FALSE"))) +
     ggplot2::geom_point(size = size) +
     ggplot2::scale_shape_manual(values = c("circle", "circle open")) +
-    ggplot2::labs(x = "Relative density of staff in unsurveyed area", y = "Candidate predictor", shape = "Predictor selected") +
+    ggplot2::labs(x = "Coeffficient used for the imputation", y = "Candidate predictor", shape = "Predictor selected") +
     ggplot2::facet_grid(.data$who ~ .data$type) +
     ggplot2::scale_x_continuous(breaks = seq(0, 1, 0.25), minor_breaks = NULL) +
     ggplot2::theme_bw() +
@@ -316,19 +320,22 @@ plot_features_selected <- function(list_results_LMM, list_results_RF, data, size
 #'
 plot_tallies_across_methods <- function(list_results_LMM, list_results_RF, data) {
 
-  res <- extract_results(list_results_LMM = list_results_LMM, list_results_RF = list_results_RF, data = data)
+  extract_results(list_results_LMM = list_results_LMM,
+                  list_results_RF = list_results_RF, data = data) %>%
+    dplyr::mutate(type = dplyr::if_else(.data$type == "LMM", "LMM", "RF/ETs")) -> res
 
   ggplot2::ggplot(res) +
     ggplot2::aes(y = .data$point_pred, x = as.factor(.data$coef), fill = .data$type,
                  ymin = pmin(.data$lwr, .data$point_pred), ymax = .data$upr) +
     ggplot2::geom_col(position = "dodge", colour = "black", size = 0.2) +
     ggplot2::geom_linerange(position = ggplot2::position_dodge(width = 0.9), size = 0.5) +
-    ggplot2::scale_y_continuous(breaks = (0:10) * 1e5, minor_breaks = (0:200) * 1e4, labels = scales::comma) +
+    ggplot2::scale_y_continuous(breaks = (0:10) * 1e5, minor_breaks = (0:200) * 1e4,
+                                labels = scales::label_number(accuracy = 1)) +
     ggsci::scale_fill_npg(guide = ggplot2::guide_legend(reverse = TRUE), alpha = 0.8) + # values = c("#52734D", "#FEFFDE", "#91C788")
     ggplot2::theme_minimal() +
     ggplot2::coord_flip() +
     ggplot2::labs(x = "Coefficient used for imputation",
-                  y = "Estimated worldwide total number of staff",
+                  y = "Estimated total number of staff",
                   fill = "Statistical framework used for predictions:") +
     ggplot2::facet_wrap(~ .data$who, scales = "free") +
     ggplot2::theme(legend.position = "bottom")
@@ -381,7 +388,8 @@ plot_tallies_across_continents <- function(what, data) {
       ggplot2::geom_col() +
       ggplot2::geom_errorbar(width = 0, colour = "#E64B35FF") +
       ggplot2::facet_wrap(~ .data$continent, nrow = 1) +
-      ggplot2::scale_y_continuous(breaks = (0:10) * 1e5, minor_breaks = (0:100) * 1e4, labels = scales::comma) +
+      ggplot2::scale_y_continuous(breaks = (0:10) * 1e5, minor_breaks = (0:100) * 1e4,
+                                  labels = scales::label_number(accuracy = 1)) +
       ggsci::scale_fill_npg() +
       ggplot2::theme_minimal() +
       ggplot2::labs(fill = "Type of data:", y = "Number of staff", x = NULL) +
@@ -412,11 +420,12 @@ plot_PA_by_data_type <- function(what, data) {
     tidyr::unnest(-.data$who) %>%
     tidyr::pivot_longer(cols = tidyselect::starts_with("PA")) %>%
     dplyr::mutate(name = sapply(.data$name, \(x) sub(pattern = "PA_area_", replacement = "", x))) %>%
+    dplyr::filter(.data$name %in% c("unknown", "predicted", "imputed", "known")) %>%
     dplyr::mutate(name = factor(.data$name, levels = c("unknown", "predicted", "imputed", "known"))) %>%
     dplyr::group_by(.data$who, .data$continent) %>%
     dplyr::mutate(total = sum(.data$value),
                   value = .data$value / .data$total,
-                  who = factor(.data$who, levels = c("Rangers", "Others", "All"))) %>%
+                  who = factor(.data$who, levels = c("All", "Rangers", "Others"))) %>%
     dplyr::ungroup() -> PA_areas_breakdown
 
   PA_areas_breakdown %>%
@@ -480,12 +489,12 @@ plot_density_staff <- function(what, who, data, outliers = "Greenland", ymax = 5
 
   dd %>%
     dplyr::group_by(.data$continent) %>%
-    dplyr::summarise(mean = stats::weighted.mean(.data$km2_per_staff, .data$PA),
+    dplyr::summarise(mean = sum(.data$PA) / sum(.data$value), #stats::weighted.mean(.data$km2_per_staff, .data$PA),
                      good = sum(.data$PA[.data$km2_per_staff <= threshold]),
                      bad = sum(.data$PA[.data$km2_per_staff > threshold])) -> dd_mean_continents
 
   dd %>%
-    dplyr::summarise(mean = stats::weighted.mean(.data$km2_per_staff, .data$PA),
+    dplyr::summarise(mean = sum(.data$PA) / sum(.data$value), #stats::weighted.mean(.data$km2_per_staff, .data$PA),
                      good = sum(.data$PA[.data$km2_per_staff <= threshold]),
                      bad = sum(.data$PA[.data$km2_per_staff > threshold])) %>%
     dplyr::mutate(continent = "World") -> dd_mean_world
@@ -520,6 +529,7 @@ plot_density_staff <- function(what, who, data, outliers = "Greenland", ymax = 5
     ggplot2::geom_point(ggplot2::aes(y = .data$mean, x = .data$continent, fill = .data$continent),
                         shape = 23, colour = "black", size = 3, data = dd_mean) +
     ggplot2::geom_hline(yintercept = threshold, colour = "darkgreen") +
+    { if (who == "rangers") ggplot2::geom_hline(yintercept = 5, colour = "darkgreen", linetype = "dashed") } +
     ggplot2::geom_text(ggplot2::aes(y = .data$mean, x = .data$continent, label = round(.data$mean)),
                        nudge_x = 0.3, size = 6, data = dd_mean) +
     ggplot2::geom_text(ggplot2::aes(y = .data$y, x = .data$x), colour = "darkgreen", size = 3, label = "Recommended",

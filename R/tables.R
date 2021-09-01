@@ -50,7 +50,7 @@ table_completeness_obs <- function(data, outliers = NULL) {
     dplyr::bind_rows(tibble::tibble(category = "total",
                                     full_survey = sum(tab$full_survey),
                                     partial_survey = sum(tab$partial_survey))) %>%
-    dplyr::mutate(both = .data$full_survey + .data$partial_survey)
+    dplyr::mutate(all_survey = .data$full_survey + .data$partial_survey)
 }
 
 
@@ -69,7 +69,7 @@ table_completeness_obs <- function(data, outliers = NULL) {
 table_completeness_km2 <- function(data, outliers = NULL) {
 
   data %>%
-    dplyr::filter(!.data$countryname_iso %in% !!outliers) -> data
+    handle_outliers(outliers = outliers) -> data
 
   tibble::tibble(
     category = c("rangers and other staff both separately known",
@@ -83,20 +83,20 @@ table_completeness_km2 <- function(data, outliers = NULL) {
                  "no data",
                  "no data"),
     category_PA = rep(c("km2_surveyed", "km2_unsurveyed"), 5),
-    N = c(sum(data$PA_area_surveyed[!is.na(data$staff_rangers_others_known) & data$PA_area_unsurveyed == 0]),
-          sum(data$PA_area_unsurveyed[!is.na(data$staff_rangers_others_known) & data$PA_area_unsurveyed > 0]),
-          sum(data$PA_area_surveyed[!is.na(data$staff_total_details_unknown) & data$PA_area_unsurveyed == 0]),
-          sum(data$PA_area_unsurveyed[!is.na(data$staff_total_details_unknown) & data$PA_area_unsurveyed > 0]),
-          sum(data$PA_area_surveyed[!is.na(data$staff_rangers_others_unknown) & data$PA_area_unsurveyed == 0]),
-          sum(data$PA_area_unsurveyed[!is.na(data$staff_rangers_others_unknown) & data$PA_area_unsurveyed > 0]),
-          sum(data$PA_area_surveyed[!is.na(data$staff_others) & is.na(data$staff_rangers) & data$PA_area_unsurveyed == 0]),
-          sum(data$PA_area_unsurveyed[!is.na(data$staff_others) & is.na(data$staff_rangers) & data$PA_area_unsurveyed > 0]),
+    N = c(sum(data$PA_area_surveyed[!is.na(data$staff_rangers_others_known)]),
+          sum(data$PA_area_unsurveyed[!is.na(data$staff_rangers_others_known)]),
+          sum(data$PA_area_surveyed[!is.na(data$staff_total_details_unknown)]),
+          sum(data$PA_area_unsurveyed[!is.na(data$staff_total_details_unknown)]),
+          sum(data$PA_area_surveyed[!is.na(data$staff_rangers_others_unknown)]),
+          sum(data$PA_area_unsurveyed[!is.na(data$staff_rangers_others_unknown)]),
+          sum(data$PA_area_surveyed[!is.na(data$staff_others) & is.na(data$staff_rangers)]),
+          sum(data$PA_area_unsurveyed[!is.na(data$staff_others) & is.na(data$staff_rangers)]),
           sum(data$PA_area_surveyed[(is.na(data$staff_rangers_others_known) &
                is.na(data$staff_rangers_others_unknown) &
-               is.na(data$staff_total_details_unknown) & data$PA_area_unsurveyed == 0)]),
+               is.na(data$staff_total_details_unknown))]),
           sum(data$PA_area_unsurveyed[(is.na(data$staff_rangers_others_known) &
                is.na(data$staff_rangers_others_unknown) &
-               is.na(data$staff_total_details_unknown) & data$PA_area_unsurveyed > 0)])
+               is.na(data$staff_total_details_unknown))])
           )) -> tab
 
   tab <- tidyr::pivot_wider(tab, names_from = "category_PA", values_from = "N")
@@ -132,7 +132,7 @@ table_completeness_vars <- function(data, outliers = NULL) {
                   nb_unknown = c(sum(is.na(data[, var]))),
                   proportion_nb_known = .data$nb_known / (.data$nb_known + .data$nb_unknown),
                   total_PA_known = c(sum(data$PA_area_surveyed[!is.na(data[, var])])),
-                  total_PA_unknown = c(sum(data$PA_area_unsurveyed[is.na(data[, var])])),
+                  total_PA_unknown = c(sum(data$PA_area_surveyed[is.na(data[, var])])),
                   proportion_total_PA_known = .data$total_PA_known / (.data$total_PA_known + .data$total_PA_unknown))
   }
 
@@ -161,3 +161,96 @@ table_completeness_vars <- function(data, outliers = NULL) {
 }
 
 
+#' Create table with predictions (per method)
+#'
+#' This function creates the table that shows the point predictions and their intervals, for the
+#' different methods and coefficient values used for the imputation.
+#'
+#' @inheritParams extract_results
+#' @param density a logical indicating whether to return densities instead of raw numbers (default =
+#'   `FALSE`)
+#'
+#' @return a tibble
+#' @export
+#'
+#' @examples
+#' # see see ?rangeRinPA
+#'
+table_predictions_per_method <- function(list_results_LMM, list_results_RF, data, density = FALSE) {
+
+  outliers <- NULL
+  if (density) {
+    outliers <- "Greenland" ## Note: results contain Greenland for rangers only since only that is known for this territory and we don't do predictions for it!
+    }
+
+  extract_results(list_results_LMM = list_results_LMM,
+                  list_results_RF = list_results_RF,
+                  data = data,
+                  outliers = outliers) -> results_predictions
+
+  results_predictions %>%
+   dplyr::select(1:3, "point_pred", "lwr", "upr", "PA_total_without_unknown") %>%
+   tidyr::pivot_wider(values_from = c("point_pred", "lwr", "upr", "PA_total_without_unknown"), names_from = "type") %>%
+   dplyr::select(.data$who, coef_imputation = .data$coef, tidyselect::contains("PA_total_without"),
+                 tidyselect::contains("LMM"),
+                 tidyselect::contains("RF")) -> res
+
+  if (density) {
+    if (any(grepl(pattern = "LMM", colnames(res)))) {
+      res %>%
+        dplyr::mutate(dplyr::across(.cols =  c(.data$point_pred_LMM, .data$lwr_LMM, .data$upr_LMM),
+                                    ~ .data$PA_total_without_unknown_LMM / .x)) %>%
+        dplyr::rename(lwr_LMM = .data$upr_LMM, upr_LMM = .data$lwr_LMM) %>%
+        dplyr::relocate(.data$upr_LMM, .after = .data$lwr_LMM) -> res
+      }
+
+    if (any(grepl(pattern = "RF", colnames(res)))) {
+      res %>%
+        dplyr::mutate(dplyr::across(.cols =  c(.data$point_pred_RF, .data$lwr_RF, .data$upr_RF),
+                                    ~ .data$PA_total_without_unknown_RF / .x)) %>%
+        dplyr::rename(lwr_RF = .data$upr_RF, upr_RF = .data$lwr_RF) %>%
+        dplyr::relocate(.data$upr_RF, .after = .data$lwr_RF) -> res
+    }
+  }
+
+  res %>%
+    dplyr::select(-tidyselect::contains("PA_total_without")) %>%
+    dplyr::rename_with(\(n) sub("RF", "RF/ETs", n), tidyselect::contains("RF")) %>%
+    dplyr::arrange(.data$who, dplyr::desc(.data$coef_imputation))
+}
+
+
+#' Create table with predictions (per continent)
+#'
+#' This function creates the table that shows the point predictions and their intervals, for the
+#' different continents.
+#'
+#' @inheritParams table_predictions_per_method
+#' @inheritParams plot_PA_by_data_type
+#'
+#' @return a tibble
+#' @export
+#'
+#' @examples
+#' # see see ?rangeRinPA
+#'
+table_predictions_per_continent <- function(what, data) {
+
+  extract_results(list_results_LMM = list(what),
+                  data = data,
+                  outliers = "Greenland") -> results_predictions_no_G
+
+  results_predictions_no_G  %>%
+      dplyr::rowwise() %>%
+      dplyr::mutate(pred_details = .data$pred_details %>%
+                    dplyr::filter(.data$continent != "Antarctica") %>%
+                    dplyr::select(-.data$continent) %>% list()) %>%
+      dplyr::select(.data$who, .data$pred_details, .data$PA_areas) %>%
+      tidyr::unnest(cols = c(.data$PA_areas, .data$pred_details)) %>%
+      dplyr::select(.data$who, .data$continent, .data$sum_total, .data$lwr, .data$upr, .data$PA_area_total_without_unknown) %>%
+      dplyr::mutate(km2_per_staff_point_pred = .data$PA_area_total_without_unknown / .data$sum_total,
+                    km2_per_staff_lwr = .data$PA_area_total_without_unknown / .data$upr,
+                    km2_per_staff_upr = .data$PA_area_total_without_unknown / .data$lwr) %>%
+      dplyr::select(-.data$PA_area_total_without_unknown) %>%
+      dplyr::rename(point_pred = .data$sum_total)
+}

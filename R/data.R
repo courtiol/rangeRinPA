@@ -532,6 +532,8 @@ handle_PA_area <- function(data, survey, formula = NULL, keep_details = FALSE) {
 #' @export
 #'
 handle_outliers <- function(data, outliers) {
+  if (is.null(outliers)) return(data)
+
   data %>%
     dplyr::filter(!.data$countryname_eng %in% outliers)
 }

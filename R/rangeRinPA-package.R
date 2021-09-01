@@ -79,6 +79,15 @@
 #'                 width = ggplot2::unit(8, "cm"))
 #'
 #'
+#' ## Figure XX
+#'
+#' plot_density_vs_sampling(data_rangers)
+#' ggplot2::ggsave(filename = paste0(path_figures, "figure_density_vs_sampling.pdf"),
+#'                 width = ggplot2::unit(8, "cm"))
+#' ggplot2::ggsave(filename = paste0(path_figures, "figure_density_vs_sampling.png"),
+#'                 width = ggplot2::unit(8, "cm"))
+#'
+#'
 #' ## Numerical example to explain how imputation is done (in SI):
 #'
 #' data_rangers %>%
@@ -179,6 +188,7 @@
 #'  readr::write_excel_csv(training_info_initial_clean,
 #'                         file = paste0(path_tables, "table_training_sets_initial.csv"))
 #'
+#'
 #' ## Table S3
 #'
 #' extract_training_info(which = "final",
@@ -214,11 +224,16 @@
 #' ## Figure XX feature selection (influence on RMSE)
 #'
 #' plot_features_selection(result = RF_100, who = "rangers")
-#' ggplot2::ggsave(filename = paste0(path_figures, "figure_features_selection_temp.pdf"),
+#' ggplot2::ggsave(filename = paste0(path_figures, "figure_features_selection_RF_temp.pdf"),
 #'                 width = ggplot2::unit(8, "cm"))
-#' ggplot2::ggsave(filename = paste0(path_figures, "figure_features_selection_temp.png"),
+#' ggplot2::ggsave(filename = paste0(path_figures, "figure_features_selection_RF_temp.png"),
 #'                 width = ggplot2::unit(8, "cm"))
 #'
+#' plot_features_selection(result = LMM_100, who = "rangers")
+#' ggplot2::ggsave(filename = paste0(path_figures, "figure_features_selection_LMM_temp.pdf"),
+#'                 width = ggplot2::unit(8, "cm"))
+#' ggplot2::ggsave(filename = paste0(path_figures, "figure_features_selection_LMM_temp.png"),
+#'                 width = ggplot2::unit(8, "cm"))
 #'
 #' ## Figure XX fine tuning
 #'
@@ -227,20 +242,12 @@
 #'                 width = ggplot2::unit(8, "cm"))
 #' ggplot2::ggsave(filename = paste0(path_figures, "figure_finetuning_temp.png"),
 #'                 width = ggplot2::unit(8, "cm"))
-#'
-#'
+
 #' ## Table SXX
 #'
-#' extract_results(list_results_LMM = list(LMM_000, LMM_025, LMM_050, LMM_075, LMM_100),
+#' table_predictions_per_method(list_results_LMM = list(LMM_000, LMM_025, LMM_050, LMM_075, LMM_100),
 #'                 list_results_RF = list(RF_000, RF_025, RF_050, RF_075, RF_100),
-#'                 data = data_rangers) -> results_predictions
-#'
-#' results_predictions %>%
-#'   dplyr::select(1:3, "point_pred", "lwr", "upr") %>%
-#'   tidyr::pivot_wider(values_from = c("point_pred", "lwr", "upr"), names_from = "type") %>%
-#'   dplyr::select(.data$who, coef_imputation = .data$coef,
-#'                 tidyselect::contains("LMM"),
-#'                 tidyselect::contains("RF")) -> table_predictions
+#'                 data = data_rangers) -> table_predictions
 #'
 #'  readr::write_excel_csv(table_predictions,
 #'                         file = paste0(path_tables, "table_predictions.csv"))
@@ -248,28 +255,20 @@
 #'
 #' ## Table SXX
 #'
-#' results_predictions %>%
-#'   dplyr::filter(.data$who == "All", .data$type == "LMM", .data$coef == 1) %>%
-#'   dplyr::pull(.data$pred_details) %>%
-#'   `[[`(1) %>%
-#'   dplyr::select(-.data$sum_known_imputed) %>%
-#'   dplyr::rename_with(.fn = \(n) sub("sum_", "", n), tidyselect::starts_with("sum_")) -> table_predictions_all_per_continent
+#' table_predictions_per_method(list_results_LMM = list(LMM_000, LMM_025, LMM_050, LMM_075, LMM_100),
+#'                 list_results_RF = list(RF_000, RF_025, RF_050, RF_075, RF_100),
+#'                 data = data_rangers, density = TRUE) -> table_predictions_densities
 #'
-#'  readr::write_excel_csv(table_predictions_all_per_continent,
-#'                         file = paste0(path_tables, "table_predictions_all_per_continent.csv"))
-#'
+#'  readr::write_excel_csv(table_predictions_densities,
+#'                         file = paste0(path_tables, "table_predictions_densities.csv"))
 #'
 #' ## Table SXX
 #'
-#' results_predictions %>%
-#'   dplyr::filter(.data$who == "Rangers", .data$type == "LMM", .data$coef == 1) %>%
-#'   dplyr::pull(.data$pred_details) %>%
-#'   `[[`(1) %>%
-#'   dplyr::select(-.data$sum_known_imputed) %>%
-#'   dplyr::rename_with(.fn = \(n) sub("sum_", "", n), tidyselect::starts_with("sum_")) -> table_predictions_rangers_per_continent
+#' table_predictions_per_continent <- table_predictions_per_continent(what = LMM_100, data = data_rangers)
 #'
-#' readr::write_excel_csv(table_predictions_all_per_continent,
-#'                        file = paste0(path_tables, "table_predictions_rangers_per_continent.csv"))
+#' readr::write_excel_csv(table_predictions_per_continent,
+#'                        file = paste0(path_tables, "table_predictions_per_continent.csv"))
+#'
 #'
 #' ## Figure XX tallies per methods
 #'
@@ -291,15 +290,6 @@
 #'                 width = ggplot2::unit(8, "cm"))
 #'
 #'
-#' ## Figure XX PA per data type
-#'
-#' plot_PA_by_data_type(what = LMM_100, data = data_rangers)
-#' ggplot2::ggsave(filename = paste0(path_figures, "figure_PA_by_data_type_temp.pdf"),
-#'                 width = ggplot2::unit(11, "cm"))
-#' ggplot2::ggsave(filename = paste0(path_figures, "figure_PA_by_data_type_temp.png"),
-#'                 width = ggplot2::unit(11, "cm"))
-#'
-#'
 #' ## Figure XX density rangers
 #'
 #' plot_density_staff(what = LMM_100, who = "rangers", data = data_rangers)
@@ -309,12 +299,21 @@
 #'                  width = 15, height = 9, scale = 0.7)
 #'
 #'
-#' ## Figure XX density others
+#' ## Figure XX density all
 #'
-#' plot_density_staff(what = LMM_100, who = "others", data = data_rangers)
-#' ggplot2::ggsave(filename = paste0(path_figures, "figure_density_others.pdf"),
+#' plot_density_staff(what = LMM_100, who = "all", data = data_rangers)
+#' ggplot2::ggsave(filename = paste0(path_figures, "figure_density_all.pdf"),
 #'                  width = 15, height = 9, scale = 0.7)
-#' ggplot2::ggsave(filename = paste0(path_figures, "figure_density_others.png"),
+#' ggplot2::ggsave(filename = paste0(path_figures, "figure_density_all.png"),
 #'                  width = 15, height = 9, scale = 0.7)
+#'
+#'
+#' ## Figure XX PA per data type
+#'
+#' plot_PA_by_data_type(what = LMM_100, data = data_rangers)
+#' ggplot2::ggsave(filename = paste0(path_figures, "figure_PA_by_data_type_temp.pdf"),
+#'                 width = ggplot2::unit(11, "cm"))
+#' ggplot2::ggsave(filename = paste0(path_figures, "figure_PA_by_data_type_temp.png"),
+#'                 width = ggplot2::unit(11, "cm"))
 #'
 #' }
