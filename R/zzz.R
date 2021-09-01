@@ -17,7 +17,7 @@ package_info <- function() {
     files <- dir(paste0(find.package(package = "rangeRinPA"), "/R/"))
     filenames_R <- paste0(find.package(package = "rangeRinPA"), "/R/", files)
     lines_code <- sum(sapply(filenames_R, function(file) R.utils::countLines(file)))
-    message(paste("Number of lines of code =", lines_code, "\nNote: the numbers are only reliable if the package is loaded using library()\nand not via devtools!"))
+    message(paste("Number of lines of code =", lines_code, "\nNote: the numbers varies if the package is loaded using library()\nand or via devtools (the latter counts everything, including documentation)!"))
   } else {
     message("Install the package R.utils for more info.")
   }
