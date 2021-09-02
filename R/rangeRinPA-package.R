@@ -103,7 +103,7 @@
 #' ### Predictions
 #'
 #' #Ncpu <- 2L
-#' Ncpu <- 120 ## define the number of CPUs to use
+#' Ncpu <- 100 ## define the number of CPUs to use
 #' n_trees <- 2000
 #'
 #'
@@ -171,6 +171,13 @@
 #'
 #' sapply(paste0(path_predictions, files_to_load), function(file) load(file, envir = .GlobalEnv))
 #'
+#'
+#' ## Info on computing time:
+#'
+#' extract_results(list_results_LMM = list(LMM_000, LMM_025, LMM_050, LMM_075, LMM_100),
+#'                 list_results_RF = list(RF_000, RF_025, RF_050, RF_075, RF_100)) %>%
+#'                 dplyr::mutate(time = .data$run_time * .data$Ncpu) %>%
+#'                 dplyr::summarize(total_time_h = sum(.data$time))
 #'
 #' ## Table S2
 #'
