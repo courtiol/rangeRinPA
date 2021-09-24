@@ -509,23 +509,27 @@ plot_density_staff <- function(what, who, data, outliers = "Greenland", ymax = 5
                                   colour = .data$continent, fill = .data$continent,
                                   shape = .data$type),
                      position = ggplot2::position_jitter(seed = 1L, width = 0.15, height = 0), data = dd_all) +
-    ggplot2::geom_segment(ggplot2::aes(y = .data$mean, x = .data$continent, yend = threshold, xend = .data$continent),
-                          arrow = ggplot2::arrow(length = ggplot2::unit(0.3, "cm")),
-                          data = dd_mean %>% dplyr::filter(!dplyr::between(.data$mean, 0.8*threshold, 1.2*threshold))) + ## no arrow if close to target
+    # ggplot2::geom_segment(ggplot2::aes(y = .data$mean, x = .data$continent, yend = threshold, xend = .data$continent),
+    #                       arrow = ggplot2::arrow(length = ggplot2::unit(0.3, "cm")),
+    #                       data = dd_mean %>% dplyr::filter(!dplyr::between(.data$mean, 0.8*threshold, 1.2*threshold))) + ## no arrow if close to target
     ggplot2::geom_point(ggplot2::aes(y = .data$mean, x = .data$continent, fill = .data$continent),
                         shape = 23, colour = "black", size = 3, data = dd_mean) +
     ggplot2::geom_hline(yintercept = threshold, colour = "darkgreen") +
     { if (who == "rangers") ggplot2::geom_hline(yintercept = 5, colour = "darkgreen", linetype = "dashed") } +
+    { if (who == "rangers") ggplot2::geom_text(ggplot2::aes(y = .data$y, x = .data$x), colour = "darkgreen", size = 3, label = "IUCN recommended",
+         alpha = 0.95,
+         hjust = 0, vjust = -0.2,
+         data = data.frame(x = 0, y = 5)) } +
     ggplot2::geom_text(ggplot2::aes(y = .data$mean, x = .data$continent, label = round(.data$mean)),
                        nudge_x = 0.3, size = 6, data = dd_mean) +
-    ggplot2::geom_text(ggplot2::aes(y = .data$y, x = .data$x), colour = "darkgreen", size = 3, label = "Recommended",
+    ggplot2::geom_text(ggplot2::aes(y = .data$y, x = .data$x), colour = "darkgreen", size = 3, label = "our calculated requirement",
                        alpha = 0.95,
                        hjust = 0, vjust = -0.2,
                        data = data.frame(x = 0, y = threshold)) + # if not in data, coord_trans does not pick it up...
-    ggplot2::geom_text(ggplot2::aes(y = .data$y, x = .data$x), colour = "darkgreen", size = 3, label = "Not-recommended",
-                       alpha = 0.3,
-                       hjust = 0, vjust = 1.1,
-                       data = data.frame(x = 0, y = threshold)) +
+    #ggplot2::geom_text(ggplot2::aes(y = .data$y, x = .data$x), colour = "darkgreen", size = 3, label = "Not-recommended",
+    #                   alpha = 0.3,
+    #                   hjust = 0, vjust = 1.1,
+    #                   data = data.frame(x = 0, y = threshold)) +
     ggplot2::scale_y_continuous(limits = c(ymax, 0.01), breaks = breaks, minor_breaks = NULL,
                                 labels = scales::label_number(accuracy = 1), trans = "reverse") +
     ggplot2::scale_x_discrete(position = "top") +
