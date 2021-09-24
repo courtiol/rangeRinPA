@@ -593,7 +593,7 @@ plot_density_vs_PA <- function(data, who, coef = 1) {
                        inherit.aes = FALSE) +
     ggrepel::geom_text_repel(key_glyph = "point", alpha = 0.4, size = 3) +
     ggplot2::geom_point() +
-    ggplot2::coord_trans(y = "log", x = "log") +
+    ggplot2::coord_trans(y = "log1p", x = "log1p") +
     ggsci::scale_colour_npg() +
     ggplot2::scale_x_continuous(breaks = xbreaks, minor_breaks = NULL,
                                 limits = c(5, min(xbreaks[xbreaks > max(d$area_PA_total)])),
