@@ -34,6 +34,13 @@
 #' if (!dir.exists(path_predictions)) dir.create(path_predictions)
 #'
 #'
+#' ## Data reliability
+#' summary(data_rangers$reliability)
+#' sum(data_rangers$reliability >= 15, na.rm = TRUE)
+#' length(na.omit(data_rangers$reliability))
+#' round(mean(data_rangers$reliability, na.rm = TRUE), 2)
+#' round(sd(data_rangers$reliability, na.rm = TRUE), 2)
+#'
 #' ## Table S1 A
 #'
 #' readr::write_excel_csv(table_completeness_obs(data_rangers, outliers = NULL),
