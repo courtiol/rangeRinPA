@@ -254,3 +254,67 @@ table_predictions_per_continent <- function(what, data) {
       dplyr::select(-.data$PA_area_total_without_unknown) %>%
       dplyr::rename(point_pred = .data$sum_total)
 }
+
+
+#' This function creates the table that shows the point predictions and their intervals, for the
+#' different continents and for the world. It is the one shown in main text.
+#'
+#' @inheritParams table_predictions_per_method
+#' @inheritParams plot_PA_by_data_type
+#'
+#' @return a tibble
+#' @export
+#'
+#' @examples
+#' # see see ?rangeRinPA
+#'
+table_predictions_summary <- function(what, data) {
+
+  lapply(c("all", "rangers"), \(who) {
+    var_staff <- colnames(what[[who]]$country_info[[1]])[grepl("staff", colnames(what[[who]]$country_info[[1]]))]
+
+    what[[who]]$country_info[[1]] %>%
+      add_continents(data = data) %>%
+      handle_outliers(outliers = "Greenland") %>% ## NOTE: outliers not included in "what" at the moment, so superfluous.
+      dplyr::mutate(staff = delog1p(!!rlang::sym(var_staff))) %>%
+      dplyr::rowwise() %>%
+      dplyr::mutate(PA_total = sum(dplyr::c_across(tidyselect::starts_with("PA")))) %>%
+      dplyr::ungroup() %>%
+      dplyr::select(.data$countryname_eng, .data$continent, .data$staff, .data$PA_total) -> country_info
+
+    country_info %>%
+      dplyr::summarise(who = !!who,
+                       PA = sum(.data$PA_total),
+                       estimated_number = sum(.data$staff, na.rm = TRUE),
+                       mean_density = .data$PA / .data$estimated_number) %>%
+      dplyr::mutate(continent = "Global", .before = 1L) -> world_summary_estimates_all
+
+    world_summary_estimates_all %>%
+      dplyr::mutate(estimated_number_lwr = what[[who]]$lwr[[1]],
+                    estimated_number_upr = what[[who]]$upr[[1]],
+                    mean_density_lwr = .data$PA / .data$estimated_number_upr,
+                    mean_density_upr = .data$PA / .data$estimated_number_lwr) -> world_summary
+
+    country_info %>%
+      dplyr::group_by(.data$continent) %>%
+      dplyr::summarise(who = !!who,
+                       PA = sum(.data$PA_total),
+                       estimated_number = sum(.data$staff, na.rm = TRUE),
+                       mean_density = .data$PA / .data$estimated_number) -> continents_summary_estimates
+
+    continents_summary_estimates %>%
+      dplyr::full_join(what$all$tallies_details[[1]] %>% dplyr::select(.data$continent, .data$lwr, .data$upr),
+                       by = "continent") %>%
+      dplyr::rename(estimated_number_lwr = .data$lwr,
+                    estimated_number_upr = .data$upr) %>%
+      dplyr::filter(.data$continent != "Antarctica") %>%
+      dplyr::mutate(mean_density_lwr = .data$PA / .data$estimated_number_upr,
+                    mean_density_upr = .data$PA / .data$estimated_number_lwr) -> continents_summary
+
+    dplyr::bind_rows(world_summary, continents_summary) %>%
+      dplyr::select(.data$who, .data$continent, .data$PA, tidyselect::starts_with("estimated_number"), tidyselect::starts_with("mean_density"))
+  }) -> tables
+
+  do.call("rbind", tables)
+
+}

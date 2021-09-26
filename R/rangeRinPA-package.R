@@ -276,12 +276,20 @@
 #'  readr::write_excel_csv(table_predictions_densities,
 #'                         file = paste0(path_tables, "table_predictions_densities.csv"))
 #'
+#'
 #' ## Table SXX
 #'
 #' table_predictions_per_continent <- table_predictions_per_continent(what = LMM_100, data = data_rangers)
 #'
 #' readr::write_excel_csv(table_predictions_per_continent,
 #'                        file = paste0(path_tables, "table_predictions_per_continent.csv"))
+#'
+#'
+#' ## Main table of predictions that is part of main text
+#'
+#' table_predictions_main <- table_predictions_summary(what = LMM_100, data = data_rangers)
+#' readr::write_excel_csv(table_predictions_main,
+#'                        file = paste0(path_tables, "table_predictions_main.csv"))
 #'
 #'
 #' ## Figure XX tallies per methods
