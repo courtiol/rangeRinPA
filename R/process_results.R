@@ -146,7 +146,7 @@ extract_results_internal <- function(what, who, type, data, outliers) {
 #' }
 #'
 single_summary_internal <- function(result, who, resp, data) {
-  res_in_context <- dplyr::left_join(data, result[[who]]$country_preds[[1]], by = "countryname_eng")
+  res_in_context <- dplyr::left_join(data, result[[who]]$country_info[[1]], by = "countryname_eng")
   res_in_context %>%
     dplyr::mutate(staff = delog1p(res_in_context[[resp]])) -> res_in_context
 
