@@ -51,11 +51,11 @@ plot_map_sampling <- function(data, proj = "+proj=moll") {
     ggplot2::geom_sf(data = border, fill = NA, size = 0.1, colour = "black") +
     ggplot2::geom_sf(mapping = ggplot2::aes(fill = .data$sampled_coverage2, geometry = .data$geometry),
                      data = data, colour = "black", size = 0.05) +
-    ggplot2::scale_fill_manual(values = c(scales::brewer_pal(type = "seq", palette = 2, direction = -1)(length(unique(data$sampled_coverage2)) - 2), "#FFA500"),
-                               labels = c(levels(data$sampled_coverage2), "no terrestrial PAs listed in the WDPA"),
+    ggplot2::scale_fill_manual(values = c(scales::brewer_pal(type = "seq", palette = 2, direction = -1)(length(unique(data$sampled_coverage2)) - 2), "white"),
+                               labels = c(levels(data$sampled_coverage2), "excluded (see legend)"),
                                na.value = "grey50",
                                guide = ggplot2::guide_legend(title = "Protected areas\n surveyed (%)")) +
-    ggplot2::theme_void() +
+    ggplot2::theme_void(base_size = 24) +
     ggplot2::theme(legend.position = "left",
                    #panel.grid = ggplot2::element_line(colour = "GREY", size = 0.3),
                    panel.grid = ggplot2::element_blank()) +
@@ -80,9 +80,11 @@ plot_map_reliability <- function(data, proj = "+proj=moll") {
 
   ## binning variable of interest for plotting:
   data %>%
-    dplyr::mutate(reliability2 = cut(.data$reliability, breaks = c(0, 9, 12, 14, 16, 18, 20),
-                                     labels = c("0-9", "10-12", "13-14", "15-16", "17-18", "19-20")),
-                  reliability2 = forcats::fct_rev(droplevels(.data$reliability2))) -> data
+    dplyr::mutate(reliability = dplyr::if_else(is.na(.data$reliability) & .data$sampled_coverage == 0, 0, .data$reliability),
+                  reliability2 = cut(.data$reliability, breaks = c(-1, 9, 12, 14, 16, 18, 20),
+                                     labels = c("not surveyed", "10-12", "13-14", "15-16", "17-18", "19-20")),
+                  reliability2 = forcats::fct_rev(droplevels(.data$reliability2))) %>%
+    dplyr::select(.data$reliability, .data$reliability2, .data$geometry) -> data
 
   #browser()
   #table(data$reliability2)
@@ -99,11 +101,11 @@ plot_map_reliability <- function(data, proj = "+proj=moll") {
     ggplot2::geom_sf(data = border, fill = NA, size = 0.1, colour = "black") +
     ggplot2::geom_sf(mapping = ggplot2::aes(fill = .data$reliability2, geometry = .data$geometry),
                      data = data, colour = "black", size = 0.05) +
-    ggplot2::scale_fill_manual(values = c(scales::brewer_pal(type = "seq", palette = 2, direction = -1)(length(unique(data$reliability2)) - 1)),
-                               labels = c(levels(data$reliability2), "no data"),
+    ggplot2::scale_fill_manual(values = c(scales::brewer_pal(type = "seq", palette = 2, direction = -1)(length(unique(data$reliability2)) - 2), "white"),
+                               labels = c(levels(data$reliability2), "excluded (see legend)"),
                                na.value = "grey50",
                                guide = ggplot2::guide_legend(title = "Reliability score (/20)")) +
-    ggplot2::theme_void() +
+    ggplot2::theme_void(base_size = 24) +
     ggplot2::theme(legend.position = "left",
                    legend.box.spacing = ggplot2::unit(2.5, "cm"),
                    #panel.grid = ggplot2::element_line(colour = "GREY", size = 0.3),

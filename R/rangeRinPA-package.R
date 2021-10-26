@@ -17,8 +17,6 @@
 #' @examples
 #' \dontrun{
 #'
-#' library(sf) ## to handle the geometry column in the data
-#'
 #' ## Set and create all directories to store files
 #'
 #' path <- "inst/extdata/" ## set the path where you want to store all created files
@@ -43,34 +41,34 @@
 #'
 #' ## Table S1 A
 #'
-#' readr::write_excel_csv(table_completeness_obs(data_rangers, outliers = NULL),
+#' readr::write_excel_csv(table_completeness_obs(data_rangers),
 #'                        file = paste0(path_tables, "table_completeness_obs.csv"))
 #'
 #'
 #' ## Table S1 B
 #'
-#' readr::write_excel_csv(table_completeness_km2(data_rangers, outliers = NULL),
+#' readr::write_excel_csv(table_completeness_km2(data_rangers),
 #'                        file = paste0(path_tables, "table_completeness_km2.csv"))
 #'
 #'
 #' ## Table S1 C
 #'
-#' readr::write_excel_csv(table_completeness_vars(data_rangers, outliers = NULL),
+#' readr::write_excel_csv(table_completeness_vars(data_rangers),
 #'                        file = paste0(path_tables, "table_completeness_vars.csv"))
 #'
 #'
-#' ## Figure XX
+#' ## Figure 1
 #'
-#' plot_map_sampling(data_rangers)
+#' plot_map_sampling(data_rangers_with_geo)
 #' ggplot2::ggsave(filename = paste0(path_figures, "figure_sampling.pdf"),
 #'                 width = ggplot2::unit(15, "cm"))
 #' ggplot2::ggsave(filename = paste0(path_figures, "figure_sampling.png"),
 #'                 width = ggplot2::unit(15, "cm"))
 #'
 #'
-#' ## Figure XX
+#' ## Figure S1
 #'
-#' plot_map_reliability(data_rangers)
+#' plot_map_reliability(data_rangers_with_geo)
 #' ggplot2::ggsave(filename = paste0(path_figures, "figure_reliability.pdf"),
 #'                 width = ggplot2::unit(15, "cm"))
 #' ggplot2::ggsave(filename = paste0(path_figures, "figure_reliability.png"),
@@ -285,7 +283,7 @@
 #'                        file = paste0(path_tables, "table_predictions_per_continent.csv"))
 #'
 #'
-#' ## Main table of predictions that is part of main text
+#' ## Table 1
 #'
 #' table_predictions_main <- table_predictions_summary(what = LMM_100, data = data_rangers)
 #' readr::write_excel_csv(table_predictions_main,
