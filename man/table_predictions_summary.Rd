@@ -5,12 +5,14 @@
 \title{This function creates the table that shows the point predictions and their intervals, for the
 different continents and for the world. It is the one shown in main text.}
 \usage{
-table_predictions_summary(what, data)
+table_predictions_summary(what, data, with_PI = FALSE)
 }
 \arguments{
 \item{what}{an object produced by \code{\link[=run_LMM_workflow]{run_LMM_workflow()}} or \code{\link[=run_RF_workflow]{run_RF_workflow()}}}
 
 \item{data}{a dataset with info on continents if breakdown by continent is required (optional)}
+
+\item{with_PI}{whether or not to add prediction intervals (default = \code{FALSE})}
 }
 \value{
 a tibble

@@ -289,6 +289,14 @@
 #' readr::write_excel_csv(table_predictions_main,
 #'                        file = paste0(path_tables, "table_predictions_main.csv"))
 #'
+#' ## Table SXX
+#'
+#' table_predictions_main_with_PI <- table_predictions_summary(what = LMM_100, data = data_rangers,
+#'                                                             with_PI = TRUE)
+#' readr::write_excel_csv(table_predictions_main_with_PI,
+#'                        file = paste0(path_tables, "table_predictions_main_with_PI.csv"))
+#'
+#'
 #'
 #' ## Figure XX tallies per methods
 #'
