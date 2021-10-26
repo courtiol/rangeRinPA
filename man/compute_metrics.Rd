@@ -27,9 +27,10 @@ country/territory. The rationale for considering this additional metric is to me
 prediction uncertainty at the scale we are actually interested in (a tally across
 countries/territories and not prediction for a particular country/territory). Indeed, our
 predictions are a priori not independent and thus the (expected) squared prediction error of the
-sum is not the sum of (expected) squared errors for each response.  We finally computed Moran's I
-statistics (Moran 1950) via its implementation in the R package ape (Paradis & Schliep 2019) to
-quantify the amount of spatial autocorrelation in cross validation residuals.
+sum is not the sum of (expected) squared errors for each response. If the package ape is
+installed, we finally computed Moran's I statistics (Moran 1950) via its implementation in the R
+package ape (Paradis & Schliep 2019) to quantify the amount of spatial autocorrelation in cross
+validation residuals.
 }
 \examples{
 compute_metrics(pred = c(1.1, 1.8, 2.5, 4.5),

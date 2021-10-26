@@ -136,9 +136,10 @@ globalVariables("where") ## since not properly exported from tidyselect...
 #' prediction uncertainty at the scale we are actually interested in (a tally across
 #' countries/territories and not prediction for a particular country/territory). Indeed, our
 #' predictions are a priori not independent and thus the (expected) squared prediction error of the
-#' sum is not the sum of (expected) squared errors for each response.  We finally computed Moran's I
-#' statistics (Moran 1950) via its implementation in the R package ape (Paradis & Schliep 2019) to
-#' quantify the amount of spatial autocorrelation in cross validation residuals.
+#' sum is not the sum of (expected) squared errors for each response. If the package ape is
+#' installed, we finally computed Moran's I statistics (Moran 1950) via its implementation in the R
+#' package ape (Paradis & Schliep 2019) to quantify the amount of spatial autocorrelation in cross
+#' validation residuals.
 #'
 #' @references Lin, L. I. 1989. A concordance correlation coefficient to evaluate reproducibility.
 #' Biometrics 45: 255–268.
@@ -191,7 +192,7 @@ compute_metrics <- function(pred, obs, inv.dist = NULL) {
 
   MoranI <-  c("MoranI" = NA, "MoranI_pv" = NA) # Moran's I
 
-  if (!is.null(inv.dist)) {
+  if (!is.null(inv.dist) && requireNamespace("ape", quietly = TRUE)) {
     MoranI <- unlist(ape::Moran.I(resid, inv.dist))
     MoranI <- MoranI[c("observed", "p.value")]
     names(MoranI) <- c("MoranI", "MoranI_pv")
@@ -494,13 +495,17 @@ add_continents <- function(tbl, data, levels = NULL) {
 #'
 #' @examples
 #' ## Extracting the polygon for French Guiana
-#' world <- rnaturalearth::ne_countries(scale = "medium", returnclass = "sf")
-#' FrenchGuiana <- extract_polygon(data = world,
-#'                                 countryname_eng = "France",
-#'                                 lon = c(-55, -50), lat = c(6, 2))
-#' plot(FrenchGuiana)
+#' if (requireNamespace("rnaturalearth")) {
+#'   world <- rnaturalearth::ne_countries(scale = "medium", returnclass = "sf")
+#'   FrenchGuiana <- extract_polygon(data = world,
+#'                                   countryname_eng = "France",
+#'                                   lon = c(-55, -50), lat = c(6, 2))
+#'   plot(FrenchGuiana)
+#' }
 #'
 extract_polygon <- function(data, countryname_eng, lon, lat) {
+  if (!requireNamespace("sf", quietly = TRUE)) stop("You need to install the package sf for this function to run")
+
   if (!any(colnames(data) %in% "rne_name")) {
     data$rne_name <- data$name
   }
@@ -523,15 +528,20 @@ extract_polygon <- function(data, countryname_eng, lon, lat) {
 #'
 #' @examples
 #' ## Clipping out the polygon for French Guiana
-#' world <- rnaturalearth::ne_countries(scale = "medium", returnclass = "sf")
-#' France <- world$geometry[world$name == "France"]
-#' plot(France)
-#' France2 <- clipout_polygon(data = world,
-#'                            countryname_eng = "France",
-#'                            lon = c(-55, -50), lat = c(6, 2))
-#' plot(France2)
+#' if (requireNamespace("rnaturalearth")) {
+#'   world <- rnaturalearth::ne_countries(scale = "medium", returnclass = "sf")
+#'   France <- world$geometry[world$name == "France"]
+#'   plot(France)
+#'   France2 <- clipout_polygon(data = world,
+#'                              countryname_eng = "France",
+#'                              lon = c(-55, -50), lat = c(6, 2))
+#'   plot(France2)
+#' }
 #'
 clipout_polygon <- function(data, countryname_eng, lon, lat) {
+
+  if (!requireNamespace("sf", quietly = TRUE)) stop("You need to install the package sf for this function to run")
+
   data2 <- data
   if (!any(colnames(data2) %in% "rne_name")) {
     data2$rne_name <- data2$name

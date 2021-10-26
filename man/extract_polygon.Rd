@@ -22,10 +22,12 @@ are not down in the dataset we use to retrieve the polygons.
 }
 \examples{
 ## Extracting the polygon for French Guiana
-world <- rnaturalearth::ne_countries(scale = "medium", returnclass = "sf")
-FrenchGuiana <- extract_polygon(data = world,
-                                countryname_eng = "France",
-                                lon = c(-55, -50), lat = c(6, 2))
-plot(FrenchGuiana)
+if (requireNamespace("rnaturalearth")) {
+  world <- rnaturalearth::ne_countries(scale = "medium", returnclass = "sf")
+  FrenchGuiana <- extract_polygon(data = world,
+                                  countryname_eng = "France",
+                                  lon = c(-55, -50), lat = c(6, 2))
+  plot(FrenchGuiana)
+}
 
 }

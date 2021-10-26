@@ -23,6 +23,12 @@
 #'
 fetch_data <- function(keep_geometry = FALSE) {
 
+  if (!requireNamespace("sf", quietly = TRUE)) stop("You need to install the package sf for this function to run")
+  if (!requireNamespace("googlesheets4", quietly = TRUE)) stop("You need to install the package googlesheets4 for this function to run")
+  if (!requireNamespace("rnaturalearth", quietly = TRUE)) stop("You need to install the package rnaturalearth for this function to run")
+  if (!requireNamespace("countrycode", quietly = TRUE)) stop("You need to install the package countrycode for this function to run")
+
+
   ### Read the data online:
   googlesheets4::gs4_auth() # google authentification
 

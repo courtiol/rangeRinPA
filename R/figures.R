@@ -23,6 +23,8 @@
 #'
 plot_map_sampling <- function(data, proj = "+proj=moll") {
 
+  if (!requireNamespace("sf", quietly = TRUE)) stop("You need to install the package sf for this function to run")
+
   ## applying projection:
   data$geometry <- sf::st_transform(data$geometry, crs = proj)
 
@@ -70,6 +72,8 @@ plot_map_sampling <- function(data, proj = "+proj=moll") {
 #' plot_map_reliability(data_rangers_with_geo)
 #'
 plot_map_reliability <- function(data, proj = "+proj=moll") {
+
+  if (!requireNamespace("sf", quietly = TRUE)) stop("You need to install the package sf for this function to run")
 
   ## applying projection:
   data$geometry <- sf::st_transform(data$geometry, crs = proj)
@@ -442,6 +446,8 @@ plot_PA_by_data_type <- function(what, data) {
 #'
 plot_density_staff <- function(what, who, data, ymax = 50000, breaks = c(10^(0:3), 2*10^(0:3), 5*10^(0:3))) {
 
+    if (!requireNamespace("patchwork", quietly = TRUE)) stop("You need to install the package patchwork for this function to run")
+
   what[[who]]$country_info[[1]] %>%
     dplyr::rowwise() %>%
     dplyr::mutate(PA = sum(dplyr::c_across(tidyselect::starts_with("PA"))),
@@ -569,6 +575,8 @@ plot_density_staff <- function(what, who, data, ymax = 50000, breaks = c(10^(0:3
 #' plot_density_vs_PA(data = data_rangers, who = "rangers", coef = 1)
 #'
 plot_density_vs_PA <- function(data, who, coef = 1) {
+
+  if (!requireNamespace("ggrepel", quietly = TRUE)) stop("You need to install the package ggrepel for this function to run")
 
   if (who == "all") who <- "total"
 
