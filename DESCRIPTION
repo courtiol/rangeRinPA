@@ -8,7 +8,7 @@ Authors@R:
            comment = c(ORCID = "0000-0003-0637-2959")),
     person("Re:Wild",
            role = "cph"))
-Description: What the package does (one paragraph).
+Description: This packages provides the data and reproduces the results presented in our paper.
 License: CC BY 4.0 + file LICENSE
 Imports:
     dplyr,
