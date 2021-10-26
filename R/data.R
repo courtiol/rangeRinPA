@@ -1,23 +1,29 @@
-#' Fetch the ranger data from the Google sheet
+#' Fetch the data from the Google sheet
 #'
-#' This function retrieves the data from a Google spreadsheet and format them
+#' This function retrieves the raw data from a Google spreadsheet and format them.
 #'
+#' @param keep_geometry whether or not to keep a geometry column storing the polygons associated with each country/territory (default = `FALSE`)
 #' @return a tibble with the raw data
 #' @export
 #'
 #' @examples
 #' \dontrun{
 #' ## Here is how we created the data stored in this package:
-#' data_rangers <- fetch_data_rangers()
+#'
+#' data_rangers <- fetch_data(keep_geometry = FALSE)
+#' data_rangers_with_geo <- fetch_data(keep_geometry = TRUE)
+#'
+#' write.csv2(data_rangers, file = "inst/extdata/raw_data/data_rangers.csv", row.names = FALSE)
+#'
 #' if (require(usethis)) {
 #'   usethis::use_data(data_rangers, overwrite = TRUE)
+#'   usethis::use_data(data_rangers_with_geo, overwrite = TRUE)
 #' }
 #' }
 #'
-fetch_data_rangers <- function() {
+fetch_data <- function(keep_geometry = FALSE) {
 
   ### Read the data online:
-  ### TODO: replace by csv when data are final!
   googlesheets4::gs4_auth() # google authentification
 
   d <- googlesheets4::read_sheet("https://docs.google.com/spreadsheets/d/1x3uo3xojtPAcmB3BDMpBVDuOaYRkYB-mfa9icBZcThc",
@@ -133,9 +139,7 @@ fetch_data_rangers <- function() {
   d$country_UN_continent[d$countryname_iso == "VAT"] <- d$country_UN_continent[d$countryname_iso == "ITA"] # Vatican as Italy
   d$country_UN_subcontinent[d$countryname_iso == "VAT"] <- d$country_UN_subcontinent[d$countryname_iso == "ITA"] # Vatican as Italy
 
-  ### Temporary patch for private analysis only, TODO: remove before release
   d$countryname_iso[d$countryname_eng == "W African Country"] <- "SEN"
-  d$countryname_eng[d$countryname_eng == "W African Country"] <- "Senegal"
 
   ### Dealing with PA variables:
   ## Make clean columns for PA areas:
@@ -250,30 +254,30 @@ fetch_data_rangers <- function() {
                                          rne_name = c("Guadeloupe", "French Guiana", "Reunion", "Bonaire, Sint Eustatius and Saba", "Martinique", "Mayotte", "Svalbard and Jan Mayen", "Tuvalu", "Cocos (Keeling) Islands", "Christmas Island"),
                                          geometry = c(GLP_geom, GUF_geom, REU_geom, BES_geom, MTQ_geom, MYT_geom, SJM_geom, TKL_geom, CCK_geom, CXR_geom))
 
-  world_sf |>
+  world_sf %>%
     dplyr::bind_rows(polygons_data_to_add) -> world_sf
 
   ### Check locations not found in map (depend on scale defined above) or not found in data:
-  d |>
-    dplyr::anti_join(world_sf, by = c(countryname_iso = "rne_iso_a3_eh")) |>
+  d %>%
+    dplyr::anti_join(world_sf, by = c(countryname_iso = "rne_iso_a3_eh")) %>%
     dplyr::pull(.data$countryname_eng) -> missing1
 
-  world_sf |>
-    dplyr::anti_join(d, by = c(rne_iso_a3_eh = "countryname_iso")) |>
+  world_sf %>%
+    dplyr::anti_join(d, by = c(rne_iso_a3_eh = "countryname_iso")) %>%
     dplyr::pull(.data$rne_name) -> missing2
-
-  missing <- c(missing1, missing2)
 
   if (length(missing1) > 0) {
     cat("\nHere are the countries/territories for which polygons are not found:\n")
     print(missing1)
   }
 
-  if (length(missing1) > 0) {
+  if (length(missing2) > 0) {
     cat("\nHere are the countries/territories for which data are not found in our dataset:\n")
     print(missing2)
-    #world_sf |>
-    #  dplyr::filter(!.data$rne_name %in% missing2) -> world_sf ## to remove but then no plotted
+    if (!keep_geometry) {
+      world_sf %>%
+        dplyr::filter(!.data$rne_name %in% missing2) -> world_sf ## to remove but then no plotted
+    }
   }
 
   ### Extract coordinate of the center of each country/territory:
@@ -281,26 +285,80 @@ fetch_data_rangers <- function() {
 
   ### Add geographical info to the data:
   d %>%
-    dplyr::left_join(world_sf %>% dplyr::select(.data$center, .data$rne_iso_a3_eh), by = c("countryname_iso" = "rne_iso_a3_eh")) -> d
+    dplyr::full_join(world_sf %>% dplyr::select(.data$center, .data$rne_iso_a3_eh, .data$rne_adm0_a3, .data$rne_name), by = c("countryname_iso" = "rne_iso_a3_eh")) -> d
 
   d %>%
     tidyr::unnest_wider(col = .data$center, names_sep = "") %>%
     dplyr::rename(long = .data$center1, lat = .data$center2) -> d
+
+
+  ### Fix country names:
+  d %>%
+    dplyr::mutate(countryname_eng = dplyr::if_else(is.na(.data$countryname_eng), .data$rne_name, .data$countryname_eng),
+                  countryname_iso = dplyr::if_else(is.na(.data$countryname_iso), .data$rne_adm0_a3, .data$countryname_iso)) %>%
+    dplyr::select(-.data$rne_adm0_a3, -.data$rne_name) -> d
 
   ### Add coordinates manually for countries/territories with no polygons:
   ## Bouvet Island:
   d$lat[d$countryname_iso == "BVT"]  <- -54.4204601
   d$long[d$countryname_iso == "BVT"] <- 3.3245614
 
+  ### Remove geometry is not to be kept:
+  if (!keep_geometry) {
+    d %>%
+      dplyr::select(!.data$geometry) -> d
+  }
+
   ### Adding flags
+  d$countryname_iso[d$countryname_eng == "W African Country"] <- "XXX" ## For privacy reasons
+
   d %>%
-    dplyr::mutate(flag = countrycode::countrycode(sourcevar = .data$countryname_iso, "iso3c", "unicode.symbol", custom_match = c("KOS" = NA))) -> d
+    dplyr::mutate(countryname_iso_temp = .data$countryname_iso) -> d
+
+  d$countryname_iso_temp[d$countryname_iso == "IOA"] <- "AUS"
+  d$countryname_iso_temp[d$countryname_iso == "CLP"] <- "FRA"
+  d$countryname_iso_temp[d$countryname_iso == "CNM"] <- "CYP"
+  d$countryname_iso_temp[d$countryname_iso == "CSI"] <- "AUS"
+  d$countryname_iso_temp[d$countryname_iso == "ESB"] <- "GBR"
+  d$countryname_iso_temp[d$countryname_iso == "KAB"] <- "KAZ"
+  d$countryname_iso_temp[d$countryname_iso == "SER"] <- "COL" # disputed but I follow 2012 ruling from International Court of Justice
+  d$countryname_iso_temp[d$countryname_iso == "USG"] <- "USA"
+  d$countryname_iso_temp[d$countryname_iso == "WSB"] <- "GBR"
+
+  d %>%
+    dplyr::mutate(flag = countrycode::countrycode(sourcevar = .data$countryname_iso_temp, "iso3c", "unicode.symbol",
+                                                  custom_match = c("KOS" = NA, # Kosovo
+                                                                   "KAS" = NA, "BJN" = NA, "PGA" = NA, "SCR" = NA, # disputed territories
+                                                                   "XXX" = NA))) -> d # privacy reason
+
+  d %>% dplyr::select(-.data$countryname_iso_temp) -> d
+
   d$flag[d$countryname_iso == "KOS"] <- "\U1f1fd\U1f1f0"
+
   d %>%
     dplyr::mutate(country = paste(.data$countryname_eng, .data$flag)) -> d
 
-  ### Adding row names
-  #rownames(d) <- d$countryname_iso ## support in tibbles should stop soon
+  ### Keep only geographical data (or nothing) for Greenland (outlier):
+
+  if (keep_geometry) {
+
+    d %>%
+      dplyr::filter(.data$countryname_iso == "GRL") %>%
+      dplyr::select(.data$countryname_iso, .data$countryname_eng, .data$country_UN_continent, .data$country_UN_subcontinent,
+                    .data$geometry, .data$long, .data$lat, .data$geometry, .data$flag, .data$country) -> Greenland
+
+    d %>%
+      dplyr::filter(.data$countryname_iso != "GRL") -> d
+
+    d %>%
+      dplyr::bind_rows(Greenland) -> d
+
+  } else {
+    d %>%
+      dplyr::filter(.data$countryname_iso != "GRL") -> d
+  }
+
+  ### Return
   d
 }
 
@@ -309,9 +367,9 @@ globalVariables(".data")
 
 #' Ranger data
 #'
-#' This object contain the data about rangers and other staffs members working in protected areas.
+#' This object contain the data about rangers and non-rangers working in protected areas.
 #'
-#' @seealso [`fetch_data_rangers()`] for the function used to create such a dataset
+#' @seealso [`fetch_data()`] for the function used to create such a dataset
 #'
 #' @examples
 #' data_rangers
@@ -319,15 +377,29 @@ globalVariables(".data")
 "data_rangers"
 
 
-#' Impute missing staff numbers proportionally to the density in surveyed areas
+#' Ranger data with polygons
 #'
-#' This function modifies the numbers of staffs for countries/territories where it is partially known.
-#' For those country, it assumes that the unsurveyed area have a density of staff proportional to the density in the surveyed areas.
+#' This object contain the data about rangers and non-rangers working in protected areas.
+#' Compared to [`data_rangers`], this dataset contains polygons corresponding to each country / territory.
+#' It therefore contains additional rows for which we did not collect any information.
+#'
+#' @seealso [`fetch_data()`] for the function used to create such a dataset
+#'
+#' @examples
+#' data_rangers_with_geo
+#'
+"data_rangers_with_geo"
+
+
+#' Impute missing personnel numbers proportionally to the known density in surveyed areas
+#'
+#' This function modifies the numbers of personnel for countries/territories where it is partially known.
+#' For those countries/territories, it assumes that the unsurveyed area have a density of personnel proportional to the density in the surveyed areas.
 #' The proportionality is set by the argument `coef`:
 #'     - e.g. if `coef = 1`, then unsurveyed areas are populated with the same density as the surveyed areas.
 #'     - e.g. if `coef = 0.5`, then unsurveyed areas are populated with half the density as the surveyed areas.
 #'
-#' @param data a data.frame or tibble produced by [`fetch_data_rangers()`]
+#' @param data a data.frame or tibble produced by [`fetch_data()`]
 #' @param coef the coefficient used for the propagation
 #'
 #' @return a dataframe or tibble
@@ -365,7 +437,7 @@ fill_PA_area <- function(data, coef) {
 #'
 #' @inheritParams prepare_data
 #' @param response the unquoted name of the response variable
-#' @param survey the criterion used to select rows depending on whether the focal number of staff is:
+#' @param survey the criterion used to select rows depending on whether the focal number of personnel is:
 #'     - completely unknown ("complete_unknown")
 #'     - completely or partially unknown ("partial_unknown")
 #'     - completely or partially known ("partial_known")
@@ -575,6 +647,7 @@ handle_order <- function(data) {
   data_ordered
 }
 
+
 #' @describeIn build_training_data internal function to handle missing data while building the datasets
 #' @export
 #'
@@ -601,9 +674,10 @@ handle_na <- function(data, response, NA_in_resp = NULL, NA_in_preds = NULL) {
   data
 }
 
+
 #' Test data
 #'
-#' This object contain a subset with the data about rangers and other staffs members working in protected areas.
+#' This object contain a subset with the data about rangers and non-rangers working in protected areas.
 #'
 #' @seealso [`build_initial_training_data()`] for the function used to create such a dataset
 #'

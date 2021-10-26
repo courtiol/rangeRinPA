@@ -37,7 +37,7 @@ handle_na(data, response, NA_in_resp = NULL, NA_in_preds = NULL)
 
 \item{formula}{the formula for the LMM or RF}
 
-\item{survey}{the criterion used to select rows depending on whether the focal number of staff is:
+\item{survey}{the criterion used to select rows depending on whether the focal number of personnel is:
 - completely unknown ("complete_unknown")
 - completely or partially unknown ("partial_unknown")
 - completely or partially known ("partial_known")

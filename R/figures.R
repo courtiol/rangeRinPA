@@ -7,18 +7,18 @@
 #' @export
 #'
 #' @examples
-#' plot_map_sampling(data_rangers)
+#' plot_map_sampling(data_rangers_with_geo)
 #'
 #' if(require(patchwork)) {
-#'   plot_map_sampling(data_rangers, proj = "+proj=moll") +
-#'   plot_map_sampling(data_rangers, proj = "+proj=robin" ) +
-#'   plot_map_sampling(data_rangers, proj = "+proj=natearth2") +
-#'   plot_map_sampling(data_rangers, proj = "+proj=mbt_fps") +
-#'   plot_map_sampling(data_rangers, proj = "+proj=hammer") +
-#'   plot_map_sampling(data_rangers, proj = "+proj=wag1") +
-#'   plot_map_sampling(data_rangers, proj = "+proj=eqearth") +
-#'   plot_map_sampling(data_rangers, proj = "+proj=eck4") +
-#'   plot_map_sampling(data_rangers, proj = "+proj=boggs")
+#'   plot_map_sampling(data_rangers_with_geo, proj = "+proj=moll") +
+#'   plot_map_sampling(data_rangers_with_geo, proj = "+proj=robin" ) +
+#'   plot_map_sampling(data_rangers_with_geo, proj = "+proj=natearth2") +
+#'   plot_map_sampling(data_rangers_with_geo, proj = "+proj=mbt_fps") +
+#'   plot_map_sampling(data_rangers_with_geo, proj = "+proj=hammer") +
+#'   plot_map_sampling(data_rangers_with_geo, proj = "+proj=wag1") +
+#'   plot_map_sampling(data_rangers_with_geo, proj = "+proj=eqearth") +
+#'   plot_map_sampling(data_rangers_with_geo, proj = "+proj=eck4") +
+#'   plot_map_sampling(data_rangers_with_geo, proj = "+proj=boggs")
 #' }
 #'
 plot_map_sampling <- function(data, proj = "+proj=moll") {
@@ -67,7 +67,7 @@ plot_map_sampling <- function(data, proj = "+proj=moll") {
 #' @export
 #'
 #' @examples
-#' plot_map_reliability(data_rangers)
+#' plot_map_reliability(data_rangers_with_geo)
 #'
 plot_map_reliability <- function(data, proj = "+proj=moll") {
 

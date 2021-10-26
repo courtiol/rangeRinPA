@@ -5,19 +5,19 @@
 \alias{data_rangers}
 \title{Ranger data}
 \format{
-An object of class \code{tbl_df} (inherits from \code{tbl}, \code{data.frame}) with 250 rows and 38 columns.
+An object of class \code{tbl_df} (inherits from \code{tbl}, \code{data.frame}) with 249 rows and 37 columns.
 }
 \usage{
 data_rangers
 }
 \description{
-This object contain the data about rangers and other staffs members working in protected areas.
+This object contain the data about rangers and non-rangers working in protected areas.
 }
 \examples{
 data_rangers
 
 }
 \seealso{
-\code{\link[=fetch_data_rangers]{fetch_data_rangers()}} for the function used to create such a dataset
+\code{\link[=fetch_data]{fetch_data()}} for the function used to create such a dataset
 }
 \keyword{datasets}

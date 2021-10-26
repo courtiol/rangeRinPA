@@ -11,7 +11,7 @@ An object of class \code{tbl_df} (inherits from \code{tbl}, \code{data.frame}) w
 data_test
 }
 \description{
-This object contain a subset with the data about rangers and other staffs members working in protected areas.
+This object contain a subset with the data about rangers and non-rangers working in protected areas.
 }
 \examples{
 data_test

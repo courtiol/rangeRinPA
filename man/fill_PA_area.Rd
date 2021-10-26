@@ -2,12 +2,12 @@
 % Please edit documentation in R/data.R
 \name{fill_PA_area}
 \alias{fill_PA_area}
-\title{Impute missing staff numbers proportionally to the density in surveyed areas}
+\title{Impute missing personnel numbers proportionally to the known density in surveyed areas}
 \usage{
 fill_PA_area(data, coef)
 }
 \arguments{
-\item{data}{a data.frame or tibble produced by \code{\link[=fetch_data_rangers]{fetch_data_rangers()}}}
+\item{data}{a data.frame or tibble produced by \code{\link[=fetch_data]{fetch_data()}}}
 
 \item{coef}{the coefficient used for the propagation}
 }
@@ -15,8 +15,8 @@ fill_PA_area(data, coef)
 a dataframe or tibble
 }
 \description{
-This function modifies the numbers of staffs for countries/territories where it is partially known.
-For those country, it assumes that the unsurveyed area have a density of staff proportional to the density in the surveyed areas.
+This function modifies the numbers of personnel for countries/territories where it is partially known.
+For those countries/territories, it assumes that the unsurveyed area have a density of personnel proportional to the density in the surveyed areas.
 The proportionality is set by the argument \code{coef}:
 - e.g. if \code{coef = 1}, then unsurveyed areas are populated with the same density as the surveyed areas.
 - e.g. if \code{coef = 0.5}, then unsurveyed areas are populated with half the density as the surveyed areas.

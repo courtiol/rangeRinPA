@@ -15,6 +15,6 @@ plot_map_reliability(data, proj = "+proj=moll")
 Plot the map for the reliability score
 }
 \examples{
-plot_map_reliability(data_rangers)
+plot_map_reliability(data_rangers_with_geo)
 
 }
