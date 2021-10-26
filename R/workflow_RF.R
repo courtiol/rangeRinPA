@@ -9,7 +9,6 @@
 #' @param rep_finetune the number of replicates for fine tuning (default = 1000)
 #' @param rep_simu the number of simulation replicates (default = 10000)
 #' @param n_trees the number of trees in the random forest
-#' @param outliers a vector with the names of the countries/territories to discard (default = `"Greenland`)
 #'
 #' @return a list with all the output information
 #' @export
@@ -21,7 +20,7 @@
 #'                                    grid_type = "coarse", n_trees = 100)
 #' }
 #'
-run_RF_workflow <- function(data, rerank = TRUE, Ncpu = 2,  coef = 1, rep_feature_select = 1000, rep_finetune = 1000, rep_simu = 10000, n_trees = 10000, grid_type = "fine", outliers = "Greenland") {
+run_RF_workflow <- function(data, rerank = TRUE, Ncpu = 2,  coef = 1, rep_feature_select = 1000, rep_finetune = 1000, rep_simu = 10000, n_trees = 10000, grid_type = "fine") {
 
   set.seed(123)
 
@@ -46,16 +45,13 @@ run_RF_workflow <- function(data, rerank = TRUE, Ncpu = 2,  coef = 1, rep_featur
 
   data_initial_training_rangers <- build_initial_training_data(data,
                                                                formula = formula_rangers_full,
-                                                               survey = "complete_known",
-                                                               outliers = outliers) # note: complete_known includes imputed PAs!
+                                                               survey = "complete_known") # note: complete_known includes imputed PAs!
   data_initial_training_others  <- build_initial_training_data(data,
                                                                formula = formula_others_full,
-                                                               survey = "complete_known",
-                                                               outliers = outliers)
+                                                               survey = "complete_known")
   data_initial_training_all     <- build_initial_training_data(data,
                                                                formula = formula_all_full,
-                                                               survey = "complete_known",
-                                                               outliers = outliers)
+                                                               survey = "complete_known")
 
   record <- c(record,
               list(rangers = tibble::tibble(initial_training_nrow = nrow(data_initial_training_rangers),
@@ -151,20 +147,17 @@ run_RF_workflow <- function(data, rerank = TRUE, Ncpu = 2,  coef = 1, rep_featur
   data_final_training_rangers <- build_final_training_data(data = data,
                                                            formula = selected_formula_rangers,
                                                            survey = "complete_known",
-                                                           spatial = record$rangers$selected_spatial,
-                                                           outliers = outliers)
+                                                           spatial = record$rangers$selected_spatial)
 
   data_final_training_others <- build_final_training_data(data = data,
                                                           formula = selected_formula_others,
                                                           survey = "complete_known",
-                                                          spatial = record$others$selected_spatial,
-                                                          outliers = outliers)
+                                                          spatial = record$others$selected_spatial)
 
   data_final_training_all <- build_final_training_data(data = data,
                                                        formula = selected_formula_all,
                                                        survey = "complete_known",
-                                                       spatial = record$all$selected_spatial,
-                                                       outliers = outliers)
+                                                       spatial = record$all$selected_spatial)
 
   record$rangers$final_training_nrow <- nrow(data_final_training_rangers)
   record$others$final_training_nrow <- nrow(data_final_training_others)
@@ -265,21 +258,21 @@ run_RF_workflow <- function(data, rerank = TRUE, Ncpu = 2,  coef = 1, rep_featur
     formula = selected_formula_rangers,
     survey = "complete_known",
     spatial = record$rangers$selected_spatial,
-    outliers = c(outliers, dont_predict))
+    outliers = dont_predict)
 
   data_final_pred_others <- build_final_pred_data(
     data = data,
     formula = selected_formula_others,
     survey = "complete_known",
     spatial = record$others$selected_spatial,
-    outliers = c(outliers, dont_predict))
+    outliers = dont_predict)
 
   data_final_pred_all <- build_final_pred_data(
     data = data,
     formula = selected_formula_all,
     survey = "complete_known",
     spatial = record$all$selected_spatial,
-    outliers = c(outliers, dont_predict))
+    outliers = dont_predict)
 
 
   record$rangers$nrow_obs_or_imputed <- length(data_final_pred_rangers$data_known$PA_area_surveyed)

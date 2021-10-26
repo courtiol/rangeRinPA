@@ -8,7 +8,6 @@ plot_density_staff(
   what,
   who,
   data,
-  outliers = "Greenland",
   ymax = 50000,
   breaks = c(10^(0:3), 2 * 10^(0:3), 5 * 10^(0:3))
 )
@@ -19,8 +18,6 @@ plot_density_staff(
 \item{who}{the type of staff ("rangers", "others" or "all")}
 
 \item{data}{a dataset with info on continents if breakdown by continent is required (optional)}
-
-\item{outliers}{a vector with the names of the countries/territories to discard (default = \verb{"Greenland})}
 
 \item{ymax}{the maximal value for the y-axis}
 

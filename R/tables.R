@@ -3,7 +3,6 @@
 #' This function creates the table that indicate how many countries and territories have ranger staff and other staff documented in our data.
 #'
 #' @param data the complete dataset
-#' @param outliers a vector with the iso code for the countries/territories to discard (default = `NULL`)
 #'
 #' @return a tibble
 #' @export
@@ -11,10 +10,7 @@
 #' @examples
 #' table_completeness_obs(data_rangers)
 #'
-table_completeness_obs <- function(data, outliers = NULL) {
-
-  data %>%
-    dplyr::filter(!.data$countryname_iso %in% !!outliers) -> data
+table_completeness_obs <- function(data) {
 
   tibble::tibble(
     category = c("rangers and other staff both separately known",
@@ -66,10 +62,7 @@ table_completeness_obs <- function(data, outliers = NULL) {
 #' @examples
 #' table_completeness_km2(data_rangers)
 #'
-table_completeness_km2 <- function(data, outliers = NULL) {
-
-  data %>%
-    handle_outliers(outliers = outliers) -> data
+table_completeness_km2 <- function(data) {
 
   tibble::tibble(
     category = c("rangers and other staff both separately known",
@@ -121,10 +114,7 @@ table_completeness_km2 <- function(data, outliers = NULL) {
 #' @examples
 #' table_completeness_vars(data_rangers)
 #'
-table_completeness_vars <- function(data, outliers = NULL) {
-
-  data %>%
-    dplyr::filter(!.data$countryname_iso %in% !!outliers) -> data
+table_completeness_vars <- function(data) {
 
   var_table <- function(name, var) {
    tibble::tibble(variable = c(name),
@@ -178,15 +168,9 @@ table_completeness_vars <- function(data, outliers = NULL) {
 #'
 table_predictions_per_method <- function(list_results_LMM, list_results_RF, data, density = FALSE) {
 
-  outliers <- NULL
-  if (density) {
-    outliers <- "Greenland" ## Note: results contain Greenland for rangers only since only that is known for this territory and we don't do predictions for it!
-    }
-
   extract_results(list_results_LMM = list_results_LMM,
                   list_results_RF = list_results_RF,
-                  data = data,
-                  outliers = outliers) -> results_predictions
+                  data = data) -> results_predictions
 
   results_predictions %>%
    dplyr::select(1:3, "point_pred", "lwr", "upr", "PA_total_without_unknown") %>%
@@ -237,10 +221,9 @@ table_predictions_per_method <- function(list_results_LMM, list_results_RF, data
 table_predictions_per_continent <- function(what, data) {
 
   extract_results(list_results_LMM = list(what),
-                  data = data,
-                  outliers = "Greenland") -> results_predictions_no_G
+                  data = data) -> results_predictions
 
-  results_predictions_no_G  %>%
+  results_predictions  %>%
       dplyr::rowwise() %>%
       dplyr::mutate(pred_details = .data$pred_details %>%
                     dplyr::filter(.data$continent != "Antarctica") %>%
@@ -275,7 +258,6 @@ table_predictions_summary <- function(what, data) {
 
     what[[who]]$country_info[[1]] %>%
       add_continents(data = data) %>%
-      handle_outliers(outliers = "Greenland") %>% ## NOTE: outliers not included in "what" at the moment, so superfluous.
       dplyr::mutate(staff = delog1p(!!rlang::sym(var_staff))) %>%
       dplyr::rowwise() %>%
       dplyr::mutate(PA_total = sum(dplyr::c_across(tidyselect::starts_with("PA")))) %>%

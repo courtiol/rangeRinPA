@@ -49,7 +49,7 @@
 #'
 #' ## Table S1 B
 #'
-#' readr::write_excel_csv(table_completeness_km2(data_rangers, outliers = NULL), # or NULL or "GRL"?
+#' readr::write_excel_csv(table_completeness_km2(data_rangers, outliers = NULL),
 #'                        file = paste0(path_tables, "table_completeness_km2.csv"))
 #'
 #'

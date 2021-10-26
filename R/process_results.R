@@ -6,7 +6,6 @@
 #' @param list_results_LMM a list of objects produced by [`run_LMM_workflow()`]
 #' @param list_results_RF a list of objects produced by [`run_RF_workflow()`]
 #' @param data a dataset with info on continents if breakdown by continent is required (optional)
-#' @inheritParams run_RF_workflow
 #'
 #' @export
 #'
@@ -29,21 +28,21 @@
 #'
 #' }
 #'
-extract_results <- function(list_results_LMM = list(), list_results_RF = list(), data = NULL, outliers = NULL) {
+extract_results <- function(list_results_LMM = list(), list_results_RF = list(), data = NULL) {
   d_LMM <- d_RF <- data.frame()
 
   if (length(list_results_LMM) > 0) {
-    rangers_list_LMM <- lapply(list_results_LMM, function(x) extract_results_internal(what = x, who = "rangers", type = "LMM", data = data, outliers = outliers))
-    others_list_LMM  <- lapply(list_results_LMM, function(x) extract_results_internal(what = x, who = "others", type = "LMM", data = data, outliers = outliers))
-    all_list_LMM     <- lapply(list_results_LMM, function(x) extract_results_internal(what = x, who = "all", type = "LMM", data = data, outliers = outliers))
+    rangers_list_LMM <- lapply(list_results_LMM, function(x) extract_results_internal(what = x, who = "rangers", type = "LMM", data = data))
+    others_list_LMM  <- lapply(list_results_LMM, function(x) extract_results_internal(what = x, who = "others", type = "LMM", data = data))
+    all_list_LMM     <- lapply(list_results_LMM, function(x) extract_results_internal(what = x, who = "all", type = "LMM", data = data))
     rbind(cbind(who = "All",     as.data.frame(do.call("rbind", all_list_LMM))),
           cbind(who = "Rangers", as.data.frame(do.call("rbind", rangers_list_LMM))),
           cbind(who = "Others",  as.data.frame(do.call("rbind", others_list_LMM)))) -> d_LMM
   }
   if (length(list_results_RF) > 0) {
-    rangers_list_RF <- lapply(list_results_RF, function(x) extract_results_internal(what = x, who = "rangers", type = "RF", data = data, outliers = outliers))
-    others_list_RF  <- lapply(list_results_RF, function(x) extract_results_internal(what = x, who = "others", type = "RF", data = data, outliers = outliers))
-    all_list_RF     <- lapply(list_results_RF, function(x) extract_results_internal(what = x, who = "all", type = "RF", data = data, outliers = outliers))
+    rangers_list_RF <- lapply(list_results_RF, function(x) extract_results_internal(what = x, who = "rangers", type = "RF", data = data))
+    others_list_RF  <- lapply(list_results_RF, function(x) extract_results_internal(what = x, who = "others", type = "RF", data = data))
+    all_list_RF     <- lapply(list_results_RF, function(x) extract_results_internal(what = x, who = "all", type = "RF", data = data))
     rbind(cbind(who = "All",     as.data.frame(do.call("rbind", all_list_RF))),
           cbind(who = "Rangers", as.data.frame(do.call("rbind", rangers_list_RF))),
           cbind(who = "Others",  as.data.frame(do.call("rbind", others_list_RF)))) -> d_RF
@@ -63,7 +62,7 @@ extract_results <- function(list_results_LMM = list(), list_results_RF = list(),
 #' @describeIn extract_results an internal function fetching the results
 #' @export
 #'
-extract_results_internal <- function(what, who, type, data, outliers) {
+extract_results_internal <- function(what, who, type, data) {
 
   if (!is.null(data)) {
     what[[who]]$country_info[[1]] %>%
@@ -72,10 +71,6 @@ extract_results_internal <- function(what, who, type, data, outliers) {
   } else {
      country_info <- what[[who]]$country_info[[1]]
   }
-
-  ### handle outliers:
-  country_info %>%
-    handle_outliers(outliers = outliers) -> country_info
 
   ### extract info about PA:
 
@@ -204,7 +199,7 @@ single_summary_internal <- function(result, who, resp, data) {
 #'                 list_results_RF  = list(RF_small_test))
 #' }
 #'
-extract_training_info <- function(which, list_results_LMM = list(), list_results_RF = list(), data = NULL, outliers = "Greenland") {
+extract_training_info <- function(which, list_results_LMM = list(), list_results_RF = list(), data = NULL) {
   d_LMM <- d_RF <- data.frame()
 
   if (length(list_results_LMM) > 0) {
@@ -249,8 +244,8 @@ extract_training_info <- function(which, list_results_LMM = list(), list_results
   }
 
   if (!is.null(data)) {
-    d$total_obs <- nrow(data[!data$countryname_eng %in% outliers, ])
-    d$total_PA <- sum(data$area_PA_total[!data$countryname_eng %in% outliers])
+    d$total_obs <- nrow(data)
+    d$total_PA <- sum(data$area_PA_total)
     d$obs_coverage <- d$obs / d$total_obs
     d$PA_coverage <- d$PA / d$total_PA
   }

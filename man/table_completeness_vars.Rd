@@ -4,12 +4,10 @@
 \alias{table_completeness_vars}
 \title{Create completeness table (variables)}
 \usage{
-table_completeness_vars(data, outliers = NULL)
+table_completeness_vars(data)
 }
 \arguments{
 \item{data}{the complete dataset}
-
-\item{outliers}{a vector with the iso code for the countries/territories to discard (default = \code{NULL})}
 }
 \value{
 a tibble

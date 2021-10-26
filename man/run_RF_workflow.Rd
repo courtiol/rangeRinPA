@@ -13,8 +13,7 @@ run_RF_workflow(
   rep_finetune = 1000,
   rep_simu = 10000,
   n_trees = 10000,
-  grid_type = "fine",
-  outliers = "Greenland"
+  grid_type = "fine"
 )
 }
 \arguments{
@@ -35,8 +34,6 @@ run_RF_workflow(
 \item{n_trees}{the number of trees in the random forest}
 
 \item{grid_type}{The type of grid to use for finetuning the RF ("fine", the default, or "coarse")}
-
-\item{outliers}{a vector with the names of the countries/territories to discard (default = \verb{"Greenland})}
 }
 \value{
 a list with all the output information

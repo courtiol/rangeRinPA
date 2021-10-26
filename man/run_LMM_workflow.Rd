@@ -11,8 +11,7 @@ run_LMM_workflow(
   coef = 0,
   rep_feature_select = 1000,
   rep_finetune = 1000,
-  rep_simu = 10000,
-  outliers = "Greenland"
+  rep_simu = 10000
 )
 }
 \arguments{
@@ -29,8 +28,6 @@ run_LMM_workflow(
 \item{rep_finetune}{the number of replicates for fine tuning (default = 1000)}
 
 \item{rep_simu}{the number of simulation replicates (default = 10000)}
-
-\item{outliers}{a vector with the names of the countries/territories to discard (default = \verb{"Greenland})}
 }
 \value{
 a list with all the output information

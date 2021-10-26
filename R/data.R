@@ -477,9 +477,8 @@ NULL
 #' @describeIn build_training_data build the initial training datasets
 #' @export
 #'
-build_initial_training_data <- function(data, formula, survey, spatial = FALSE, outliers) {
+build_initial_training_data <- function(data, formula, survey, spatial = FALSE) {
   data <- build_data(data = data, formula = formula, type = "training", spatial = spatial)
-  data <- handle_outliers(data = data, outliers = outliers)
   data <- handle_PA_area(data = data, survey = survey, formula = formula, keep_details = TRUE)
   data <- handle_transform(data = data)
   data <- handle_na(data = data, response = paste0(as.character(formula)[[2]], "_log"))
@@ -491,10 +490,9 @@ build_initial_training_data <- function(data, formula, survey, spatial = FALSE, 
 #' @describeIn build_training_data build the final training datasets
 #' @export
 #'
-build_final_training_data <- function(data, formula, survey, spatial = FALSE, outliers) {
+build_final_training_data <- function(data, formula, survey, spatial = FALSE) {
   data <- build_data(data = data, formula = formula, type = "training", spatial = spatial)
   data <- handle_PA_area(data = data, survey = survey, formula = formula, keep_details = TRUE)
-  data <- handle_outliers(data = data, outliers = outliers)
   data <- handle_transform(data = data)
   data <- handle_order(data)
   data
@@ -503,7 +501,7 @@ build_final_training_data <- function(data, formula, survey, spatial = FALSE, ou
 #' @describeIn build_training_data build the final prediction datasets
 #' @export
 #'
-build_final_pred_data <- function(data, formula, survey, spatial = FALSE, outliers) {
+build_final_pred_data <- function(data, formula, survey, spatial = FALSE, outliers = NULL) {
   data_list <- build_data(data = data, formula = formula, type = "prediction", spatial = spatial)
   for (data in names(data_list)) {
     if (data == "data_known") {
@@ -603,7 +601,7 @@ handle_PA_area <- function(data, survey, formula = NULL, keep_details = FALSE) {
 #' @describeIn build_training_data internal function to handle outliers while building the datasets
 #' @export
 #'
-handle_outliers <- function(data, outliers) {
+handle_outliers <- function(data, outliers = NULL) {
   if (is.null(outliers)) return(data)
 
   data %>%

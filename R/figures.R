@@ -146,7 +146,7 @@ plot_density_vs_sampling <- function(data, who = "rangers") {
                   staff = tidyselect::matches(paste0("staff_", who, "$"))) %>%
     dplyr::mutate(coverage_staff = .data$PA_area_surveyed/.data$staff,
                   coverage_sampling = .data$sampled_coverage) %>%
-    dplyr::filter(.data$PA_area_surveyed > 100, .data$countryname_eng != "Greenland") %>%
+    dplyr::filter(.data$PA_area_surveyed > 100) %>%
     dplyr::arrange(dplyr::desc(.data$coverage_staff)) -> d
 
   d %>%
@@ -440,7 +440,7 @@ plot_PA_by_data_type <- function(what, data) {
 #' @examples
 #' # see ?rangeRinPA
 #'
-plot_density_staff <- function(what, who, data, outliers = "Greenland", ymax = 50000, breaks = c(10^(0:3), 2*10^(0:3), 5*10^(0:3))) {
+plot_density_staff <- function(what, who, data, ymax = 50000, breaks = c(10^(0:3), 2*10^(0:3), 5*10^(0:3))) {
 
   what[[who]]$country_info[[1]] %>%
     dplyr::rowwise() %>%
@@ -452,7 +452,7 @@ plot_density_staff <- function(what, who, data, outliers = "Greenland", ymax = 5
   order_continents <- rev(c("World", "Latin America \n& Caribbean", "Africa", "Oceania", "Asia", "Europe", "Northern\n America"))
 
   d %>%
-    dplyr::filter(!is.na(.data$km2_per_staff), !.data$countryname_eng %in% outliers) %>%
+    dplyr::filter(!is.na(.data$km2_per_staff)) %>%
     add_continents(data = data) %>%
     dplyr::mutate(continent = dplyr::case_when(.data$continent == "Latin America & Caribbean" ~ "Latin America \n& Caribbean",
                                                .data$continent == "Northern America" ~ "Northern\n America",
