@@ -338,19 +338,26 @@
 #'
 #' plot_density_staff(what = LMM_100, who = "rangers", data = data_rangers)
 #' ggplot2::ggsave(filename = paste0(path_figures, "figure_density_rangers.pdf"),
-#'                  width = 15, height = 9, scale = 0.7)
+#'                  width = 14, height = 12, scale = 0.7)
 #' ggplot2::ggsave(filename = paste0(path_figures, "figure_density_rangers.png"),
-#'                  width = 15, height = 9, scale = 0.7)
+#'                  width = 14, height = 12, scale = 0.7)
 #'
 #'
 #' ## Figure XX density all
 #'
 #' plot_density_staff(what = LMM_100, who = "all", data = data_rangers)
 #' ggplot2::ggsave(filename = paste0(path_figures, "figure_density_all.pdf"),
-#'                  width = 15, height = 9, scale = 0.7)
+#'                  width = 14, height = 12, scale = 0.7)
 #' ggplot2::ggsave(filename = paste0(path_figures, "figure_density_all.png"),
-#'                  width = 15, height = 9, scale = 0.7)
+#'                  width = 14, height = 12, scale = 0.7)
 #'
+#' ## Tow previous figures as panel (as in main text)
+#'
+#' plot_density_panel(what = LMM_100, data = data_rangers)
+#' ggplot2::ggsave(filename = paste0(path_figures, "figure_density_panel.pdf"),
+#'                  width = 26, height = 12, scale = 0.7)
+#' ggplot2::ggsave(filename = paste0(path_figures, "figure_density_panel.png"),
+#'                  width = 26, height = 12, scale = 0.7)
 #'
 #' ## Figure XX PA per data type
 #'

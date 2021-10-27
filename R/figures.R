@@ -436,17 +436,18 @@ plot_PA_by_data_type <- function(what, data) {
 
 
 
-#' Plot densities of staff
+#' Plot densities of rangers or all personnel
 #'
 #' @inheritParams extract_results
 #' @inheritParams run_RF_workflow
 #' @param ymax the maximal value for the y-axis
 #' @param breaks a vector of number defining the horizontal lines in the plot (i.e. breaks in ggplot jargon)
+#' @param tag a tag to be used for building a panel (e.g "A.")
 #' @export
 #' @examples
 #' # see ?rangeRinPA
 #'
-plot_density_staff <- function(what, who, data, ymax = 50000, breaks = c(10^(0:3), 2*10^(0:3), 5*10^(0:3))) {
+plot_density_staff <- function(what, who, data, ymax = 6000, breaks = c(10^(0:3), 2*10^(0:3), 5*10^(0:3)), tag = "") {
 
     if (!requireNamespace("patchwork", quietly = TRUE)) stop("You need to install the package patchwork for this function to run")
 
@@ -457,7 +458,7 @@ plot_density_staff <- function(what, who, data, ymax = 50000, breaks = c(10^(0:3
     dplyr::select(-tidyselect::starts_with("PA_"), -tidyselect::ends_with("log")) %>%
     dplyr::mutate(km2_per_staff = .data$PA / .data$value) -> d ## TODO: check who is missing
 
-  order_continents <- rev(c("World", "Latin America \n& Caribbean", "Africa", "Oceania", "Asia", "Europe", "Northern\n America"))
+  order_continents <- c("World", "Latin America \n& Caribbean", "Africa", "Oceania", "Asia", "Europe", "Northern\n America")
 
   d %>%
     dplyr::filter(!is.na(.data$km2_per_staff)) %>%
@@ -512,59 +513,89 @@ plot_density_staff <- function(what, who, data, ymax = 50000, breaks = c(10^(0:3
 
   dd %>%
     ggplot2::ggplot() +
+    ggplot2::geom_polygon(data = data.frame(x = c(0, 0, 8, 8, 0), y = c(6000, 0.01, 0.01, 6000, 6000)),
+                          mapping = ggplot2::aes(x = .data$x, y = .data$y), fill = NA, colour = NA, alpha = 0) +
+    ggplot2::geom_segment(data = data.frame(x = 7.8, xend = 7.8, y = 0.01, yend = 6000),
+                          mapping = ggplot2::aes(x = .data$x, y = .data$y, xend = .data$xend, yend = .data$yend),
+                          arrow = ggplot2::arrow(type = "closed", length = ggplot2::unit(0.3, units = "cm"), ends = "both")) +
+    ggplot2::geom_text(data.frame(x = 7.9, y = 2), mapping = ggplot2::aes(x = .data$x, y = .data$y), label = "better", angle = 270) +
+    ggplot2::geom_text(data.frame(x = 7.9, y = 3000), mapping = ggplot2::aes(x = .data$x, y = .data$y), label = "worse", angle = 270) +
+    ggplot2::geom_polygon(data = data.frame(x = c(0.5, 0.5, 1.5, 1.5, 0.5), y = c(6000, 0.1, 0.1, 6000, 6000)),
+                          mapping = ggplot2::aes(x = .data$x, y = .data$y), fill = "grey", colour = NA, alpha = 0.5) +
     ggplot2::geom_jitter(ggplot2::aes(y = .data$km2_per_staff, x = .data$continent, size = .data$PA,
                                   alpha = .data$km2_per_staff < threshold,
                                   colour = .data$continent, fill = .data$continent,
                                   shape = .data$type),
                      position = ggplot2::position_jitter(seed = 1L, width = 0.15, height = 0), data = dd_all) +
-    # ggplot2::geom_segment(ggplot2::aes(y = .data$mean, x = .data$continent, yend = threshold, xend = .data$continent),
-    #                       arrow = ggplot2::arrow(length = ggplot2::unit(0.3, "cm")),
-    #                       data = dd_mean %>% dplyr::filter(!dplyr::between(.data$mean, 0.8*threshold, 1.2*threshold))) + ## no arrow if close to target
     ggplot2::geom_point(ggplot2::aes(y = .data$mean, x = .data$continent, fill = .data$continent),
                         shape = 23, colour = "black", size = 3, data = dd_mean) +
-    ggplot2::geom_hline(yintercept = threshold, colour = "darkgreen") +
+    ggplot2::geom_polygon(data = data.frame(x = c(0.2, 0.2, 7.5, 7.5, 0.2), y = c(threshold, 0.01, 0.01, threshold, threshold)),
+                          mapping = ggplot2::aes(x = .data$x, y = .data$y), fill = "darkgreen", colour = NA, alpha = 0.1) +
     { if (who == "rangers") ggplot2::geom_hline(yintercept = 5, colour = "darkgreen", linetype = "dashed") } +
-    { if (who == "rangers") ggplot2::geom_text(ggplot2::aes(y = .data$y, x = .data$x), colour = "darkgreen", size = 3, label = "IUCN recommended",
+    { if (who == "rangers") ggplot2::geom_text(ggplot2::aes(y = .data$y, x = .data$x), colour = "darkgreen",
+                                               size = 3, label = "Recommended by IUCN",
          alpha = 0.95,
-         hjust = 0, vjust = -0.2,
-         data = data.frame(x = 0, y = 5)) } +
+         hjust = 0.5, vjust = -0.2,
+         data = data.frame(x = 7, y = 5)) } +
     ggplot2::geom_text(ggplot2::aes(y = .data$mean, x = .data$continent, label = round(.data$mean)),
                        nudge_x = 0.3, size = 6, data = dd_mean) +
-    ggplot2::geom_text(ggplot2::aes(y = .data$y, x = .data$x), colour = "darkgreen", size = 3, label = "our calculated requirement",
-                       alpha = 0.95,
-                       hjust = 0, vjust = -0.2,
-                       data = data.frame(x = 0, y = threshold)) + # if not in data, coord_trans does not pick it up...
-    #ggplot2::geom_text(ggplot2::aes(y = .data$y, x = .data$x), colour = "darkgreen", size = 3, label = "Not-recommended",
-    #                   alpha = 0.3,
-    #                   hjust = 0, vjust = 1.1,
-    #                   data = data.frame(x = 0, y = threshold)) +
+    ggplot2::geom_hline(yintercept = threshold, colour = "darkgreen", linetype = "dashed") +
+    ggplot2::geom_text(ggplot2::aes(y = .data$y, x = .data$x), colour = "darkgreen",
+                       size = 3, label = "Averaged requirement",
+                       hjust = 0.5, vjust = -0.2,
+                       data = data.frame(x = 7, y = threshold)) + # if not in data, coord_trans does not pick it up...
     ggplot2::scale_y_continuous(limits = c(ymax, 0.01), breaks = breaks, minor_breaks = NULL,
                                 labels = scales::label_number(accuracy = 1), trans = "reverse") +
-    ggplot2::scale_x_discrete(position = "top") +
+    ggplot2::scale_x_discrete(position = "bottom") +
     ggplot2::scale_shape_manual(values = c(21, 1)) +
     ggsci::scale_colour_npg() +
     ggsci::scale_fill_npg() +
     ggplot2::scale_alpha_discrete(range = c(0.3, 0.95)) +
     ggplot2::scale_size_continuous(range = c(1, 10)) +
     ggplot2::coord_trans(y = "pseudo_log") +
-    ggplot2::labs(x = "", y = expression(paste("Protected areas per individual staff (km"^"2", ")")),
-         caption = bquote(Proportion~of~protected~areas~where~each~staff~manages~""<=""*.(round(threshold, 1))~km^2~":")) +
-    ggplot2::theme_minimal() +
-    ggplot2::theme(panel.grid.major.x = ggplot2::element_blank(), plot.caption = ggplot2::element_text(hjust = 0, vjust = 45)) +
+    { if (who == "rangers") ggplot2::labs(x = "", y = expression(paste("PA per ranger (km"^"2", ")")), tag = tag) } +
+    { if (who == "all") ggplot2::labs(x = "", y = expression(paste("PA per person (km"^"2", ")")), tag = tag) } +
+    ggplot2::theme_minimal(base_size = 18) +
+    ggplot2::theme(panel.grid.major.x = ggplot2::element_blank(),
+                   plot.caption = ggplot2::element_text(hjust = 0, vjust = 45), axis.text.x = ggplot2::element_text(size = 12),
+                   plot.margin = ggplot2::margin(t = 0, b = 2, r = 0.5, unit = "in")) +
     ggplot2::guides(colour = "none", size = "none", fill = "none", alpha = "none", shape = "none") -> main_plot
 
   main_plot +
-    patchwork::inset_element(data_pies$gg[[1]], 0.1, 0, 1/6.15, 0.12, align_to = "panel") +
-    patchwork::inset_element(data_pies$gg[[2]], 0.2, 0, 2/6.15, 0.12, align_to = "panel") +
-    patchwork::inset_element(data_pies$gg[[3]], 0.3, 0, 3/6.15, 0.12, align_to = "panel") +
-    patchwork::inset_element(data_pies$gg[[4]], 0.4, 0, 4/6.15, 0.12, align_to = "panel") +
-    patchwork::inset_element(data_pies$gg[[5]], 0.5, 0, 5/6.15, 0.12, align_to = "panel") +
-    patchwork::inset_element(data_pies$gg[[6]], 0.6, 0, 6/6.15, 0.12, align_to = "panel") +
-    patchwork::inset_element(data_pies$gg[[7]], 0.7, 0, 7/6.15, 0.12, align_to = "panel") -> plot_final
+    patchwork::inset_element(data_pies$gg[[1]], 0.15, 0,    0.05 + 1/4.5, 0.2, align_to = "full") +
+    patchwork::inset_element(data_pies$gg[[2]], 0.15, 0.03, 0.05 + 2/4.5, 0.17, align_to = "full") +
+    patchwork::inset_element(data_pies$gg[[3]], 0.15, 0.03, 0.05 + 3/4.5, 0.17, align_to = "full") +
+    patchwork::inset_element(data_pies$gg[[4]], 0.15, 0.03, 0.05 + 4/4.5, 0.17, align_to = "full") +
+    patchwork::inset_element(data_pies$gg[[5]], 0.15, 0.03, 0.05 + 5/4.5, 0.17, align_to = "full") +
+    patchwork::inset_element(data_pies$gg[[6]], 0.15, 0.03, 0.05 + 6/4.5, 0.17, align_to = "full") +
+    patchwork::inset_element(data_pies$gg[[7]], 0.15, 0.03, 0.05 + 7/4.5, 0.17, align_to = "full") +
+    patchwork::plot_annotation(caption = ifelse(who == "rangers",
+                                                "Proportion of PA where each ranger manages less than the averaged requirement:",
+                                                "Proportion of PA where each person manages less than the averaged requirement:"),
+                               theme = ggplot2::theme(plot.caption = ggplot2::element_text(face = "italic", size = 14, hjust = 0.5, vjust = 45))) #-> plot_final
 
-  print(plot_final)
+  #print(plot_final)
 
-  invisible(dd_all %>% dplyr::arrange(dplyr::desc(.data$km2_per_staff)))
+  #invisible(dd_all %>% dplyr::arrange(dplyr::desc(.data$km2_per_staff)))
+}
+
+
+#' Plot densities of rangers and all personnel
+#'
+#' @inheritParams plot_density_staff
+#' @export
+#' @examples
+#' # see ?rangeRinPA
+#'
+plot_density_panel <- function(what, data, ymax = 6000, breaks = c(10^(0:3), 2*10^(0:3), 5*10^(0:3))) {
+
+  if (!requireNamespace("patchwork", quietly = TRUE)) stop("You need to install the package patchwork for this function to run")
+
+  plot_density_staff(what = what, who = "all", ymax = ymax, breaks = breaks, data = data, tag = "A.") -> plot_all
+
+  plot_density_staff(what = what, who = "rangers", ymax = ymax, breaks = breaks, data = data, tag = "B.") -> plot_rangers
+
+  plot_all + plot_rangers
 }
 
 
