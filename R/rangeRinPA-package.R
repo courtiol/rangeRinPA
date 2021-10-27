@@ -303,6 +303,15 @@
 #' readr::write_excel_csv(table_projections,
 #'                        file = paste0(path_tables, "table_projections.csv"))
 #'
+#' ## Figure  XXX projections
+#'
+#' plot_projections(what = LMM_100, data = data_rangers)
+#' ggplot2::ggsave(filename = paste0(path_figures, "figure_projections.pdf"),
+#'                 width = ggplot2::unit(6.2, "cm"))
+#' ggplot2::ggsave(filename = paste0(path_figures, "figure_projections.png"),
+#'                 width = ggplot2::unit(6.2, "cm"))
+#'
+#'
 #' ## Figure XX tallies per methods
 #'
 #' plot_tallies_across_methods(list_results_LMM = list(LMM_000, LMM_025, LMM_050, LMM_075, LMM_100),

@@ -626,3 +626,65 @@ plot_density_vs_PA <- function(data, who, coef = 1) {
    plot
 }
 
+
+#' Plot projections for required numbers
+#'
+#' @inheritParams plot_map_sampling
+#' @inheritParams extract_results
+#' @export
+#' @examples
+#' # see ?rangeRinPA
+#'
+plot_projections <- function(what, data) {
+
+  if (!requireNamespace("patchwork", quietly = TRUE)) stop("You need to install the package patchwork for this function to run")
+
+  d <- table_projections(what = what, data = data)
+
+  d %>%
+    tidyr::pivot_longer(cols = tidyselect::contains("number")) %>%
+    dplyr::mutate(name = dplyr::case_when(.data$name == "number" ~ "current",
+                                          .data$name == "number_required" ~ "required now",
+                                          .data$name == "number_required_2030" ~ "required 2030"),
+                  name = forcats::fct_inorder(.data$name),
+                  who = dplyr::case_when(.data$who == "all" ~ "All personnel",
+                                         .data$who == "rangers" ~ "Rangers")) -> d_long_number
+
+  d %>%
+    tidyr::pivot_longer(cols = tidyselect::contains("density")) %>%
+    dplyr::filter(.data$name != "density_required_2030") %>% ## density required is the same now and in 2030!
+    dplyr::mutate(name = dplyr::case_when(.data$name == "density" ~ "current",
+                                          .data$name == "density_required" ~ "required (now & 2030)"),
+                  name = forcats::fct_inorder(.data$name),
+                  who = dplyr::case_when(.data$who == "all" ~ "All personnel",
+                                         .data$who == "rangers" ~ "Rangers")) -> d_long_density
+
+
+  ggplot2::ggplot(d_long_number) +
+    ggplot2::aes(y = .data$value, x = .data$who, fill = .data$name) +
+    ggplot2::geom_col(width = 0.4, position = "dodge2") +
+    ggplot2::labs(y = "Number of personnel", x = "", fill = "", tag = "A.") +
+    ggplot2::scale_y_continuous(breaks = seq(0, 10e6, by = 0.5e6),
+                                limits = c(0, 3.5e6),
+                                labels = scales::label_number(accuracy = 1)) +
+    ggplot2::scale_fill_manual(values = ggsci::pal_npg()(3)) +
+    ggplot2::theme_bw(base_size = 18) +
+    ggplot2::theme(panel.grid.major.x = ggplot2::element_blank(), legend.position = "top", plot.margin = ggplot2::margin(r = 1.5, unit = "in")) -> plot_numbers
+
+  ggplot2::ggplot(d_long_density) +
+    ggplot2::aes(y = .data$value, x = .data$who, fill = .data$name) +
+    ggplot2::geom_col(width = 0.4, position = "dodge2") +
+    ggplot2::labs(y = expression(paste("PA per personnel (km"^"2", ")")), x = "", fill = "", tag = "B.") +
+    ggplot2::scale_y_continuous(breaks = seq(0, 100, by = 10),
+                                labels = scales::label_number(accuracy = 1)) +
+    ggplot2::scale_fill_manual(values = c(ggsci::pal_npg()(3)[1],
+                                          grDevices::colorRampPalette(c(ggsci::pal_npg()(3)[2], ## compute mid colour
+                                                                        ggsci::pal_npg()(3)[3]),
+                                                                      space = "Lab")(3)[2])) +
+    ggplot2::theme_bw(base_size = 18) +
+    ggplot2::theme(panel.grid.major.x = ggplot2::element_blank(), legend.position = "top") -> plot_density
+
+  plot_numbers / plot_density
+
+}
+
