@@ -5,7 +5,7 @@
 \alias{data_rangers}
 \title{Ranger data}
 \format{
-An object of class \code{tbl_df} (inherits from \code{tbl}, \code{data.frame}) with 249 rows and 37 columns.
+An object of class \code{tbl_df} (inherits from \code{tbl}, \code{data.frame}) with 248 rows and 37 columns.
 }
 \usage{
 data_rangers

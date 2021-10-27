@@ -344,24 +344,24 @@ fetch_data <- function(keep_geometry = FALSE) {
   d %>%
     dplyr::mutate(country = paste(.data$countryname_eng, .data$flag)) -> d
 
-  ### Keep only geographical data (or nothing) for Greenland (outlier):
+  ### Keep only geographical data (or nothing) for Antartica and Greenland (outliers):
 
   if (keep_geometry) {
 
     d %>%
-      dplyr::filter(.data$countryname_iso == "GRL") %>%
+      dplyr::filter(.data$countryname_iso %in% c("ATA", "GRL")) %>%
       dplyr::select(.data$countryname_iso, .data$countryname_eng, .data$country_UN_continent, .data$country_UN_subcontinent,
-                    .data$geometry, .data$long, .data$lat, .data$geometry, .data$flag, .data$country) -> Greenland
+                    .data$geometry, .data$long, .data$lat, .data$geometry, .data$flag, .data$country) -> outliers
 
     d %>%
-      dplyr::filter(.data$countryname_iso != "GRL") -> d
+      dplyr::filter(!.data$countryname_iso %in% c("ATA", "GRL")) -> d
 
     d %>%
-      dplyr::bind_rows(Greenland) -> d
+      dplyr::bind_rows(outliers) -> d
 
   } else {
     d %>%
-      dplyr::filter(.data$countryname_iso != "GRL") -> d
+      dplyr::filter(!.data$countryname_iso %in% c("ATA", "GRL")) -> d
   }
 
   ### Return
