@@ -669,14 +669,16 @@ plot_projections <- function(what, data) {
                                 labels = scales::label_number(accuracy = 1)) +
     ggplot2::scale_fill_manual(values = ggsci::pal_npg()(3)) +
     ggplot2::theme_bw(base_size = 18) +
-    ggplot2::theme(panel.grid.major.x = ggplot2::element_blank(), legend.position = "top", plot.margin = ggplot2::margin(r = 1.5, unit = "in")) -> plot_numbers
+    ggplot2::theme(panel.grid.major.x = ggplot2::element_blank(), legend.position = "top", plot.margin = ggplot2::margin(r = 1, unit = "in")) -> plot_numbers
 
   ggplot2::ggplot(d_long_density) +
     ggplot2::aes(y = .data$value, x = .data$who, fill = .data$name) +
     ggplot2::geom_col(width = 0.4, position = "dodge2") +
     ggplot2::labs(y = expression(paste("PA per personnel (km"^"2", ")")), x = "", fill = "", tag = "B.") +
     ggplot2::scale_y_continuous(breaks = seq(0, 100, by = 10),
-                                labels = scales::label_number(accuracy = 1)) +
+                                labels = scales::label_number(accuracy = 1),
+                                limits = c(80, 0),
+                                trans = "reverse") +
     ggplot2::scale_fill_manual(values = c(ggsci::pal_npg()(3)[1],
                                           grDevices::colorRampPalette(c(ggsci::pal_npg()(3)[2], ## compute mid colour
                                                                         ggsci::pal_npg()(3)[3]),

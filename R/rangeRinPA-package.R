@@ -307,9 +307,11 @@
 #'
 #' plot_projections(what = LMM_100, data = data_rangers)
 #' ggplot2::ggsave(filename = paste0(path_figures, "figure_projections.pdf"),
-#'                 width = ggplot2::unit(6.2, "cm"))
+#'                 width = ggplot2::unit(5.5, "cm"),
+#'                 height = ggplot2::unit(8, "cm"))
 #' ggplot2::ggsave(filename = paste0(path_figures, "figure_projections.png"),
-#'                 width = ggplot2::unit(6.2, "cm"))
+#'                 width = ggplot2::unit(5.5, "cm"),
+#'                 height = ggplot2::unit(8, "cm"))
 #'
 #'
 #' ## Figure XX tallies per methods
