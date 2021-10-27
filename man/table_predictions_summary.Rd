@@ -2,8 +2,8 @@
 % Please edit documentation in R/tables.R
 \name{table_predictions_summary}
 \alias{table_predictions_summary}
-\title{This function creates the table that shows the point predictions and their intervals, for the
-different continents and for the world. It is the one shown in main text.}
+\title{This function creates the table that shows the point predictions, for the
+different continents and for the world. It creates of the main text tables.}
 \usage{
 table_predictions_summary(what, data, with_PI = FALSE)
 }
@@ -18,8 +18,8 @@ table_predictions_summary(what, data, with_PI = FALSE)
 a tibble
 }
 \description{
-This function creates the table that shows the point predictions and their intervals, for the
-different continents and for the world. It is the one shown in main text.
+This function creates the table that shows the point predictions, for the
+different continents and for the world. It creates of the main text tables.
 }
 \examples{
 # see see ?rangeRinPA

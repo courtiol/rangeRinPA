@@ -297,6 +297,11 @@
 #'                        file = paste0(path_tables, "table_predictions_main_with_PI.csv"))
 #'
 #'
+#' ## Table 3
+#'
+#' table_projections <- table_projections(what = LMM_100, data = data_rangers)
+#' readr::write_excel_csv(table_projections,
+#'                        file = paste0(path_tables, "table_projections.csv"))
 #'
 #' ## Figure XX tallies per methods
 #'

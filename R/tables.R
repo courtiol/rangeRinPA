@@ -239,8 +239,8 @@ table_predictions_per_continent <- function(what, data) {
 }
 
 
-#' This function creates the table that shows the point predictions and their intervals, for the
-#' different continents and for the world. It is the one shown in main text.
+#' This function creates the table that shows the point predictions, for the
+#' different continents and for the world. It creates of the main text tables.
 #'
 #' @inheritParams table_predictions_per_method
 #' @inheritParams plot_PA_by_data_type
@@ -314,3 +314,58 @@ table_predictions_summary <- function(what, data, with_PI = FALSE) {
                   PA = .data$all_PA)
 
 }
+
+
+#' This function creates the table that shows the requirements in rangers and all personal.
+#' IIt creates of the main text tables.
+#'
+#' @inheritParams table_predictions_summary
+#'
+#' @return a tibble
+#' @export
+#'
+#' @examples
+#' # see see ?rangeRinPA
+#'
+table_projections <- function(what, data) {
+
+  table_pred <- table_predictions_summary(what = what, data = data, with_PI = FALSE)
+
+  table_pred %>%
+    dplyr::filter(.data$continent == "Global") %>%
+    dplyr::select(-.data$continent) %>%
+    dplyr::rename_with(.cols = tidyselect::matches("number|density"), .fn = ~ paste0(., "_pred")) -> table_pred
+
+  current_pct <- sum(data$area_PA_total, na.rm = TRUE) / sum(data$area_country, na.rm = TRUE) # does not contain Greenland
+
+  table_pred %>%
+    dplyr::select(-tidyselect::contains("rangers")) %>%
+    dplyr::mutate(who = "all",
+                  number = .data$all_number_pred,
+                  density = .data$all_density_pred,
+                  number_required = .data$number * 1/0.36,
+                  surplus_required = .data$number_required - .data$number,
+                  density_required = .data$PA/.data$number_required,
+                  number_required_2030 = .data$number * 1/0.36 * 0.3/current_pct,
+                  surplus_required_2030 = .data$number_required_2030 - .data$number,
+                  density_required_2030 = (.data$PA  * 0.3/current_pct)/.data$number_required_2030,
+                  .keep = "none") -> table_all
+
+  table_pred %>%
+    dplyr::select(-tidyselect::contains("all")) %>%
+    dplyr::mutate(who = "rangers",
+                  number = .data$rangers_number_pred,
+                  density = .data$rangers_density_pred,
+                  number_required = .data$number * 1/0.36,
+                  surplus_required = .data$number_required - .data$number,
+                  density_required = .data$PA/.data$number_required,
+                  number_required_2030 = .data$number * 1/0.36 * 0.3/current_pct,
+                  surplus_required_2030 = .data$number_required_2030 - .data$number,
+                  density_required_2030 = (.data$PA  * 0.3/current_pct)/.data$number_required_2030,
+                  .keep = "none") -> table_rangers
+
+  dplyr::bind_rows(table_all, table_rangers) -> table_full
+
+  table_full
+
+  }
