@@ -54,7 +54,7 @@ plot_map_sampling <- function(data, proj = "+proj=moll") {
     ggplot2::scale_fill_manual(values = c(scales::brewer_pal(type = "seq", palette = 2, direction = -1)(length(unique(data$sampled_coverage2)) - 2), "white"),
                                labels = c(levels(data$sampled_coverage2), "excluded (see legend)"),
                                na.value = "grey50",
-                               guide = ggplot2::guide_legend(title = "Protected areas\n surveyed (%)")) +
+                               guide = ggplot2::guide_legend(title = "Area surveyed (%)")) +
     ggplot2::theme_void(base_size = 24) +
     ggplot2::theme(legend.position = "left",
                    #panel.grid = ggplot2::element_line(colour = "GREY", size = 0.3),
@@ -541,7 +541,7 @@ plot_density_staff <- function(what, who, data, ymax = 6000, breaks = c(10^(0:3)
                        nudge_x = 0.3, size = 6, data = dd_mean) +
     ggplot2::geom_hline(yintercept = threshold, colour = "darkgreen", linetype = "dashed") +
     ggplot2::geom_text(ggplot2::aes(y = .data$y, x = .data$x), colour = "darkgreen",
-                       size = 3, label = "Averaged requirement",
+                       size = 3, label = "Average requirement",
                        hjust = 0.5, vjust = -0.2,
                        data = data.frame(x = 7, y = threshold)) + # if not in data, coord_trans does not pick it up...
     ggplot2::scale_y_continuous(limits = c(ymax, 0.01), breaks = breaks, minor_breaks = NULL,
@@ -553,8 +553,8 @@ plot_density_staff <- function(what, who, data, ymax = 6000, breaks = c(10^(0:3)
     ggplot2::scale_alpha_discrete(range = c(0.3, 0.95)) +
     ggplot2::scale_size_continuous(range = c(1, 10)) +
     ggplot2::coord_trans(y = "pseudo_log") +
-    { if (who == "rangers") ggplot2::labs(x = "", y = expression(paste("PA per ranger (km"^"2", ")")), tag = tag) } +
-    { if (who == "all") ggplot2::labs(x = "", y = expression(paste("PA per person (km"^"2", ")")), tag = tag) } +
+    { if (who == "rangers") ggplot2::labs(x = "", y = expression(paste("Area per ranger (km"^"2", ")")), tag = tag) } +
+    { if (who == "all") ggplot2::labs(x = "", y = expression(paste("Area per person (km"^"2", ")")), tag = tag) } +
     ggplot2::theme_minimal(base_size = 18) +
     ggplot2::theme(panel.grid.major.x = ggplot2::element_blank(),
                    plot.caption = ggplot2::element_text(hjust = 0, vjust = 45), axis.text.x = ggplot2::element_text(size = 12),
@@ -570,8 +570,8 @@ plot_density_staff <- function(what, who, data, ymax = 6000, breaks = c(10^(0:3)
     patchwork::inset_element(data_pies$gg[[6]], 0.15, 0.03, 0.05 + 6/4.5, 0.17, align_to = "full") +
     patchwork::inset_element(data_pies$gg[[7]], 0.15, 0.03, 0.05 + 7/4.5, 0.17, align_to = "full") +
     patchwork::plot_annotation(caption = ifelse(who == "rangers",
-                                                "Proportion of PA where each ranger manages less than the averaged requirement:",
-                                                "Proportion of PA where each person manages less than the averaged requirement:"),
+                                                "Proportion of area where each ranger manages less than the average requirement:",
+                                                "Proportion of area where each person manages less than the average requirement:"),
                                theme = ggplot2::theme(plot.caption = ggplot2::element_text(face = "italic", size = 14, hjust = 0.5, vjust = 45))) #-> plot_final
 
   #print(plot_final)
@@ -694,7 +694,7 @@ plot_projections <- function(what, data) {
   ggplot2::ggplot(d_long_number) +
     ggplot2::aes(y = .data$value, x = .data$who, fill = .data$name) +
     ggplot2::geom_col(width = 0.4, position = "dodge2") +
-    ggplot2::labs(y = "Number of personnel", x = "", fill = "", tag = "A.") +
+    ggplot2::labs(y = "Number of persons", x = "", fill = "", tag = "A.") +
     ggplot2::scale_y_continuous(breaks = seq(0, 10e6, by = 0.5e6),
                                 limits = c(0, 3.5e6),
                                 labels = scales::label_number(accuracy = 1)) +
@@ -705,7 +705,7 @@ plot_projections <- function(what, data) {
   ggplot2::ggplot(d_long_density) +
     ggplot2::aes(y = .data$value, x = .data$who, fill = .data$name) +
     ggplot2::geom_col(width = 0.4, position = "dodge2") +
-    ggplot2::labs(y = expression(paste("PA per personnel (km"^"2", ")")), x = "", fill = "", tag = "B.") +
+    ggplot2::labs(y = expression(paste("Area per person (km"^"2", ")")), x = "", fill = "", tag = "B.") +
     ggplot2::scale_y_continuous(breaks = seq(0, 100, by = 10),
                                 labels = scales::label_number(accuracy = 1),
                                 limits = c(80, 0),

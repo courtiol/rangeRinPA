@@ -1,5 +1,5 @@
 library(rangeRinPA)
-library(sf) ## to handle the geometry column in the data
+#library(sf) ## to handle the geometry column in the data
 
 ## Set and create all directories to store files
 path <- "inst/extdata/" ## set the path where you want to store all created files
@@ -15,7 +15,7 @@ path_predictions <- paste0(path, "predictions/")
 if (!dir.exists(path_predictions)) dir.create(path_predictions)
 
 
-Ncpu <- 100
+Ncpu <- 50
 
 LMM_100 <- run_LMM_workflow(data = data_rangers, Ncpu = Ncpu, coef = 1)
 save(LMM_100, file = paste0(path_predictions, "LMM_100.Rdata"))
