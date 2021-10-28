@@ -155,8 +155,7 @@ fetch_data <- function(keep_geometry = FALSE) {
 
   ## Dealing with missing data on PA areas:
   d %>%
-    dplyr::mutate(area_PA_total = dplyr::if_else(is.na(.data$area_PA_total), .data$area_PA_WDPA, .data$area_PA_total),
-                  PA_area_surveyed = dplyr::if_else(is.na(.data$PA_area_surveyed), 0, .data$PA_area_surveyed),
+    dplyr::mutate(PA_area_surveyed = dplyr::if_else(is.na(.data$PA_area_surveyed), 0, .data$PA_area_surveyed),
                   PA_area_unsurveyed = dplyr::if_else(is.na(.data$PA_area_unsurveyed), .data$area_PA_total, .data$PA_area_unsurveyed)) -> d
 
   ## No area_PA_total means no ranger or staff:
@@ -346,22 +345,31 @@ fetch_data <- function(keep_geometry = FALSE) {
 
   ### Keep only geographical data (or nothing) for Antartica and Greenland (outliers):
 
-  if (keep_geometry) {
+  # We did not include Antarctica or countries & territories classified by IUCN as 'polar' since
+  # these are largely uninhabited/and or very remote and are likely to to require very different
+  # approaches to management and staffing.
+  outliers <- c("ATA", "GRL", "HMD", "BVT", "ATF", "SGS")
 
+  if (length(outliers) > 0) {
+    cat("\nHere are the countries/territories excluded from computation since classifed as 'polar':\n")
+    print(d %>% dplyr::filter(.data$countryname_iso %in% outliers) %>% dplyr::pull(.data$countryname_eng))
+  }
+
+  if (keep_geometry) {
     d %>%
-      dplyr::filter(.data$countryname_iso %in% c("ATA", "GRL")) %>%
+      dplyr::filter(.data$countryname_iso %in% outliers) %>%
       dplyr::select(.data$countryname_iso, .data$countryname_eng, .data$country_UN_continent, .data$country_UN_subcontinent,
                     .data$geometry, .data$long, .data$lat, .data$geometry, .data$flag, .data$country) -> outliers
 
     d %>%
-      dplyr::filter(!.data$countryname_iso %in% c("ATA", "GRL")) -> d
+      dplyr::filter(!.data$countryname_iso %in% outliers) -> d
 
     d %>%
       dplyr::bind_rows(outliers) -> d
 
   } else {
     d %>%
-      dplyr::filter(!.data$countryname_iso %in% c("ATA", "GRL")) -> d
+      dplyr::filter(!.data$countryname_iso %in% outliers) -> d
   }
 
   ### Return

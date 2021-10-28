@@ -5,7 +5,7 @@
 \alias{data_rangers_with_geo}
 \title{Ranger data with polygons}
 \format{
-An object of class \code{tbl_df} (inherits from \code{tbl}, \code{data.frame}) with 263 rows and 38 columns.
+An object of class \code{tbl_df} (inherits from \code{tbl}, \code{data.frame}) with 269 rows and 38 columns.
 }
 \usage{
 data_rangers_with_geo
