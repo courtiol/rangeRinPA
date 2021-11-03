@@ -32,89 +32,6 @@
 #' if (!dir.exists(path_predictions)) dir.create(path_predictions)
 #'
 #'
-#' ## Data reliability
-#' summary(data_rangers$reliability)
-#' sum(data_rangers$reliability >= 15, na.rm = TRUE)
-#' length(na.omit(data_rangers$reliability))
-#' round(mean(data_rangers$reliability, na.rm = TRUE), 2)
-#' round(sd(data_rangers$reliability, na.rm = TRUE), 2)
-#'
-#' ## Extended Data Table 3A
-#'
-#' readr::write_excel_csv(table_completeness_obs(data_rangers),
-#'                        file = paste0(path_tables, "table_completeness_obs.csv"))
-#'
-#'
-#' ## Extended Data Table 3B
-#'
-#' readr::write_excel_csv(table_completeness_km2(data_rangers),
-#'                        file = paste0(path_tables, "table_completeness_km2.csv"))
-#'
-#'
-#' ## Extended Data Table 3C
-#'
-#' readr::write_excel_csv(table_completeness_vars(data_rangers),
-#'                        file = paste0(path_tables, "table_completeness_vars.csv"))
-#'
-#'
-#' ## Figure 1
-#'
-#' plot_map_sampling(data_rangers_with_geo)
-#' ggplot2::ggsave(filename = paste0(path_figures, "figure_sampling.pdf"),
-#'                 width = ggplot2::unit(15, "cm"))
-#' ggplot2::ggsave(filename = paste0(path_figures, "figure_sampling.png"),
-#'                 width = ggplot2::unit(15, "cm"))
-#'
-#'
-#' ## Extended Data Fig. 1
-#'
-#' plot_density_vs_PA_panel(data = data_rangers, coef = 1)
-#' ggplot2::ggsave(filename = paste0(path_figures, "figure_density_vs_PA.pdf"),
-#'                 width = ggplot2::unit(10, "cm"))
-#' ggplot2::ggsave(filename = paste0(path_figures, "figure_density_vs_PA.png"),
-#'                 width = ggplot2::unit(10, "cm"))
-#'
-#'
-#' ## Extended Data Fig. 2
-#'
-#' plot_map_reliability(data_rangers_with_geo)
-#' ggplot2::ggsave(filename = paste0(path_figures, "figure_reliability.pdf"),
-#'                 width = ggplot2::unit(15, "cm"))
-#' ggplot2::ggsave(filename = paste0(path_figures, "figure_reliability.png"),
-#'                 width = ggplot2::unit(15, "cm"))
-#'
-#'
-#' ## Extended Data Fig. 3
-#'
-#' set.seed(123)
-#' plot_reliability_vs_sampling(data_rangers)
-#' ggplot2::ggsave(filename = paste0(path_figures, "figure_reliability_vs_design.pdf"),
-#'                 width = ggplot2::unit(8, "cm"))
-#' ggplot2::ggsave(filename = paste0(path_figures, "figure_reliability_vs_design.png"),
-#'                 width = ggplot2::unit(8, "cm"))
-#'
-#'
-#' ## Extended Data Fig. 4
-#'
-#' plot_density_vs_sampling(data_rangers)
-#' ggplot2::ggsave(filename = paste0(path_figures, "figure_density_vs_sampling.pdf"),
-#'                 width = ggplot2::unit(8, "cm"))
-#' ggplot2::ggsave(filename = paste0(path_figures, "figure_density_vs_sampling.png"),
-#'                 width = ggplot2::unit(8, "cm"))
-#'
-#'
-#' ## Numerical example to explain how imputation is done (in SI):
-#'
-#' data_rangers %>%
-#'   dplyr::filter(countryname_eng == "Spain") %>%
-#'   dplyr::select(.data$staff_rangers,
-#'                 .data$PA_area_surveyed,
-#'                 .data$PA_area_unsurveyed) -> data_spain_before_imputation
-#'  data_spain_before_imputation
-#'  fill_PA_area(data_spain_before_imputation, coef = 1)
-#'  fill_PA_area(data_spain_before_imputation, coef = 0.5)
-#'
-#'
 #' ### Predictions
 #'
 #' #Ncpu <- 2L
@@ -187,44 +104,94 @@
 #' sapply(paste0(path_predictions, files_to_load), function(file) load(file, envir = .GlobalEnv))
 #'
 #'
-#' ## Info on computing time:
 #'
-#' extract_results(list_results_LMM = list(LMM_000, LMM_025, LMM_050, LMM_075, LMM_100),
-#'                 list_results_RF = list(RF_000, RF_025, RF_050, RF_075, RF_100)) %>%
-#'                 dplyr::mutate(time = .data$run_time * .data$Ncpu) %>%
-#'                 dplyr::summarize(total_time_h = sum(.data$time))
+#' ###################################################### MAIN FIGURES
 #'
-#' ## Extended Data Table 5
+#' ## Figure 1
 #'
-#' table_training_initial(list_results_LMM = list(LMM_000, LMM_025, LMM_050, LMM_075, LMM_100),
-#'                        list_results_RF = list(RF_000, RF_025, RF_050, RF_075, RF_100),
-#'                        data = data_rangers) -> training_info_initial
-#'
-#' readr::write_excel_csv(training_info_initial,
-#'                        file = paste0(path_tables, "table_training_sets_initial.csv"))
+#' plot_map_sampling(data_rangers_with_geo)
+#' ggplot2::ggsave(filename = paste0(path_figures, "figure_sampling.pdf"),
+#'                 width = ggplot2::unit(15, "cm"))
+#' ggplot2::ggsave(filename = paste0(path_figures, "figure_sampling.png"),
+#'                 width = ggplot2::unit(15, "cm"))
 #'
 #'
-#' ## Extended Data Table 6
+#' ## Figure 2
 #'
-#' table_training_final(list_results_LMM = list(LMM_000, LMM_025, LMM_050, LMM_075, LMM_100),
-#'                      list_results_RF = list(RF_000, RF_025, RF_050, RF_075, RF_100),
-#'                      data = data_rangers) -> training_info_final
-#'
-#' readr::write_excel_csv(training_info_final,
-#'                        file = paste0(path_tables, "table_training_sets_final.csv"))
-#'
-#'
-#' ## Extended Data Table 7
-#'
-#' table_tuning(list_results_LMM = list(LMM_000, LMM_025, LMM_050, LMM_075, LMM_100),
-#'              list_results_RF = list(RF_000, RF_025, RF_050, RF_075, RF_100),
-#'              data = data_rangers) -> fine_tunning_selected
-#'
-#'  readr::write_excel_csv(fine_tunning_selected,
-#'                         file = paste0(path_tables, "table_fine_tuning.csv"))
+#' plot_density_panel(what = LMM_100, data = data_rangers)
+#' ggplot2::ggsave(filename = paste0(path_figures, "figure_density_panel.pdf"),
+#'                  width = 26, height = 12, scale = 0.7)
+#' ggplot2::ggsave(filename = paste0(path_figures, "figure_density_panel.png"),
+#'                  width = 26, height = 12, scale = 0.7)
 #'
 #'
-#' ## Extended Data Fig. 5
+#' ## Figure 3
+#'
+#' plot_projections(what = LMM_100, data = data_rangers)
+#' ggplot2::ggsave(filename = paste0(path_figures, "figure_projections.pdf"),
+#'                 width = ggplot2::unit(5.5, "cm"),
+#'                 height = ggplot2::unit(8, "cm"))
+#' ggplot2::ggsave(filename = paste0(path_figures, "figure_projections.png"),
+#'                 width = ggplot2::unit(5.5, "cm"),
+#'                 height = ggplot2::unit(8, "cm"))
+#'
+#'
+#'
+#' ###################################################### MAIN TABLES
+#'
+#' ## Table 1
+#'
+#' table_predictions_main <- table_predictions_summary(what = LMM_100, data = data_rangers)
+#' readr::write_excel_csv(table_predictions_main,
+#'                        file = paste0(path_tables, "table_predictions_main.csv"))
+#'
+#'
+#' ## Table 2
+#'
+#' table_projections <- table_projections(what = LMM_100, data = data_rangers)
+#' readr::write_excel_csv(table_projections,
+#'                        file = paste0(path_tables, "table_projections.csv"))
+#'
+#'
+#' ###################################################### SI FIGURES
+#'
+#' ## Extended Data Fig. 1
+#'
+#' plot_density_vs_PA_panel(data = data_rangers, coef = 1)
+#' ggplot2::ggsave(filename = paste0(path_figures, "figure_density_vs_PA.pdf"),
+#'                 width = ggplot2::unit(10, "cm"))
+#' ggplot2::ggsave(filename = paste0(path_figures, "figure_density_vs_PA.png"),
+#'                 width = ggplot2::unit(10, "cm"))
+#'
+#'
+#' ## Extended Data Fig. 2
+#'
+#' plot_map_reliability(data_rangers_with_geo)
+#' ggplot2::ggsave(filename = paste0(path_figures, "figure_reliability.pdf"),
+#'                 width = ggplot2::unit(15, "cm"))
+#' ggplot2::ggsave(filename = paste0(path_figures, "figure_reliability.png"),
+#'                 width = ggplot2::unit(15, "cm"))
+#'
+#'
+#' ## Extended Data Fig. 3
+#'
+#' set.seed(123)
+#' plot_reliability_vs_sampling(data_rangers)
+#' ggplot2::ggsave(filename = paste0(path_figures, "figure_reliability_vs_design.pdf"),
+#'                 width = ggplot2::unit(8, "cm"))
+#' ggplot2::ggsave(filename = paste0(path_figures, "figure_reliability_vs_design.png"),
+#'                 width = ggplot2::unit(8, "cm"))
+#'
+#'
+#' ## Extended Data Fig. 4
+#'
+#' plot_density_vs_sampling(data_rangers)
+#' ggplot2::ggsave(filename = paste0(path_figures, "figure_density_vs_sampling.pdf"),
+#'                 width = ggplot2::unit(8, "cm"))
+#' ggplot2::ggsave(filename = paste0(path_figures, "figure_density_vs_sampling.png"),
+#'                 width = ggplot2::unit(8, "cm"))
+#'
+#'#' ## Extended Data Fig. 5
 #'
 #' plot_features_selected(list_results_LMM = list(LMM_000, LMM_025, LMM_050, LMM_075, LMM_100),
 #'                        list_results_RF  = list(RF_000, RF_025, RF_050, RF_075, RF_100),
@@ -251,74 +218,6 @@
 #'                 width = ggplot2::unit(8, "cm"))
 #' ggplot2::ggsave(filename = paste0(path_figures, "figure_finetuning.png"),
 #'                 width = ggplot2::unit(8, "cm"))
-
-#' ## Table SXX
-#'
-#' table_predictions_per_method(list_results_LMM = list(LMM_000, LMM_025, LMM_050, LMM_075, LMM_100),
-#'                 list_results_RF = list(RF_000, RF_025, RF_050, RF_075, RF_100),
-#'                 data = data_rangers) -> table_predictions
-#'
-#'  readr::write_excel_csv(table_predictions,
-#'                         file = paste0(path_tables, "table_predictions.csv"))
-#'
-#'
-#'
-#' ## Table SXX
-#'
-#' table_predictions_per_method(list_results_LMM = list(LMM_000, LMM_025, LMM_050, LMM_075, LMM_100),
-#'                 list_results_RF = list(RF_000, RF_025, RF_050, RF_075, RF_100),
-#'                 data = data_rangers, density = TRUE) -> table_predictions_densities
-#'
-#'  readr::write_excel_csv(table_predictions_densities,
-#'                         file = paste0(path_tables, "table_predictions_densities.csv"))
-#'
-#'
-#' ## Table SXX
-#'
-#' table_predictions_per_continent <- table_predictions_per_continent(what = LMM_100, data = data_rangers)
-#'
-#' readr::write_excel_csv(table_predictions_per_continent,
-#'                        file = paste0(path_tables, "table_predictions_per_continent.csv"))
-#'
-#'
-#' ## Table 1
-#'
-#' table_predictions_main <- table_predictions_summary(what = LMM_100, data = data_rangers)
-#' readr::write_excel_csv(table_predictions_main,
-#'                        file = paste0(path_tables, "table_predictions_main.csv"))
-#'
-#' ## Extended Data Table 1
-#'
-#' table_predictions_main_with_PI <- table_predictions_summary(what = LMM_100, data = data_rangers,
-#'                                                             with_PI = TRUE)
-#' readr::write_excel_csv(table_predictions_main_with_PI,
-#'                        file = paste0(path_tables, "table_predictions_main_with_PI.csv"))
-#'
-#'
-#' ## Table 3
-#'
-#' table_projections <- table_projections(what = LMM_100, data = data_rangers)
-#' readr::write_excel_csv(table_projections,
-#'                        file = paste0(path_tables, "table_projections.csv"))
-#'
-#' ## Figure 3
-#'
-#' plot_projections(what = LMM_100, data = data_rangers)
-#' ggplot2::ggsave(filename = paste0(path_figures, "figure_projections.pdf"),
-#'                 width = ggplot2::unit(5.5, "cm"),
-#'                 height = ggplot2::unit(8, "cm"))
-#' ggplot2::ggsave(filename = paste0(path_figures, "figure_projections.png"),
-#'                 width = ggplot2::unit(5.5, "cm"),
-#'                 height = ggplot2::unit(8, "cm"))
-#'
-#'
-#' ## Figure 3
-#'
-#' plot_density_panel(what = LMM_100, data = data_rangers)
-#' ggplot2::ggsave(filename = paste0(path_figures, "figure_density_panel.pdf"),
-#'                  width = 26, height = 12, scale = 0.7)
-#' ggplot2::ggsave(filename = paste0(path_figures, "figure_density_panel.png"),
-#'                  width = 26, height = 12, scale = 0.7)
 #'
 #'
 #' ## Extended Data Fig. 8
@@ -349,5 +248,128 @@
 #' ggplot2::ggsave(filename = paste0(path_figures, "figure_tallies_across_continents.png"),
 #'                 width = ggplot2::unit(14, "cm"))
 #'
+#'
+#' ###################################################### SI TABLES
+#'
+#' ## Extended Data Table 1
+#'
+#' table_predictions_main_with_PI <- table_predictions_summary(what = LMM_100, data = data_rangers,
+#'                                                             with_PI = TRUE)
+#' readr::write_excel_csv(table_predictions_main_with_PI,
+#'                        file = paste0(path_tables, "table_predictions_main_with_PI.csv"))
+#'
+#'
+#' ## Extended Data Table 2
+#'
+#' table_predictions_per_method(list_results_LMM = list(LMM_000, LMM_025, LMM_050, LMM_075, LMM_100),
+#'                 list_results_RF = list(RF_000, RF_025, RF_050, RF_075, RF_100),
+#'                 data = data_rangers) -> table_predictions
+#'
+#'  readr::write_excel_csv(table_predictions,
+#'                         file = paste0(path_tables, "table_predictions.csv"))
+#'
+#'
+#' ## Extended Data Table 3
+#'
+#' table_predictions_per_method(list_results_LMM = list(LMM_000, LMM_025, LMM_050, LMM_075, LMM_100),
+#'                 list_results_RF = list(RF_000, RF_025, RF_050, RF_075, RF_100),
+#'                 data = data_rangers, density = TRUE) -> table_predictions_densities
+#'
+#'  readr::write_excel_csv(table_predictions_densities,
+#'                         file = paste0(path_tables, "table_predictions_densities.csv"))
+#'
+#'
+#' ## Extended Data Table 4
+#'
+#' table_predictions_per_continent <- table_predictions_per_continent(what = LMM_100, data = data_rangers)
+#'
+#' readr::write_excel_csv(table_predictions_per_continent,
+#'                        file = paste0(path_tables, "table_predictions_per_continent.csv"))
+#'
+#'
+#' ## Extended Data Table 5
+#' # table about recommendation in personnel numbers; not produced using R
+#'
+#' ## Extended Data Table 6A
+#'
+#' readr::write_excel_csv(table_completeness_obs(data_rangers),
+#'                        file = paste0(path_tables, "table_completeness_obs.csv"))
+#'
+#'
+#' ## Extended Data Table 6B
+#'
+#' readr::write_excel_csv(table_completeness_km2(data_rangers),
+#'                        file = paste0(path_tables, "table_completeness_km2.csv"))
+#'
+#'
+#' ## Extended Data Table 6C
+#'
+#' readr::write_excel_csv(table_completeness_vars(data_rangers),
+#'                        file = paste0(path_tables, "table_completeness_vars.csv"))
+#'
+#'
+#' ## Extended Data Table 7
+#' # table about the data design; not produced using R
+#'
+#'
+#' ## Extended Data Table 8
+#'
+#' table_training_initial(list_results_LMM = list(LMM_000, LMM_025, LMM_050, LMM_075, LMM_100),
+#'                        list_results_RF = list(RF_000, RF_025, RF_050, RF_075, RF_100),
+#'                        data = data_rangers) -> training_info_initial
+#'
+#' readr::write_excel_csv(training_info_initial,
+#'                        file = paste0(path_tables, "table_training_sets_initial.csv"))
+#'
+#'
+#' ## Extended Data Table 9
+#'
+#' table_training_final(list_results_LMM = list(LMM_000, LMM_025, LMM_050, LMM_075, LMM_100),
+#'                      list_results_RF = list(RF_000, RF_025, RF_050, RF_075, RF_100),
+#'                      data = data_rangers) -> training_info_final
+#'
+#' readr::write_excel_csv(training_info_final,
+#'                        file = paste0(path_tables, "table_training_sets_final.csv"))
+#'
+#'
+#' ## Extended Data Table 10
+#'
+#' table_tuning(list_results_LMM = list(LMM_000, LMM_025, LMM_050, LMM_075, LMM_100),
+#'              list_results_RF = list(RF_000, RF_025, RF_050, RF_075, RF_100),
+#'              data = data_rangers) -> fine_tunning_selected
+#'
+#'  readr::write_excel_csv(fine_tunning_selected,
+#'                         file = paste0(path_tables, "table_fine_tuning.csv"))
+#'
+#'
+#' ###################################################### SMALL COMPUTATIONS
+#'
+#' ## Numerical example to explain how imputation is done (in SI):
+#'
+#' data_rangers %>%
+#'   dplyr::filter(countryname_eng == "Spain") %>%
+#'   dplyr::select(.data$staff_rangers,
+#'                 .data$PA_area_surveyed,
+#'                 .data$PA_area_unsurveyed) -> data_spain_before_imputation
+#'  data_spain_before_imputation
+#'  fill_PA_area(data_spain_before_imputation, coef = 1)
+#'  fill_PA_area(data_spain_before_imputation, coef = 0.5)
+#'
+#'
+#' ## Data reliability:
+#'
+#' summary(data_rangers$reliability)
+#' sum(data_rangers$reliability >= 15, na.rm = TRUE)
+#' length(na.omit(data_rangers$reliability))
+#' round(mean(data_rangers$reliability, na.rm = TRUE), 2)
+#' round(sd(data_rangers$reliability, na.rm = TRUE), 2)
+#'
+#'
+#' ## Info on computing time:
+#'
+#' extract_results(list_results_LMM = list(LMM_000, LMM_025, LMM_050, LMM_075, LMM_100),
+#'                 list_results_RF = list(RF_000, RF_025, RF_050, RF_075, RF_100)) %>%
+#'                 dplyr::mutate(time = .data$run_time * .data$Ncpu) %>%
+#'                 dplyr::summarize(total_time_h = sum(.data$time))
 #'
 #' }
