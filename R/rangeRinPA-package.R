@@ -39,19 +39,19 @@
 #' round(mean(data_rangers$reliability, na.rm = TRUE), 2)
 #' round(sd(data_rangers$reliability, na.rm = TRUE), 2)
 #'
-#' ## Extended Data Table 2A
+#' ## Extended Data Table 3A
 #'
 #' readr::write_excel_csv(table_completeness_obs(data_rangers),
 #'                        file = paste0(path_tables, "table_completeness_obs.csv"))
 #'
 #'
-#' ## Extended Data Table 2B
+#' ## Extended Data Table 3B
 #'
 #' readr::write_excel_csv(table_completeness_km2(data_rangers),
 #'                        file = paste0(path_tables, "table_completeness_km2.csv"))
 #'
 #'
-#' ## Extended Data Table 2C
+#' ## Extended Data Table 3C
 #'
 #' readr::write_excel_csv(table_completeness_vars(data_rangers),
 #'                        file = paste0(path_tables, "table_completeness_vars.csv"))
@@ -194,7 +194,7 @@
 #'                 dplyr::mutate(time = .data$run_time * .data$Ncpu) %>%
 #'                 dplyr::summarize(total_time_h = sum(.data$time))
 #'
-#' ## Extended Data Table 4
+#' ## Extended Data Table 5
 #'
 #' table_training_initial(list_results_LMM = list(LMM_000, LMM_025, LMM_050, LMM_075, LMM_100),
 #'                        list_results_RF = list(RF_000, RF_025, RF_050, RF_075, RF_100),
@@ -204,7 +204,7 @@
 #'                        file = paste0(path_tables, "table_training_sets_initial.csv"))
 #'
 #'
-#' ## Extended Data Table 5
+#' ## Extended Data Table 6
 #'
 #' table_training_final(list_results_LMM = list(LMM_000, LMM_025, LMM_050, LMM_075, LMM_100),
 #'                      list_results_RF = list(RF_000, RF_025, RF_050, RF_075, RF_100),
@@ -214,7 +214,7 @@
 #'                        file = paste0(path_tables, "table_training_sets_final.csv"))
 #'
 #'
-#' ## Extended Data Table 6
+#' ## Extended Data Table 7
 #'
 #' table_tuning(list_results_LMM = list(LMM_000, LMM_025, LMM_050, LMM_075, LMM_100),
 #'              list_results_RF = list(RF_000, RF_025, RF_050, RF_075, RF_100),
@@ -242,6 +242,7 @@
 #'                 width = ggplot2::unit(8, "cm"))
 #' ggplot2::ggsave(filename = paste0(path_figures, "figure_features_selection.png"),
 #'                 width = ggplot2::unit(8, "cm"))
+#'
 #'
 #' ## Extended Data Fig. 7
 #'
