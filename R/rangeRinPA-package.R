@@ -39,19 +39,19 @@
 #' round(mean(data_rangers$reliability, na.rm = TRUE), 2)
 #' round(sd(data_rangers$reliability, na.rm = TRUE), 2)
 #'
-#' ## Table S1 A
+#' ## Extended Data Table 1A
 #'
 #' readr::write_excel_csv(table_completeness_obs(data_rangers),
 #'                        file = paste0(path_tables, "table_completeness_obs.csv"))
 #'
 #'
-#' ## Table S1 B
+#' ## Extended Data Table 1B
 #'
 #' readr::write_excel_csv(table_completeness_km2(data_rangers),
 #'                        file = paste0(path_tables, "table_completeness_km2.csv"))
 #'
 #'
-#' ## Table S1 C
+#' ## Extended Data Table 1C
 #'
 #' readr::write_excel_csv(table_completeness_vars(data_rangers),
 #'                        file = paste0(path_tables, "table_completeness_vars.csv"))
@@ -66,7 +66,7 @@
 #'                 width = ggplot2::unit(15, "cm"))
 #'
 #'
-#' ## Figure S1
+#' ## Extended Data Fig. 1
 #'
 #' plot_map_reliability(data_rangers_with_geo)
 #' ggplot2::ggsave(filename = paste0(path_figures, "figure_reliability.pdf"),
@@ -75,8 +75,9 @@
 #'                 width = ggplot2::unit(15, "cm"))
 #'
 #'
-#' ## Figure XX
+#' ## Extended Data Fig. 2
 #'
+#' set.seed(123)
 #' plot_reliability_vs_sampling(data_rangers)
 #' ggplot2::ggsave(filename = paste0(path_figures, "figure_reliability_vs_design.pdf"),
 #'                 width = ggplot2::unit(8, "cm"))
@@ -184,75 +185,60 @@
 #'                 dplyr::mutate(time = .data$run_time * .data$Ncpu) %>%
 #'                 dplyr::summarize(total_time_h = sum(.data$time))
 #'
-#' ## Table S2
+#' ## Extended Data Table 3
 #'
-#' extract_training_info(which = "initial",
-#'                       list_results_LMM = list(LMM_000, LMM_025, LMM_050, LMM_075, LMM_100),
-#'                       list_results_RF = list(RF_000, RF_025, RF_050, RF_075, RF_100),
-#'                       data = data_rangers) -> training_info_initial
+#' table_training_initial(list_results_LMM = list(LMM_000, LMM_025, LMM_050, LMM_075, LMM_100),
+#'                        list_results_RF = list(RF_000, RF_025, RF_050, RF_075, RF_100),
+#'                        data = data_rangers) -> training_info_initial
 #'
-#' training_info_initial %>% # remove duplicates
-#'   dplyr::group_by(who) %>%
-#'   dplyr::slice(1) %>%
-#'   dplyr::select(-.data$type, -.data$coef, -.data$ncol) %>%
-#'   dplyr::ungroup() -> training_info_initial_clean
-#'
-#'  readr::write_excel_csv(training_info_initial_clean,
-#'                         file = paste0(path_tables, "table_training_sets_initial.csv"))
+#' readr::write_excel_csv(training_info_initial,
+#'                        file = paste0(path_tables, "table_training_sets_initial.csv"))
 #'
 #'
-#' ## Table S3
+#' ## Extended Data Table 4
 #'
-#' extract_training_info(which = "final",
-#'                       list_results_LMM = list(LMM_000, LMM_025, LMM_050, LMM_075, LMM_100),
-#'                       list_results_RF = list(RF_000, RF_025, RF_050, RF_075, RF_100),
-#'                       data = data_rangers) -> training_info_final
-#'
+#' table_training_final(list_results_LMM = list(LMM_000, LMM_025, LMM_050, LMM_075, LMM_100),
+#'                      list_results_RF = list(RF_000, RF_025, RF_050, RF_075, RF_100),
+#'                      data = data_rangers) -> training_info_final
 #'
 #' readr::write_excel_csv(training_info_final,
-#'                        file = paste0(path_tables, "table_training_sets_final_temp.csv"))
+#'                        file = paste0(path_tables, "table_training_sets_final.csv"))
 #'
 #'
-#' ## Table S4
-#' extract_finetuning(list_results_LMM = list(LMM_000, LMM_025, LMM_050, LMM_075, LMM_100),
-#'                    list_results_RF = list(RF_000, RF_025, RF_050, RF_075, RF_100),
-#'                    data = data_rangers) -> fine_tunning_selected
+#' ## Extended Data Table 5
+#' table_tuning(list_results_LMM = list(LMM_000, LMM_025, LMM_050, LMM_075, LMM_100),
+#'              list_results_RF = list(RF_000, RF_025, RF_050, RF_075, RF_100),
+#'              data = data_rangers) -> fine_tunning_selected
 #'
 #'  readr::write_excel_csv(fine_tunning_selected,
-#'                         file = paste0(path_tables, "table_fine_tuning_temp.csv"))
+#'                         file = paste0(path_tables, "table_fine_tuning.csv"))
 #'
 #'
-#' ## Figure XX selected features
+#' ## Extended Data Fig. 3
 #'
 #' plot_features_selected(list_results_LMM = list(LMM_000, LMM_025, LMM_050, LMM_075, LMM_100),
 #'                        list_results_RF  = list(RF_000, RF_025, RF_050, RF_075, RF_100),
 #'                        data = data_rangers)
-#' ggplot2::ggsave(filename = paste0(path_figures, "figure_features_selected_temp.pdf"),
+#' ggplot2::ggsave(filename = paste0(path_figures, "figure_features_selected.pdf"),
 #'                 width = ggplot2::unit(8, "cm"), height = ggplot2::unit(10, "cm"))
-#' ggplot2::ggsave(filename = paste0(path_figures, "figure_features_selected_temp.png"),
+#' ggplot2::ggsave(filename = paste0(path_figures, "figure_features_selected.png"),
 #'                 width = ggplot2::unit(8, "cm"), height = ggplot2::unit(10, "cm"))
 
 #'
-#' ## Figure XX feature selection (influence on RMSE)
+#' ## Extended Data Fig. 4
 #'
-#' plot_features_selection(result = RF_100, who = "rangers")
-#' ggplot2::ggsave(filename = paste0(path_figures, "figure_features_selection_RF_temp.pdf"),
+#' plot_features_selection_panel(result1 = LMM_100, result2 = RF_100, who = "rangers")
+#' ggplot2::ggsave(filename = paste0(path_figures, "figure_features_selection.pdf"),
 #'                 width = ggplot2::unit(8, "cm"))
-#' ggplot2::ggsave(filename = paste0(path_figures, "figure_features_selection_RF_temp.png"),
-#'                 width = ggplot2::unit(8, "cm"))
-#'
-#' plot_features_selection(result = LMM_100, who = "rangers")
-#' ggplot2::ggsave(filename = paste0(path_figures, "figure_features_selection_LMM_temp.pdf"),
-#'                 width = ggplot2::unit(8, "cm"))
-#' ggplot2::ggsave(filename = paste0(path_figures, "figure_features_selection_LMM_temp.png"),
+#' ggplot2::ggsave(filename = paste0(path_figures, "figure_features_selection.png"),
 #'                 width = ggplot2::unit(8, "cm"))
 #'
-#' ## Figure XX fine tuning
+#' ## Extended Data Fig. 5
 #'
 #' plot_finetuning(result = RF_100, who = "rangers")
-#' ggplot2::ggsave(filename = paste0(path_figures, "figure_finetuning_temp.pdf"),
+#' ggplot2::ggsave(filename = paste0(path_figures, "figure_finetuning.pdf"),
 #'                 width = ggplot2::unit(8, "cm"))
-#' ggplot2::ggsave(filename = paste0(path_figures, "figure_finetuning_temp.png"),
+#' ggplot2::ggsave(filename = paste0(path_figures, "figure_finetuning.png"),
 #'                 width = ggplot2::unit(8, "cm"))
 
 #' ## Table SXX
@@ -263,6 +249,7 @@
 #'
 #'  readr::write_excel_csv(table_predictions,
 #'                         file = paste0(path_tables, "table_predictions.csv"))
+#'
 #'
 #'
 #' ## Table SXX
@@ -303,7 +290,7 @@
 #' readr::write_excel_csv(table_projections,
 #'                        file = paste0(path_tables, "table_projections.csv"))
 #'
-#' ## Figure  XXX projections
+#' ## Figure 3
 #'
 #' plot_projections(what = LMM_100, data = data_rangers)
 #' ggplot2::ggsave(filename = paste0(path_figures, "figure_projections.pdf"),
@@ -334,24 +321,7 @@
 #'                 width = ggplot2::unit(8, "cm"))
 #'
 #'
-#' ## Figure XX density rangers
-#'
-#' plot_density_staff(what = LMM_100, who = "rangers", data = data_rangers)
-#' ggplot2::ggsave(filename = paste0(path_figures, "figure_density_rangers.pdf"),
-#'                  width = 14, height = 12, scale = 0.7)
-#' ggplot2::ggsave(filename = paste0(path_figures, "figure_density_rangers.png"),
-#'                  width = 14, height = 12, scale = 0.7)
-#'
-#'
-#' ## Figure XX density all
-#'
-#' plot_density_staff(what = LMM_100, who = "all", data = data_rangers)
-#' ggplot2::ggsave(filename = paste0(path_figures, "figure_density_all.pdf"),
-#'                  width = 14, height = 12, scale = 0.7)
-#' ggplot2::ggsave(filename = paste0(path_figures, "figure_density_all.png"),
-#'                  width = 14, height = 12, scale = 0.7)
-#'
-#' ## Two previous figures as panel (as in main text)
+#' ## Figure 3
 #'
 #' plot_density_panel(what = LMM_100, data = data_rangers)
 #' ggplot2::ggsave(filename = paste0(path_figures, "figure_density_panel.pdf"),
@@ -359,13 +329,15 @@
 #' ggplot2::ggsave(filename = paste0(path_figures, "figure_density_panel.png"),
 #'                  width = 26, height = 12, scale = 0.7)
 #'
-#' ## Figure XX PA per data type
 #'
-#' plot_PA_by_data_type(what = LMM_100, data = data_rangers)
-#' ggplot2::ggsave(filename = paste0(path_figures, "figure_PA_by_data_type_temp.pdf"),
+#' ## Extended Data Figure 6
+#'
+#' plot_PA_by_data_type(what = RF_100, data = data_rangers)
+#' ggplot2::ggsave(filename = paste0(path_figures, "figure_PA_by_data_type.pdf"),
 #'                 width = ggplot2::unit(11, "cm"))
-#' ggplot2::ggsave(filename = paste0(path_figures, "figure_PA_by_data_type_temp.png"),
+#' ggplot2::ggsave(filename = paste0(path_figures, "figure_PA_by_data_type.png"),
 #'                 width = ggplot2::unit(11, "cm"))
+#'
 #'
 #' ## Figure XX density vs PA
 #' plot_density_vs_PA(data = data_rangers, who = "all", coef = 1)
