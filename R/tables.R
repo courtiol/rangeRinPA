@@ -150,6 +150,35 @@ table_completeness_vars <- function(data) {
 
 }
 
+#' Create table with info on training datasets
+#'
+#' This function creates the table that shows the information about the training datasets.
+#'
+#' @inheritParams extract_results
+#'
+#' @return a tibble
+#' @export
+#'
+#' @examples
+#' # see see ?rangeRinPA
+#'
+table_training <- function(list_results_LMM, list_results_RF, data) {
+  extract_training_info(which = "initial",
+                        list_results_LMM = list_results_LMM,
+                        list_results_RF = list_results_RF,
+                        data = data) -> training_info_initial
+
+  training_info_initial %>% # remove duplicates
+    dplyr::mutate(who = dplyr::case_when(.data$who == "All" ~ "All personnel",
+                                         .data$who == "Rangers" ~ "Rangers",
+                                         .data$who == "Others" ~ "Non-rangers"),
+                  who = forcats::fct_inorder(.data$who)) %>%
+    dplyr::group_by(who) %>%
+    dplyr::slice(1) %>%
+    dplyr::select(-.data$type, -.data$coef, -.data$ncol) %>%
+    dplyr::ungroup()
+  }
+
 
 #' Create table with predictions (per method)
 #'
