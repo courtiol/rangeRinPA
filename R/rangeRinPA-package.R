@@ -68,6 +68,15 @@
 #'
 #' ## Extended Data Fig. 1
 #'
+#' plot_density_vs_PA_panel(data = data_rangers, coef = 1)
+#' ggplot2::ggsave(filename = paste0(path_figures, "figure_density_vs_PA.pdf"),
+#'                 width = ggplot2::unit(10, "cm"))
+#' ggplot2::ggsave(filename = paste0(path_figures, "figure_density_vs_PA.png"),
+#'                 width = ggplot2::unit(10, "cm"))
+#'
+#'
+#' ## Extended Data Fig. 2
+#'
 #' plot_map_reliability(data_rangers_with_geo)
 #' ggplot2::ggsave(filename = paste0(path_figures, "figure_reliability.pdf"),
 #'                 width = ggplot2::unit(15, "cm"))
@@ -75,7 +84,7 @@
 #'                 width = ggplot2::unit(15, "cm"))
 #'
 #'
-#' ## Extended Data Fig. 2
+#' ## Extended Data Fig. 3
 #'
 #' set.seed(123)
 #' plot_reliability_vs_sampling(data_rangers)
@@ -85,7 +94,7 @@
 #'                 width = ggplot2::unit(8, "cm"))
 #'
 #'
-#' ## Figure XX
+#' ## Extended Data Fig. 4
 #'
 #' plot_density_vs_sampling(data_rangers)
 #' ggplot2::ggsave(filename = paste0(path_figures, "figure_density_vs_sampling.pdf"),
@@ -214,7 +223,7 @@
 #'                         file = paste0(path_tables, "table_fine_tuning.csv"))
 #'
 #'
-#' ## Extended Data Fig. 3
+#' ## Extended Data Fig. 5
 #'
 #' plot_features_selected(list_results_LMM = list(LMM_000, LMM_025, LMM_050, LMM_075, LMM_100),
 #'                        list_results_RF  = list(RF_000, RF_025, RF_050, RF_075, RF_100),
@@ -225,7 +234,7 @@
 #'                 width = ggplot2::unit(8, "cm"), height = ggplot2::unit(10, "cm"))
 
 #'
-#' ## Extended Data Fig. 4
+#' ## Extended Data Fig. 6
 #'
 #' plot_features_selection_panel(result1 = LMM_100, result2 = RF_100, who = "rangers")
 #' ggplot2::ggsave(filename = paste0(path_figures, "figure_features_selection.pdf"),
@@ -233,7 +242,7 @@
 #' ggplot2::ggsave(filename = paste0(path_figures, "figure_features_selection.png"),
 #'                 width = ggplot2::unit(8, "cm"))
 #'
-#' ## Extended Data Fig. 5
+#' ## Extended Data Fig. 7
 #'
 #' plot_finetuning(result = RF_100, who = "rangers")
 #' ggplot2::ggsave(filename = paste0(path_figures, "figure_finetuning.pdf"),
@@ -301,16 +310,6 @@
 #'                 height = ggplot2::unit(8, "cm"))
 #'
 #'
-#' ## Figure XX tallies per methods
-#'
-#' plot_tallies_across_methods(list_results_LMM = list(LMM_000, LMM_025, LMM_050, LMM_075, LMM_100),
-#'                             list_results_RF = list(RF_000, RF_025, RF_050, RF_075, RF_100),
-#'                             data = data_rangers)
-#' ggplot2::ggsave(filename = paste0(path_figures, "figure_tallies_across_methods_temp.pdf"),
-#'                 width = ggplot2::unit(14, "cm"))
-#' ggplot2::ggsave(filename = paste0(path_figures, "figure_tallies_across_methods_temp.png"),
-#'                 width = ggplot2::unit(14, "cm"))
-#'
 #'
 #' ## Figure XX tallies per continent
 #'
@@ -330,7 +329,7 @@
 #'                  width = 26, height = 12, scale = 0.7)
 #'
 #'
-#' ## Extended Data Figure 6
+#' ## Extended Data Fig. 8
 #'
 #' plot_PA_by_data_type(what = RF_100, data = data_rangers)
 #' ggplot2::ggsave(filename = paste0(path_figures, "figure_PA_by_data_type.pdf"),
@@ -339,18 +338,15 @@
 #'                 width = ggplot2::unit(11, "cm"))
 #'
 #'
-#' ## Figure XX density vs PA
-#' plot_density_vs_PA(data = data_rangers, who = "all", coef = 1)
-#' ggplot2::ggsave(filename = paste0(path_figures, "figure_density_vs_PA_all.pdf"),
-#'                 width = ggplot2::unit(8, "cm"))
-#' ggplot2::ggsave(filename = paste0(path_figures, "figure_density_vs_PA_all.png"),
-#'                 width = ggplot2::unit(8, "cm"))
+#' ## Extended Data Fig. 9
 #'
-#' #' ## Figure XX density vs PA
-#' plot_density_vs_PA(data = data_rangers, who = "rangers", coef = 1)
-#' ggplot2::ggsave(filename = paste0(path_figures, "figure_density_vs_PA_rangers.pdf"),
-#'                 width = ggplot2::unit(8, "cm"))
-#' ggplot2::ggsave(filename = paste0(path_figures, "figure_density_vs_PA_rangers.png"),
-#'                 width = ggplot2::unit(8, "cm"))
+#' plot_tallies_across_methods(list_results_LMM = list(LMM_000, LMM_025, LMM_050, LMM_075, LMM_100),
+#'                             list_results_RF = list(RF_000, RF_025, RF_050, RF_075, RF_100),
+#'                             data = data_rangers)
+#' ggplot2::ggsave(filename = paste0(path_figures, "figure_tallies_across_methods.pdf"),
+#'                 width = ggplot2::unit(14, "cm"))
+#' ggplot2::ggsave(filename = paste0(path_figures, "figure_tallies_across_methods.png"),
+#'                 width = ggplot2::unit(14, "cm"))
+#'
 #'
 #' }
