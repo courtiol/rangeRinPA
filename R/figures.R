@@ -129,8 +129,8 @@ plot_reliability_vs_sampling <- function(data){
     ggplot2::geom_jitter(width = 0.75, height = 0.1, shape = 1) +
     ggplot2::scale_x_continuous(breaks = seq(0, 100, 5), minor_breaks = 0:100) +
     ggplot2::scale_y_continuous(breaks = 10:20, minor_breaks = NULL) +
-    ggplot2::theme_bw() +
-    ggplot2::labs(x = "Protected areas surveyed (%)", y = "Reliability score (/20)")
+    ggplot2::theme_bw(base_size = 18) +
+    ggplot2::labs(x = "Surface of protected areas surveyed in country/territory (%)", y = "Reliability score (/20)")
 }
 
 
@@ -702,18 +702,23 @@ plot_projections <- function(what, data) {
     ggplot2::theme_bw(base_size = 18) +
     ggplot2::theme(panel.grid.major.x = ggplot2::element_blank(), legend.position = "top", plot.margin = ggplot2::margin(r = 1, unit = "in")) -> plot_numbers
 
-  ggplot2::ggplot(d_long_density) +
+  d_long_density %>%
+    dplyr::mutate(who = forcats::fct_rev(.data$who),
+                  name = forcats::fct_rev(.data$name)) -> d_long_density2
+
+  ggplot2::ggplot(d_long_density2) +
     ggplot2::aes(y = .data$value, x = .data$who, fill = .data$name) +
     ggplot2::geom_col(width = 0.4, position = "dodge2") +
     ggplot2::labs(y = expression(paste("Area per person (km"^"2", ")")), x = "", fill = "", tag = "B.") +
     ggplot2::scale_y_continuous(breaks = seq(0, 100, by = 10),
                                 labels = scales::label_number(accuracy = 1),
-                                limits = c(80, 0),
-                                trans = "reverse") +
-    ggplot2::scale_fill_manual(values = c(ggsci::pal_npg()(3)[1],
-                                          grDevices::colorRampPalette(c(ggsci::pal_npg()(3)[2], ## compute mid colour
+                                limits = c(0, 80)) +
+    ggplot2::scale_fill_manual(values = c(grDevices::colorRampPalette(c(ggsci::pal_npg()(3)[2], ## compute mid colour
                                                                         ggsci::pal_npg()(3)[3]),
-                                                                      space = "Lab")(3)[2])) +
+                                                                      space = "Lab")(3)[2],
+                                          ggsci::pal_npg()(3)[1])) +
+    ggplot2::guides(fill = ggplot2::guide_legend(reverse = TRUE)) +
+    ggplot2::coord_flip() +
     ggplot2::theme_bw(base_size = 18) +
     ggplot2::theme(panel.grid.major.x = ggplot2::element_blank(), legend.position = "top") -> plot_density
 
