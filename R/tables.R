@@ -173,7 +173,7 @@ table_training_initial <- function(list_results_LMM, list_results_RF, data) {
                                          .data$who == "Rangers" ~ "Rangers",
                                          .data$who == "Others" ~ "Non-rangers"),
                   who = forcats::fct_inorder(.data$who)) %>%
-    dplyr::group_by(who) %>%
+    dplyr::group_by(.data$who) %>%
     dplyr::slice(1) %>%
     dplyr::select(-.data$type, -.data$coef, -.data$ncol) %>%
     dplyr::ungroup()
@@ -199,7 +199,7 @@ table_training_final <- function(list_results_LMM, list_results_RF, data) {
                         list_results_RF = list_results_RF,
                         data = data) -> training_info_final
 
-  training_info_final %>% # remove duplicates
+  training_info_final %>%
     dplyr::mutate(who = dplyr::case_when(.data$who == "All" ~ "All personnel",
                                          .data$who == "Rangers" ~ "Rangers",
                                          .data$who == "Others" ~ "Non-rangers"),
@@ -207,6 +207,30 @@ table_training_final <- function(list_results_LMM, list_results_RF, data) {
   }
 
 
+#' Create table with info on fine tuning
+#'
+#' This function creates the table that shows the information about the fine tuning results.
+#'
+#' @inheritParams extract_results
+#'
+#' @return a tibble
+#' @export
+#'
+#' @examples
+#' # see see ?rangeRinPA
+#'
+table_tuning <- function(list_results_LMM, list_results_RF, data) {
+
+  extract_finetuning(list_results_LMM = list_results_LMM,
+                     list_results_RF = list_results_RF,
+                     data = data) -> fine_tunning_selected
+
+  fine_tunning_selected %>%
+    dplyr::mutate(who = dplyr::case_when(.data$who == "All" ~ "All personnel",
+                                         .data$who == "Rangers" ~ "Rangers",
+                                         .data$who == "Others" ~ "Non-rangers"),
+                  who = forcats::fct_inorder(.data$who))
+  }
 
 
 #' Create table with predictions (per method)
