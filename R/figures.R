@@ -163,9 +163,9 @@ plot_density_vs_sampling <- function(data, who = "rangers") {
                                   labels = scales::label_number(accuracy = 1)) +
       ggplot2::scale_x_continuous(breaks = seq(0, 100, 5), minor_breaks = 0:100) +
       ggplot2::coord_trans(y = "log") +
-      ggplot2::labs(x = "Protected areas surveyed (%)",
-                    y = expression(paste("Protected areas per individual staff (km"^"2", ")"))) +
-      ggplot2::theme_bw()
+      ggplot2::labs(x = "Surface of protected areas surveyed in country/territory (%)",
+                    y = expression(paste("Area per ranger (km"^"2", ")"))) +
+      ggplot2::theme_bw(base_size = 18)
 }
 
 
@@ -338,21 +338,26 @@ plot_tallies_across_methods <- function(list_results_LMM, list_results_RF, data)
                   list_results_RF = list_results_RF, data = data) %>%
     dplyr::mutate(type = dplyr::if_else(.data$type == "LMM", "LMM", "RF/ETs")) -> res
 
-  ggplot2::ggplot(res) +
-    ggplot2::aes(y = .data$point_pred, x = as.factor(.data$coef), fill = .data$type,
-                 ymin = pmin(.data$lwr, .data$point_pred), ymax = .data$upr) +
-    ggplot2::geom_col(position = "dodge", colour = "black", size = 0.2) +
-    ggplot2::geom_linerange(position = ggplot2::position_dodge(width = 0.9), size = 0.5) +
-    ggplot2::scale_y_continuous(breaks = (0:10) * 1e5, minor_breaks = (0:200) * 1e4,
-                                labels = scales::label_number(accuracy = 1)) +
-    ggsci::scale_fill_npg(guide = ggplot2::guide_legend(reverse = TRUE), alpha = 0.8) + # values = c("#52734D", "#FEFFDE", "#91C788")
-    ggplot2::theme_minimal() +
-    ggplot2::coord_flip() +
-    ggplot2::labs(x = "Coefficient used for imputation",
-                  y = "Estimated total number of staff",
-                  fill = "Statistical framework used for predictions:") +
-    ggplot2::facet_wrap(~ .data$who, scales = "free") +
-    ggplot2::theme(legend.position = "bottom")
+  res %>%
+    dplyr::mutate(who = dplyr::case_when(.data$who == "All" ~ "All personnel",
+                                     .data$who == "Rangers" ~ "Rangers",
+                                     .data$who == "Others" ~ "Non-rangers"),
+              who = forcats::fct_inorder(.data$who)) %>%
+    ggplot2::ggplot() +
+      ggplot2::aes(y = .data$point_pred, x = as.factor(.data$coef), fill = .data$type,
+                   ymin = pmin(.data$lwr, .data$point_pred), ymax = .data$upr) +
+      ggplot2::geom_col(position = "dodge", colour = "black", size = 0.2) +
+      ggplot2::geom_linerange(position = ggplot2::position_dodge(width = 0.9), size = 0.5) +
+      ggplot2::scale_y_continuous(breaks = (0:10) * 1e5, minor_breaks = (0:200) * 1e4,
+                                  labels = scales::label_number(accuracy = 1)) +
+      ggsci::scale_fill_npg(guide = ggplot2::guide_legend(reverse = TRUE), alpha = 0.8) + # values = c("#52734D", "#FEFFDE", "#91C788")
+      ggplot2::theme_minimal() +
+      ggplot2::coord_flip() +
+      ggplot2::labs(x = "Coefficient used for imputation",
+                    y = "Estimated total number of personnel",
+                    fill = "Statistical framework used for predictions:") +
+      ggplot2::facet_wrap(~ .data$who, scales = "free") +
+      ggplot2::theme(legend.position = "bottom")
 }
 
 
