@@ -429,17 +429,22 @@ plot_PA_by_data_type <- function(what, data) {
   res <- extract_results(list_results_LMM = list(what), data = data) ## note: works also when input is from RF, makes no difference
 
   res %>%
+    dplyr::mutate(who = dplyr::case_when(.data$who == "All" ~ "All personnel",
+                                         .data$who == "Rangers" ~ "Rangers",
+                                         .data$who == "Others" ~ "Non-rangers"),
+                  who = forcats::fct_inorder(.data$who)) %>%
     dplyr::select(.data$who, .data$PA_areas) %>%
     tidyr::unnest_wider(.data$PA_areas) %>%
     tidyr::unnest(-.data$who) %>%
     tidyr::pivot_longer(cols = tidyselect::starts_with("PA")) %>%
     dplyr::mutate(name = sapply(.data$name, \(x) sub(pattern = "PA_area_", replacement = "", x))) %>%
     dplyr::filter(.data$name %in% c("unknown", "predicted", "imputed", "known")) %>%
-    dplyr::mutate(name = factor(.data$name, levels = c("unknown", "predicted", "imputed", "known"))) %>%
+    dplyr::mutate(name = dplyr::case_when(.data$name == "unknown" ~ "unpredictable",
+                                          TRUE ~ .data$name)) %>%
+    dplyr::mutate(name = factor(.data$name, levels = c("unpredictable", "predicted", "imputed", "known"))) %>%
     dplyr::group_by(.data$who, .data$continent) %>%
     dplyr::mutate(total = sum(.data$value),
-                  value = .data$value / .data$total,
-                  who = factor(.data$who, levels = c("All", "Rangers", "Others"))) %>%
+                  value = .data$value / .data$total) %>%
     dplyr::ungroup() -> PA_areas_breakdown
 
   PA_areas_breakdown %>%
@@ -450,7 +455,7 @@ plot_PA_by_data_type <- function(what, data) {
       ggplot2::coord_polar(theta = "y", start = 0, direction = 1) +
       ggplot2::theme_void() +
       ggsci::scale_fill_npg() +
-      ggplot2::labs(fill = "Staff:") +
+      ggplot2::labs(fill = "Source of data on personnel:") +
       ggplot2::theme(plot.title.position = "plot",
                      legend.position = "bottom",
                      plot.margin = ggplot2::margin(t = 1, l = 0.5, unit = "cm"))
