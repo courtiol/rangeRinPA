@@ -171,7 +171,7 @@ plot_density_vs_sampling <- function(data, who = "rangers") {
 
 #' Plot the influence of the fine tuning parameters for RF/ETs fits on the RMSE
 #'
-#' @param result the output of a call to [`run_RF_workflow()`]
+#' @param result the output of a call to [`run_RF_workflow()`] or [`run_LMM_workflow()`]
 #' @inheritParams plot_density_vs_sampling
 #'
 #' @export
@@ -247,13 +247,35 @@ plot_features_selection <- function(result, who = "rangers") {
       ggplot2::geom_point(size = 2) +
       ggplot2::geom_line(alpha = 0.7) +
       ggplot2::geom_hline(yintercept = min(selected_features_res$RMSE), linetype = "dashed") +
-      ggplot2::scale_x_continuous(breaks = 1:19, minor_breaks = NULL) +
+      ggplot2::scale_x_continuous(breaks = 0:19, minor_breaks = NULL) +
       ggplot2::scale_y_continuous(breaks = seq(1, 20, 0.5), minor_breaks = NULL) +
       ggplot2::coord_cartesian(ylim = c(floor(min(selected_features_res$RMSE) * 2)/2,
                                         ceiling(max(selected_features_res$RMSE)))) +
       ggplot2::theme_bw() +
-      ggplot2::labs(shape = "spatial autocorrelation", colour = "spatial autocorrelation") +
-      ggplot2::theme()
+      ggplot2::labs(shape = "spatial autocorrelation", colour = "spatial autocorrelation")
+}
+
+
+#' Plot the influence of the selection of predictors on the RMSE
+#'
+#' @inheritParams plot_finetuning
+#' @param result1 the first output of a call to [`run_RF_workflow()`] or [`run_LMM_workflow()`]
+#' @param result2 the second output of a call to [`run_RF_workflow()`] or [`run_LMM_workflow()`]
+#'
+#' @export
+#'
+#' @seealso [plot_features_selection]
+#' @examples
+#' # see see ?rangeRinPA
+#'
+plot_features_selection_panel <- function(result1, result2, who = "rangers") {
+
+  if (!requireNamespace("patchwork", quietly = TRUE)) stop("You need to install the package patchwork for this function to run")
+
+  p1 <- plot_features_selection(result = result1, who = "rangers") + ggplot2::labs(tag = "A.")
+  p2 <- plot_features_selection(result = result2, who = "rangers") + ggplot2::labs(tag = "B.") + ggplot2::theme(legend.position = "none")
+
+  p1 / p2
 }
 
 
