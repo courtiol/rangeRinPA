@@ -13,14 +13,14 @@
 table_completeness_obs <- function(data) {
 
   tibble::tibble(
-    category = c("rangers and other staff both separately known",
-                 "rangers and other staff both separately known",
-                 "rangers and other staff both known but lumped together",
-                 "rangers and other staff both known but lumped together",
-                 "only ranger staff known",
-                 "only ranger staff known",
-                 "only other staff known",
-                 "only other staff known",
+    category = c("rangers and non-rangers both separately known",
+                 "rangers and non-rangers both separately known",
+                 "rangers and non-rangers both known but lumped together",
+                 "rangers and non-rangers both known but lumped together",
+                 "only rangers known",
+                 "only rangers known",
+                 "only non-rangers known",
+                 "only non-rangers known",
                  "no data",
                  "no data"),
     category_PA = rep(c("full_survey", "partial_survey"), 5),
@@ -65,16 +65,16 @@ table_completeness_obs <- function(data) {
 table_completeness_km2 <- function(data) {
 
   tibble::tibble(
-    category = c("rangers and other staff both separately known",
-                 "rangers and other staff both separately known",
-                 "rangers and other staff both known but lumped together",
-                 "rangers and other staff both known but lumped together",
-                 "only ranger staff known",
-                 "only ranger staff known",
-                 "only other staff known",
-                 "only other staff known",
-                 "no data",
-                 "no data"),
+    category = c("rangers and non-rangers both separately known",
+                     "rangers and non-rangers both separately known",
+                     "rangers and non-rangers both known but lumped together",
+                     "rangers and non-rangers both known but lumped together",
+                     "only rangers known",
+                     "only rangers known",
+                     "only non-rangers known",
+                     "only non-rangers known",
+                     "no data",
+                     "no data"),
     category_PA = rep(c("km2_surveyed", "km2_unsurveyed"), 5),
     N = c(sum(data$PA_area_surveyed[!is.na(data$staff_rangers_others_known)]),
           sum(data$PA_area_unsurveyed[!is.na(data$staff_rangers_others_known)]),
@@ -127,12 +127,12 @@ table_completeness_vars <- function(data) {
   }
 
   dplyr::bind_rows(
-    var_table(name = "Number of ranger staff", var = "staff_rangers"),
-    var_table(name = "Number of other staff", var = "staff_others"),
-    var_table(name = "Number of total staff", var = "staff_total"),
+    var_table(name = "Number of rangers", var = "staff_rangers"),
+    var_table(name = "Number of non-rangers", var = "staff_others"),
+    var_table(name = "Number of both rangers and non-rangers", var = "staff_total"),
     var_table(name = "Latitude", var = "lat"),
     var_table(name = "Longitude", var = "long"),
-    var_table(name = "Area", var = "area_country"),
+    var_table(name = "Country/Territory area", var = "area_country"),
     var_table(name = "Population density", var = "pop_density"),
     var_table(name = "GDP", var = "GDP_2019"),
     var_table(name = "GDP per capita", var = "GDP_capita"),
@@ -143,9 +143,9 @@ table_completeness_vars <- function(data) {
     var_table(name = "Surface of protected area", var = "area_PA_total"),
     var_table(name = "Proportion of protected areas in IUCN categories I & II", var = "IUCN_1_2_prop"),
     var_table(name = "Proportion of protected areas in IUCN categories I-IV", var = "IUCN_1_4_prop"),
-    var_table(name = "Surface of protected area", var = "EVI"),
-    var_table(name = "Surface of protected area", var = "EPI_2020"),
-    var_table(name = "Surface of protected area", var = "SPI")
+    var_table(name = "Ecosystem Viability Index", var = "EVI"),
+    var_table(name = "Environmental Performance Index", var = "EPI_2020"),
+    var_table(name = "Species Protection Index", var = "SPI")
   )
 
 }
@@ -344,10 +344,10 @@ table_projections <- function(what, data) {
                   number = .data$all_number_pred,
                   density = .data$all_density_pred,
                   number_required = .data$number * 1/0.36,
-                  surplus_required = .data$number_required - .data$number,
+                  increase_required = .data$number_required - .data$number,
                   density_required = .data$PA/.data$number_required,
                   number_required_2030 = .data$number * 1/0.36 * 0.3/current_pct,
-                  surplus_required_2030 = .data$number_required_2030 - .data$number,
+                  increase_required_2030 = .data$number_required_2030 - .data$number,
                   density_required_2030 = (.data$PA  * 0.3/current_pct)/.data$number_required_2030,
                   .keep = "none") -> table_all
 
@@ -357,10 +357,10 @@ table_projections <- function(what, data) {
                   number = .data$rangers_number_pred,
                   density = .data$rangers_density_pred,
                   number_required = .data$number * 1/0.36,
-                  surplus_required = .data$number_required - .data$number,
+                  increase_required = .data$number_required - .data$number,
                   density_required = .data$PA/.data$number_required,
                   number_required_2030 = .data$number * 1/0.36 * 0.3/current_pct,
-                  surplus_required_2030 = .data$number_required_2030 - .data$number,
+                  increase_required_2030 = .data$number_required_2030 - .data$number,
                   density_required_2030 = (.data$PA  * 0.3/current_pct)/.data$number_required_2030,
                   .keep = "none") -> table_rangers
 
