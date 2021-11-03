@@ -310,16 +310,6 @@
 #'                 height = ggplot2::unit(8, "cm"))
 #'
 #'
-#'
-#' ## Figure XX tallies per continent
-#'
-#' plot_tallies_across_continents(what = LMM_100, data = data_rangers)
-#' ggplot2::ggsave(filename = paste0(path_figures, "figure_tallies_across_continents_temp.pdf"),
-#'                 width = ggplot2::unit(8, "cm"))
-#' ggplot2::ggsave(filename = paste0(path_figures, "figure_tallies_across_continents_temp.png"),
-#'                 width = ggplot2::unit(8, "cm"))
-#'
-#'
 #' ## Figure 3
 #'
 #' plot_density_panel(what = LMM_100, data = data_rangers)
@@ -346,6 +336,15 @@
 #' ggplot2::ggsave(filename = paste0(path_figures, "figure_tallies_across_methods.pdf"),
 #'                 width = ggplot2::unit(14, "cm"))
 #' ggplot2::ggsave(filename = paste0(path_figures, "figure_tallies_across_methods.png"),
+#'                 width = ggplot2::unit(14, "cm"))
+#'
+#'
+#' ## Extended Data Fig. 10
+#'
+#' plot_tallies_across_continents(what = LMM_100, data = data_rangers)
+#' ggplot2::ggsave(filename = paste0(path_figures, "figure_tallies_across_continents.pdf"),
+#'                 width = ggplot2::unit(14, "cm"))
+#' ggplot2::ggsave(filename = paste0(path_figures, "figure_tallies_across_continents.png"),
 #'                 width = ggplot2::unit(14, "cm"))
 #'
 #'

@@ -343,7 +343,7 @@ fetch_data <- function(keep_geometry = FALSE) {
   d %>%
     dplyr::mutate(country = paste(.data$countryname_eng, .data$flag)) -> d
 
-  ### Keep only geographical data (or nothing) for Antartica and Greenland (outliers):
+  ### Keep only geographical data (or nothing) for outliers:
 
   # We did not include Antarctica or countries & territories classified by IUCN as 'polar' since
   # these are largely uninhabited/and or very remote and are likely to to require very different

@@ -376,9 +376,6 @@ plot_tallies_across_continents <- function(what, data) {
   res <- extract_results(list_results_LMM = list(what)) ## note: works also when input is from RF, makes no difference
 
   res %>%
-    dplyr::filter(.data$who != "Others") -> res_focus
-
-  res_focus %>%
     dplyr::select(.data$who, .data$pred_details) %>%
     tidyr::unnest_wider(col = .data$pred_details) %>%
     tidyr::unnest(-.data$who) %>%
@@ -394,26 +391,33 @@ plot_tallies_across_continents <- function(what, data) {
     dplyr::mutate(continent = "World") %>%
     dplyr::bind_rows(breakdown) -> breakdown
 
-  breakdown$lwr[breakdown$continent == "World"] <- rep(res_focus$lwr, each = 3)
-  breakdown$upr[breakdown$continent == "World"] <- rep(res_focus$upr, each = 3)
+  breakdown$lwr[breakdown$continent == "World"] <- rep(res$lwr, each = 3)
+  breakdown$upr[breakdown$continent == "World"] <- rep(res$upr, each = 3)
 
   breakdown %>%
-    dplyr::filter(.data$who != "Others", .data$continent != "Antarctica") %>%
+    dplyr::filter(.data$continent != "Antarctica") %>%
+    #dplyr::filter(.data$who != "Others") %>%
     dplyr::mutate(continent = dplyr::case_when(.data$continent == "Latin America & Caribbean" ~ "Latin America &\nCarribbean",
                                                .data$continent == "Northern America" ~ "Northern\nAmerica",
-                                               TRUE ~ .data$continent)) %>%
+                                               TRUE ~ .data$continent),
+                  continent = factor(.data$continent,
+                                     levels = c("World", "Africa", "Asia", "Europe", "Latin America &\nCarribbean", "Northern\nAmerica", "Oceania")),
+                  who = dplyr::case_when(.data$who == "All" ~ "All personnel",
+                                     .data$who == "Rangers" ~ "Rangers",
+                                     .data$who == "Others" ~ "Non-rangers"),
+              who = forcats::fct_inorder(.data$who)) %>%
     ggplot2::ggplot() +
       ggplot2::aes(y = .data$value, x = .data$who, fill = .data$name, ymin = .data$lwr, ymax = .data$upr) +
       ggplot2::geom_col() +
-      ggplot2::geom_errorbar(width = 0, colour = "#E64B35FF") +
+      ggplot2::geom_errorbar(width = 0, colour = "#4DBBD5FF") +
       ggplot2::facet_wrap(~ .data$continent, nrow = 1) +
       ggplot2::scale_y_continuous(breaks = (0:10) * 1e5, minor_breaks = (0:100) * 1e4,
                                   labels = scales::label_number(accuracy = 1)) +
-      ggsci::scale_fill_npg() +
-      ggplot2::theme_bw() +
-      ggplot2::labs(fill = "Type of data:", y = "Number of staff", x = NULL) +
+       ggplot2::scale_fill_manual(values = ggsci::pal_npg()(4)[2:4]) + ## for concordance colours with plot_PA_by_data_type()
+      ggplot2::theme_bw(base_size = 14) +
+      ggplot2::labs(fill = "Source of data on personnel:", y = "Personnel number", x = NULL) +
       ggplot2::theme(plot.title.position = "plot",
-                     legend.position = "bottom") +
+                     legend.position = "bottom", axis.text.x = ggplot2::element_text(angle = 90, vjust = 0.5, hjust = 1)) +
       ggplot2::coord_cartesian(ylim = c(0, ceiling(max(breakdown$upr) / 10e4)*10e4))
 
 }
