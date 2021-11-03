@@ -39,19 +39,19 @@
 #' round(mean(data_rangers$reliability, na.rm = TRUE), 2)
 #' round(sd(data_rangers$reliability, na.rm = TRUE), 2)
 #'
-#' ## Extended Data Table 1A
+#' ## Extended Data Table 2A
 #'
 #' readr::write_excel_csv(table_completeness_obs(data_rangers),
 #'                        file = paste0(path_tables, "table_completeness_obs.csv"))
 #'
 #'
-#' ## Extended Data Table 1B
+#' ## Extended Data Table 2B
 #'
 #' readr::write_excel_csv(table_completeness_km2(data_rangers),
 #'                        file = paste0(path_tables, "table_completeness_km2.csv"))
 #'
 #'
-#' ## Extended Data Table 1C
+#' ## Extended Data Table 2C
 #'
 #' readr::write_excel_csv(table_completeness_vars(data_rangers),
 #'                        file = paste0(path_tables, "table_completeness_vars.csv"))
@@ -194,7 +194,7 @@
 #'                 dplyr::mutate(time = .data$run_time * .data$Ncpu) %>%
 #'                 dplyr::summarize(total_time_h = sum(.data$time))
 #'
-#' ## Extended Data Table 3
+#' ## Extended Data Table 4
 #'
 #' table_training_initial(list_results_LMM = list(LMM_000, LMM_025, LMM_050, LMM_075, LMM_100),
 #'                        list_results_RF = list(RF_000, RF_025, RF_050, RF_075, RF_100),
@@ -204,7 +204,7 @@
 #'                        file = paste0(path_tables, "table_training_sets_initial.csv"))
 #'
 #'
-#' ## Extended Data Table 4
+#' ## Extended Data Table 5
 #'
 #' table_training_final(list_results_LMM = list(LMM_000, LMM_025, LMM_050, LMM_075, LMM_100),
 #'                      list_results_RF = list(RF_000, RF_025, RF_050, RF_075, RF_100),
@@ -214,7 +214,8 @@
 #'                        file = paste0(path_tables, "table_training_sets_final.csv"))
 #'
 #'
-#' ## Extended Data Table 5
+#' ## Extended Data Table 6
+#'
 #' table_tuning(list_results_LMM = list(LMM_000, LMM_025, LMM_050, LMM_075, LMM_100),
 #'              list_results_RF = list(RF_000, RF_025, RF_050, RF_075, RF_100),
 #'              data = data_rangers) -> fine_tunning_selected
@@ -285,7 +286,7 @@
 #' readr::write_excel_csv(table_predictions_main,
 #'                        file = paste0(path_tables, "table_predictions_main.csv"))
 #'
-#' ## Table SXX
+#' ## Extended Data Table 1
 #'
 #' table_predictions_main_with_PI <- table_predictions_summary(what = LMM_100, data = data_rangers,
 #'                                                             with_PI = TRUE)
