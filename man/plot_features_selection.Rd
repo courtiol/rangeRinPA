@@ -7,7 +7,7 @@
 plot_features_selection(result, who = "rangers")
 }
 \arguments{
-\item{result}{the output of a call to \code{\link[=run_RF_workflow]{run_RF_workflow()}}}
+\item{result}{the output of a call to \code{\link[=run_RF_workflow]{run_RF_workflow()}} or \code{\link[=run_LMM_workflow]{run_LMM_workflow()}}}
 
 \item{who}{\code{"rangers"} (default), \code{"others"} or \code{"all"}}
 }
