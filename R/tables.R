@@ -352,7 +352,7 @@ table_predictions_summary <- function(what, data, with_PI = FALSE) {
                        PA = sum(.data$PA_total),
                        number = sum(.data$staff, na.rm = TRUE),
                        density = .data$PA / .data$number) %>%
-      dplyr::mutate(continent = "Global", .before = 1L) -> world_summary_estimates_all
+      dplyr::mutate(continent = "World", .before = 1L) -> world_summary_estimates_all
 
     world_summary_estimates_all %>%
       dplyr::mutate(number_lwr = what[[who]]$lwr[[1]],
@@ -393,7 +393,20 @@ table_predictions_summary <- function(what, data, with_PI = FALSE) {
   table %>%
     dplyr::select(-.data$all_who, -.data$rangers_who, -.data$rangers_continent, -.data$rangers_PA) %>%
     dplyr::rename(continent = .data$all_continent,
-                  PA = .data$all_PA)
+                  PA = .data$all_PA) -> table_out
+
+  ## pivot table as too wide if it contains PIs:
+  if (with_PI) {
+    table_out %>%
+      tidyr::pivot_longer(-c(.data$PA, .data$continent)) %>%
+      tidyr::separate(.data$name, into = c("who", "what"), sep = "\\_", extra = "merge") %>%
+      tidyr::pivot_wider(names_from = .data$what, values_from = .data$value) %>%
+      dplyr::arrange(.data$who) %>%
+      dplyr::relocate(.data$who, .before = 1) %>%
+      dplyr::select(-.data$PA) -> table_out
+  }
+
+  table_out
 
 }
 
@@ -414,7 +427,7 @@ table_projections <- function(what, data) {
   table_pred <- table_predictions_summary(what = what, data = data, with_PI = FALSE)
 
   table_pred %>%
-    dplyr::filter(.data$continent == "Global") %>%
+    dplyr::filter(.data$continent == "World") %>%
     dplyr::select(-.data$continent) %>%
     dplyr::rename_with(.cols = tidyselect::matches("number|density"), .fn = ~ paste0(., "_pred")) -> table_pred
 
