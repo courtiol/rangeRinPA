@@ -272,7 +272,7 @@ plot_features_selected <- function(list_results_LMM, list_results_RF, data, size
   res <- extract_results(list_results_LMM = list_results_LMM, list_results_RF = list_results_RF, data = data)
 
   all_predictors <- c("PA_area_log", "pop_density_log", "area_country_log", "long", "lat", "area_forest_pct","GDP_2019_log", "GDP_capita_log",
-                      "GDP_growth", "unemployment_log", "EVI", "SPI", "EPI_2020", "IUCN_1_4_prop", "IUCN_1_2_prop", "spatial_autocorr.")
+                      "GDP_growth", "unemployment_log", "EVI", "EPI_2020", "SPI", "IUCN_1_4_prop", "IUCN_1_2_prop", "spatial_autocorr.")
 
   res$predictor <- list(all_predictors)
   res$predictor_included <- lapply(res$formula, \(x) all_predictors %in% all.vars(stats::as.formula(x)[-2]))
