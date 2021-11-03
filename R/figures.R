@@ -638,7 +638,14 @@ plot_density_vs_PA <- function(data, who, coef = 1) {
 
   if (!requireNamespace("ggrepel", quietly = TRUE)) stop("You need to install the package ggrepel for this function to run")
 
-  if (who == "all") who <- "total"
+  if (who == "all") {
+    who <- "total"
+    y_title <- expression(paste("Area per person (km"^"2", ")"))
+  } else if (who == "rangers") {
+    y_title <- expression(paste("Area per ranger (km"^"2", ")"))
+  } else if (who == "others") {
+    y_title <- expression(paste("Area per non-ranger (km"^"2", ")"))
+  } else stop("Argument 'who' incorrect.")
 
   old_opt <- options("ggrepel.max.overlaps" = Inf)
 
@@ -653,6 +660,10 @@ plot_density_vs_PA <- function(data, who, coef = 1) {
     tidyr::drop_na(.data$staff) -> d
 
   fit <- spaMM::fitme(log(coverage_staff + 1) ~ log(area_PA_total + 1), data = d)
+
+  res_coef <- round(c(spaMM::fixef(fit)[2], spaMM::confint.HLfit(fit, parm = "log(area_PA_total + 1)", format = "stats", verbose = FALSE)), 2)
+  res_coef <- prettyNum(res_coef, nsmall = 2)
+
   tibble::tibble(y = exp(spaMM::predict.HLfit(fit)[, 1]) - 1,
                  x = fit$data$area_PA_total) -> preds
 
@@ -664,6 +675,11 @@ plot_density_vs_PA <- function(data, who, coef = 1) {
                        size = 2, linetype = "dashed", alpha = 0.5,
                        inherit.aes = FALSE) +
     ggrepel::geom_text_repel(key_glyph = "point", alpha = 0.4, size = 3) +
+    ggplot2::geom_text(mapping = ggplot2::aes(x = .data$x, y = .data$y, label = .data$label),
+                       data = data.frame(x = 10, y = 5000,
+                                         label = paste0("Allometric coef. = ", res_coef[1], " (", res_coef[2], "-", res_coef[3], ")")),
+                       hjust = 0,
+                       inherit.aes = FALSE) +
     ggplot2::geom_point() +
     ggplot2::coord_trans(y = "log1p", x = "log1p") +
     ggsci::scale_colour_npg() +
@@ -673,15 +689,32 @@ plot_density_vs_PA <- function(data, who, coef = 1) {
     ggplot2::scale_y_continuous(breaks = ybreaks, minor_breaks = NULL,
                                 limits = c(min(d$coverage_staff, na.rm = TRUE), min(ybreaks[ybreaks > max(d$coverage_staff, na.rm = TRUE)])),
                                 labels = scales::label_number(accuracy = 1)) +
-    ggplot2::theme_bw() +
-    ggplot2::theme(legend.position = "bottom") +
-    ggplot2::labs(y = expression(paste("Protected areas per individual staff (km"^"2", ")")),
+    ggplot2::theme_bw(base_size = 14) +
+    ggplot2::labs(y = y_title,
          x = expression(paste("Area of protected areas (km"^"2", ")")),
          colour = "Continent:") -> plot
 
    options(old_opt) ## restore original options
 
    plot
+}
+
+
+#' Plot densities of personnel and rangers vs area PA
+#'
+#' @inheritParams plot_density_vs_PA
+#' @export
+#' @examples
+#' plot_density_vs_PA_panel(data = data_rangers, coef = 1)
+#'
+plot_density_vs_PA_panel <- function(data, coef) {
+
+  if (!requireNamespace("patchwork", quietly = TRUE)) stop("You need to install the package patchwork for this function to run")
+
+  p1 <- plot_density_vs_PA(data = data, who = "all", coef = coef) + ggplot2::labs(tag = "A.")
+  p2 <- plot_density_vs_PA(data = data, who = "rangers", coef = coef) + ggplot2::labs(tag = "B.") + ggplot2::theme(legend.position = "none")
+
+  p1 / p2
 }
 
 
