@@ -265,8 +265,8 @@
 #'                 list_results_RF = list(RF_000, RF_025, RF_050, RF_075, RF_100),
 #'                 data = data_rangers) -> table_predictions
 #'
-#'  readr::write_excel_csv(table_predictions,
-#'                         file = paste0(path_tables, "table_predictions.csv"))
+#' readr::write_excel_csv(table_predictions,
+#'                        file = paste0(path_tables, "table_predictions.csv"))
 #'
 #'
 #' ## Extended Data Table 3
@@ -275,8 +275,8 @@
 #'                 list_results_RF = list(RF_000, RF_025, RF_050, RF_075, RF_100),
 #'                 data = data_rangers, density = TRUE) -> table_predictions_densities
 #'
-#'  readr::write_excel_csv(table_predictions_densities,
-#'                         file = paste0(path_tables, "table_predictions_densities.csv"))
+#' readr::write_excel_csv(table_predictions_densities,
+#'                        file = paste0(path_tables, "table_predictions_densities.csv"))
 #'
 #'
 #' ## Extended Data Table 4

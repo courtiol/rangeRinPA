@@ -282,7 +282,11 @@ table_predictions_per_method <- function(list_results_LMM, list_results_RF, data
   res %>%
     dplyr::select(-tidyselect::contains("PA_total_without")) %>%
     dplyr::rename_with(\(n) sub("RF", "RF/ETs", n), tidyselect::contains("RF")) %>%
-    dplyr::arrange(.data$who, dplyr::desc(.data$coef_imputation))
+    dplyr::arrange(.data$who, dplyr::desc(.data$coef_imputation)) %>%
+    dplyr::mutate(who = dplyr::case_when(.data$who == "All" ~ "All personnel",
+                                         .data$who == "Rangers" ~ "Rangers",
+                                         .data$who == "Others" ~ "Non-rangers"),
+                  who = forcats::fct_inorder(.data$who))
 }
 
 
@@ -317,7 +321,11 @@ table_predictions_per_continent <- function(what, data) {
                     km2_per_staff_lwr = .data$PA_area_total_without_unknown / .data$upr,
                     km2_per_staff_upr = .data$PA_area_total_without_unknown / .data$lwr) %>%
       dplyr::select(-.data$PA_area_total_without_unknown) %>%
-      dplyr::rename(point_pred = .data$sum_total)
+      dplyr::rename(point_pred = .data$sum_total) %>%
+      dplyr::mutate(who = dplyr::case_when(.data$who == "All" ~ "All personnel",
+                                           .data$who == "Rangers" ~ "Rangers",
+                                           .data$who == "Others" ~ "Non-rangers"),
+                    who = forcats::fct_inorder(.data$who))
 }
 
 
@@ -336,7 +344,13 @@ table_predictions_per_continent <- function(what, data) {
 #'
 table_predictions_summary <- function(what, data, with_PI = FALSE) {
 
-  lapply(c("all", "rangers"), \(who) {
+  if (with_PI) {
+      who_to_do <- c("all", "rangers", "others")
+    } else {
+      who_to_do <-  c("all", "rangers")
+    }
+
+  lapply(who_to_do, \(who) {
     var_staff <- colnames(what[[who]]$country_info[[1]])[grepl("staff", colnames(what[[who]]$country_info[[1]]))]
 
     what[[who]]$country_info[[1]] %>%
@@ -392,8 +406,13 @@ table_predictions_summary <- function(what, data, with_PI = FALSE) {
 
   table %>%
     dplyr::select(-.data$all_who, -.data$rangers_who, -.data$rangers_continent, -.data$rangers_PA) %>%
-    dplyr::rename(continent = .data$all_continent,
-                  PA = .data$all_PA) -> table_out
+    dplyr::rename(continent = .data$all_continent, PA = .data$all_PA) -> table_out
+
+  if (with_PI) {
+    table_out %>%
+      dplyr::select( -.data$others_who, -.data$others_continent, -.data$others_PA) -> table_out
+  }
+
 
   ## pivot table as too wide if it contains PIs:
   if (with_PI) {
@@ -401,9 +420,13 @@ table_predictions_summary <- function(what, data, with_PI = FALSE) {
       tidyr::pivot_longer(-c(.data$PA, .data$continent)) %>%
       tidyr::separate(.data$name, into = c("who", "what"), sep = "\\_", extra = "merge") %>%
       tidyr::pivot_wider(names_from = .data$what, values_from = .data$value) %>%
-      dplyr::arrange(.data$who) %>%
       dplyr::relocate(.data$who, .before = 1) %>%
-      dplyr::select(-.data$PA) -> table_out
+      dplyr::select(-.data$PA)  %>%
+      dplyr::mutate(who = dplyr::case_when(.data$who == "all" ~ "All personnel",
+                                           .data$who == "rangers" ~ "Rangers",
+                                           .data$who == "others" ~ "Non-rangers"),
+                    who = forcats::fct_inorder(.data$who)) %>%
+      dplyr::arrange(.data$who) -> table_out
   }
 
   table_out
