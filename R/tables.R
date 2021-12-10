@@ -519,3 +519,46 @@ table_projections <- function(what, data) {
   table_full
 
   }
+
+
+#' Create table with correlations between variables
+#'
+#' @inheritParams table_predictions_summary
+#' @param method a character string indicating which correlation coefficient (or covariance) is to
+#' be computed. One of "pearson" (default), "kendall", or "spearman": can be abbreviated.
+#'
+#' @return a correlation matrix
+#' @export
+#'
+#' @examples
+#' # see see ?rangeRinPA
+#'
+table_correlates <- function(data, method = "pearson") {
+
+  all_responses <- c("staff_rangers_log", "staff_others_log", "staff_total_log")
+  all_predictors <- c("PA_area_log", "pop_density_log", "area_country_log", "long", "lat", "area_forest_pct","GDP_2019_log", "GDP_capita_log",
+                      "GDP_growth", "unemployment_log", "EVI", "EPI_2020", "SPI", "IUCN_1_4_prop", "IUCN_1_2_prop")
+  all_vars <- c(all_responses, all_predictors)
+  data <- handle_transform(data)
+  data$PA_area_log <- log(data$PA_area_surveyed + data$PA_area_unsurveyed + 1)
+  m <- matrix(NA, nrow = length(all_vars), ncol = length(all_vars))
+  for (col in seq_along(all_vars)) {
+    for (row in seq_along(all_vars)) {
+      m[row, col] <- stats::cor(data[, colnames(data) == all_vars[col], drop = TRUE],
+                                data[, colnames(data) == all_vars[row], drop = TRUE],
+                                use = "pairwise.complete.obs")
+
+    }
+  }
+  all_vars[all_vars == "staff_rangers_log"] <- "rangers_log"
+  all_vars[all_vars == "staff_others_log"] <- "non-rangers_log"
+  all_vars[all_vars == "staff_total_log"] <- "all_PA_personnel_log"
+
+  all_vars <- totitle(gsub(pattern = "_", replacement = " ", x = all_vars, fixed = TRUE))
+
+  colnames(m) <- rownames(m) <- all_vars
+
+  d <- as.data.frame(round(m, digits = 2L))
+  tibble::rownames_to_column(d, var = "Variable")
+}
+
