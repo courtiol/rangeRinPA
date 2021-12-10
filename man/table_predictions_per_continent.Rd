@@ -17,6 +17,7 @@ a tibble
 \description{
 This function creates the table that shows the point predictions and their intervals, for the
 different continents.
+NOTE: superseeded by \href{table_predictions_summary}{\code{table_predictions_summary}()}.
 }
 \examples{
 # see see ?rangeRinPA

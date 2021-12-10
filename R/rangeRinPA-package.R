@@ -110,30 +110,31 @@
 #' ## Figure 1
 #'
 #' plot_map_sampling(data_rangers_with_geo)
-#' ggplot2::ggsave(filename = paste0(path_figures, "figure_sampling.pdf"),
+#' ggplot2::ggsave(filename = paste0(path_figures, "figure_main_1.pdf"),
 #'                 width = ggplot2::unit(15, "cm"))
-#' ggplot2::ggsave(filename = paste0(path_figures, "figure_sampling.png"),
+#' ggplot2::ggsave(filename = paste0(path_figures, "figure_main_1.png"),
 #'                 width = ggplot2::unit(15, "cm"))
 #'
 #'
 #' ## Figure 2
 #'
 #' plot_density_panel(what = LMM_100, data = data_rangers)
-#' ggplot2::ggsave(filename = paste0(path_figures, "figure_density_panel.pdf"),
+#' ggplot2::ggsave(filename = paste0(path_figures, "figure_main_2.pdf"),
 #'                  width = 26, height = 12, scale = 0.7)
-#' ggplot2::ggsave(filename = paste0(path_figures, "figure_density_panel.png"),
+#' ggplot2::ggsave(filename = paste0(path_figures, "figure_main_2.png"),
 #'                  width = 26, height = 12, scale = 0.7)
 #'
 #'
 #' ## Figure 3
 #'
-#' plot_projections(what = LMM_100, data = data_rangers)
-#' ggplot2::ggsave(filename = paste0(path_figures, "figure_projections.pdf"),
-#'                 width = ggplot2::unit(5.5, "cm"),
-#'                 height = ggplot2::unit(8, "cm"))
-#' ggplot2::ggsave(filename = paste0(path_figures, "figure_projections.png"),
-#'                 width = ggplot2::unit(5.5, "cm"),
-#'                 height = ggplot2::unit(8, "cm"))
+#' plot_density_vs_PA_panel(data = data_rangers, coef = 1)
+#' ggplot2::ggsave(filename = paste0(path_figures, "figure_main_3.pdf"),
+#'                 width = ggplot2::unit(10, "cm"))
+#' ggplot2::ggsave(filename = paste0(path_figures, "figure_main_3.png"),
+#'                 width = ggplot2::unit(10, "cm"))
+#'
+#'
+#' ## Figure 4 & 5 not made with R!
 #'
 #'
 #'
@@ -143,212 +144,214 @@
 #'
 #' table_predictions_main <- table_predictions_summary(what = LMM_100, data = data_rangers)
 #' readr::write_excel_csv(table_predictions_main,
-#'                        file = paste0(path_tables, "table_predictions_main.csv"))
+#'                        file = paste0(path_tables, "table_main_1.csv"))
 #'
 #'
-#' ## Table 2
 #'
-#' table_projections <- table_projections(what = LMM_100, data = data_rangers)
-#' readr::write_excel_csv(table_projections,
-#'                        file = paste0(path_tables, "table_projections.csv"))
+#' ###################################################### EXTENDED DATA FIGURES
 #'
 #'
-#' ###################################################### SI FIGURES
+#' ## Extended Data Figure 1
 #'
-#' ## Extended Data Fig. 1
-#'
-#' plot_density_vs_PA_panel(data = data_rangers, coef = 1)
-#' ggplot2::ggsave(filename = paste0(path_figures, "figure_density_vs_PA.pdf"),
-#'                 width = ggplot2::unit(10, "cm"))
-#' ggplot2::ggsave(filename = paste0(path_figures, "figure_density_vs_PA.png"),
-#'                 width = ggplot2::unit(10, "cm"))
+#' plot_tallies_across_continents(what = LMM_100, data = data_rangers)
+#' ggplot2::ggsave(filename = paste0(path_figures, "figure_extended_1.pdf"),
+#'                 width = ggplot2::unit(14, "cm"))
+#' ggplot2::ggsave(filename = paste0(path_figures, "figure_extended_1.png"),
+#'                 width = ggplot2::unit(14, "cm"))
 #'
 #'
-#' ## Extended Data Fig. 2
-#'
-#' plot_map_reliability(data_rangers_with_geo)
-#' ggplot2::ggsave(filename = paste0(path_figures, "figure_reliability.pdf"),
-#'                 width = ggplot2::unit(15, "cm"))
-#' ggplot2::ggsave(filename = paste0(path_figures, "figure_reliability.png"),
-#'                 width = ggplot2::unit(15, "cm"))
-#'
-#'
-#' ## Extended Data Fig. 3
-#'
-#' set.seed(123)
-#' plot_reliability_vs_sampling(data_rangers)
-#' ggplot2::ggsave(filename = paste0(path_figures, "figure_reliability_vs_design.pdf"),
-#'                 width = ggplot2::unit(8, "cm"))
-#' ggplot2::ggsave(filename = paste0(path_figures, "figure_reliability_vs_design.png"),
-#'                 width = ggplot2::unit(8, "cm"))
-#'
-#'
-#' ## Extended Data Fig. 4
-#'
-#' plot_density_vs_sampling(data_rangers)
-#' ggplot2::ggsave(filename = paste0(path_figures, "figure_density_vs_sampling.pdf"),
-#'                 width = ggplot2::unit(8, "cm"))
-#' ggplot2::ggsave(filename = paste0(path_figures, "figure_density_vs_sampling.png"),
-#'                 width = ggplot2::unit(8, "cm"))
-#'
-#'#' ## Extended Data Fig. 5
-#'
-#' plot_features_selected(list_results_LMM = list(LMM_000, LMM_025, LMM_050, LMM_075, LMM_100),
-#'                        list_results_RF  = list(RF_000, RF_025, RF_050, RF_075, RF_100),
-#'                        data = data_rangers)
-#' ggplot2::ggsave(filename = paste0(path_figures, "figure_features_selected.pdf"),
-#'                 width = ggplot2::unit(8, "cm"), height = ggplot2::unit(10, "cm"))
-#' ggplot2::ggsave(filename = paste0(path_figures, "figure_features_selected.png"),
-#'                 width = ggplot2::unit(8, "cm"), height = ggplot2::unit(10, "cm"))
-
-#'
-#' ## Extended Data Fig. 6
-#'
-#' plot_features_selection_panel(result1 = LMM_100, result2 = RF_100, who = "rangers")
-#' ggplot2::ggsave(filename = paste0(path_figures, "figure_features_selection.pdf"),
-#'                 width = ggplot2::unit(8, "cm"))
-#' ggplot2::ggsave(filename = paste0(path_figures, "figure_features_selection.png"),
-#'                 width = ggplot2::unit(8, "cm"))
-#'
-#'
-#' ## Extended Data Fig. 7
-#'
-#' plot_finetuning(result = RF_100, who = "rangers")
-#' ggplot2::ggsave(filename = paste0(path_figures, "figure_finetuning.pdf"),
-#'                 width = ggplot2::unit(8, "cm"))
-#' ggplot2::ggsave(filename = paste0(path_figures, "figure_finetuning.png"),
-#'                 width = ggplot2::unit(8, "cm"))
-#'
-#'
-#' ## Extended Data Fig. 8
-#'
-#' plot_PA_by_data_type(what = RF_100, data = data_rangers)
-#' ggplot2::ggsave(filename = paste0(path_figures, "figure_PA_by_data_type.pdf"),
-#'                 width = ggplot2::unit(11, "cm"))
-#' ggplot2::ggsave(filename = paste0(path_figures, "figure_PA_by_data_type.png"),
-#'                 width = ggplot2::unit(11, "cm"))
-#'
-#'
-#' ## Extended Data Fig. 9
+#' ## Extended Data Figure 2
 #'
 #' plot_tallies_across_methods(list_results_LMM = list(LMM_000, LMM_025, LMM_050, LMM_075, LMM_100),
 #'                             list_results_RF = list(RF_000, RF_025, RF_050, RF_075, RF_100),
 #'                             data = data_rangers)
-#' ggplot2::ggsave(filename = paste0(path_figures, "figure_tallies_across_methods.pdf"),
+#' ggplot2::ggsave(filename = paste0(path_figures, "figure_extended_2.pdf"),
 #'                 width = ggplot2::unit(14, "cm"))
-#' ggplot2::ggsave(filename = paste0(path_figures, "figure_tallies_across_methods.png"),
-#'                 width = ggplot2::unit(14, "cm"))
-#'
-#'
-#' ## Extended Data Fig. 10
-#'
-#' plot_tallies_across_continents(what = LMM_100, data = data_rangers)
-#' ggplot2::ggsave(filename = paste0(path_figures, "figure_tallies_across_continents.pdf"),
-#'                 width = ggplot2::unit(14, "cm"))
-#' ggplot2::ggsave(filename = paste0(path_figures, "figure_tallies_across_continents.png"),
+#' ggplot2::ggsave(filename = paste0(path_figures, "figure_extended_2.png"),
 #'                 width = ggplot2::unit(14, "cm"))
 #'
 #'
-#' ###################################################### SI TABLES
 #'
-#' ## Extended Data Table X
-#' table_raw_data_formatted <- table_raw_data(data_rangers)
-#'
-#' readr::write_excel_csv(table_raw_data_formatted,
-#'                        file = paste0(path_tables, "table_raw_data_formatted.csv"))
+#' ###################################################### EXTENDED DATA TABLES
 #'
 #' ## Extended Data Table 1
 #'
-#' table_predictions_main_with_PI <- table_predictions_summary(what = LMM_100, data = data_rangers,
-#'                                                             with_PI = TRUE)
-#' readr::write_excel_csv(table_predictions_main_with_PI,
-#'                        file = paste0(path_tables, "table_predictions_main_with_PI.csv"))
+#' table_raw_data_formatted <- table_raw_data(data_rangers)
+#'
+#' readr::write_excel_csv(table_raw_data_formatted,
+#'                        file = paste0(path_tables, "table_extended_1.csv"))
 #'
 #'
 #' ## Extended Data Table 2
 #'
-#' table_predictions_per_method(list_results_LMM = list(LMM_000, LMM_025, LMM_050, LMM_075, LMM_100),
-#'                 list_results_RF = list(RF_000, RF_025, RF_050, RF_075, RF_100),
-#'                 data = data_rangers) -> table_predictions
-#'
-#' readr::write_excel_csv(table_predictions,
-#'                        file = paste0(path_tables, "table_predictions.csv"))
+#' table_predictions_main_with_PI <- table_predictions_summary(what = LMM_100, data = data_rangers,
+#'                                                             with_PI = TRUE)
+#' readr::write_excel_csv(table_predictions_main_with_PI,
+#'                        file = paste0(path_tables, "table_extended_2.csv"))
 #'
 #'
 #' ## Extended Data Table 3
 #'
-#' table_predictions_per_method(list_results_LMM = list(LMM_000, LMM_025, LMM_050, LMM_075, LMM_100),
-#'                 list_results_RF = list(RF_000, RF_025, RF_050, RF_075, RF_100),
-#'                 data = data_rangers, density = TRUE) -> table_predictions_densities
+#' table_predictions_methods <- table_predictions_per_method(
+#'                            list_results_LMM = list(LMM_000, LMM_025, LMM_050, LMM_075, LMM_100),
+#'                            list_results_RF = list(RF_000, RF_025, RF_050, RF_075, RF_100),
+#'                            data = data_rangers)
 #'
-#' readr::write_excel_csv(table_predictions_densities,
-#'                        file = paste0(path_tables, "table_predictions_densities.csv"))
+#' readr::write_excel_csv(table_predictions_methods,
+#'                        file = paste0(path_tables, "table_extended_3.csv"))
 #'
 #'
 #' ## Extended Data Table 4
 #'
-#' table_predictions_per_continent <- table_predictions_per_continent(what = LMM_100, data = data_rangers)
+#' table_predictions_methods_densities <- table_predictions_per_method(
+#'                             list_results_LMM = list(LMM_000, LMM_025, LMM_050, LMM_075, LMM_100),
+#'                             list_results_RF = list(RF_000, RF_025, RF_050, RF_075, RF_100),
+#'                             data = data_rangers, density = TRUE)
 #'
-#' readr::write_excel_csv(table_predictions_per_continent,
-#'                        file = paste0(path_tables, "table_predictions_per_continent.csv"))
+#' readr::write_excel_csv(table_predictions_methods_densities,
+#'                        file = paste0(path_tables, "table_extended_4.csv"))
 #'
 #'
-#' ## Extended Data Table 5
-#' # table about recommendation in personnel numbers; not produced using R
+#' ## Extended Data Table 5, 6, 7 & 8 not done with R!
 #'
-#' ## Extended Data Table 6A
+#'
+#'
+#' ###################################################### SUPPLEMENTARY DATA FIGURES
+#'
+#' ## Supplementary Data Figure 1
+#'
+#' set.seed(123)
+#' plot_reliability_vs_sampling(data_rangers)
+#' ggplot2::ggsave(filename = paste0(path_figures, "figure_SI_1.pdf"),
+#'                 width = ggplot2::unit(8, "cm"))
+#' ggplot2::ggsave(filename = paste0(path_figures, "figure_SI_1.png"),
+#'                 width = ggplot2::unit(8, "cm"))
+#'
+#'
+#' ## Supplementary Data Figure 2
+#'
+#' plot_density_vs_sampling(data_rangers)
+#' ggplot2::ggsave(filename = paste0(path_figures, "figure_SI_2.pdf"),
+#'                 width = ggplot2::unit(8, "cm"))
+#' ggplot2::ggsave(filename = paste0(path_figures, "figure_SI_2.png"),
+#'                 width = ggplot2::unit(8, "cm"))
+#'
+#'
+#' ## Supplementary Data Figure 3
+#'
+#' plot_features_selected(list_results_LMM = list(LMM_000, LMM_025, LMM_050, LMM_075, LMM_100),
+#'                        list_results_RF  = list(RF_000, RF_025, RF_050, RF_075, RF_100),
+#'                        data = data_rangers)
+#' ggplot2::ggsave(filename = paste0(path_figures, "figure_SI_3.pdf"),
+#'                 width = ggplot2::unit(8, "cm"), height = ggplot2::unit(10, "cm"))
+#' ggplot2::ggsave(filename = paste0(path_figures, "figure_SI_3.png"),
+#'                 width = ggplot2::unit(8, "cm"), height = ggplot2::unit(10, "cm"))
+#'
+#'
+#' ## Supplementary Data Figure 4
+#'
+#' plot_features_selection_panel(result1 = LMM_100, result2 = RF_100, who = "rangers")
+#' ggplot2::ggsave(filename = paste0(path_figures, "figure_SI_4.pdf"),
+#'                 width = ggplot2::unit(8, "cm"))
+#' ggplot2::ggsave(filename = paste0(path_figures, "figure_SI_4.png"),
+#'                 width = ggplot2::unit(8, "cm"))
+#'
+#'
+#' ## Supplementary Data Figure 5
+#'
+#' plot_finetuning(result = RF_100, who = "rangers")
+#' ggplot2::ggsave(filename = paste0(path_figures, "figure_SI_5.pdf"),
+#'                 width = ggplot2::unit(8, "cm"))
+#' ggplot2::ggsave(filename = paste0(path_figures, "figure_SI_5.png"),
+#'                 width = ggplot2::unit(8, "cm"))
+#'
+#'
+#' ## Supplementary Data Figure 6
+#'
+#' plot_PA_by_data_type(what = RF_100, data = data_rangers)
+#' ggplot2::ggsave(filename = paste0(path_figures, "figure_SI_6.pdf"),
+#'                 width = ggplot2::unit(11, "cm"))
+#' ggplot2::ggsave(filename = paste0(path_figures, "figure_SI_6.png"),
+#'                 width = ggplot2::unit(11, "cm"))
+#'
+#'
+#'
+#'
+#' ###################################################### SUPPLEMENTARY DATA TABLES
+#'
+#' ## Supplementary Data Table 1
 #'
 #' readr::write_excel_csv(table_completeness_obs(data_rangers),
-#'                        file = paste0(path_tables, "table_completeness_obs.csv"))
-#'
-#'
-#' ## Extended Data Table 6B
-#'
+#'                        file = paste0(path_tables, "table_SI_1A.csv"))
 #' readr::write_excel_csv(table_completeness_km2(data_rangers),
-#'                        file = paste0(path_tables, "table_completeness_km2.csv"))
-#'
-#'
-#' ## Extended Data Table 6C
-#'
+#'                        file = paste0(path_tables, "table_SI_1B.csv"))
 #' readr::write_excel_csv(table_completeness_vars(data_rangers),
-#'                        file = paste0(path_tables, "table_completeness_vars.csv"))
+#'                        file = paste0(path_tables, "table_SI_1C.csv"))
 #'
 #'
-#' ## Extended Data Table 7
-#' # table about the data design; not produced using R
+#' ## Supplementary Data Table 2
+#'
+#' table_cor <- table_correlates(data_rangers)
+#' readr::write_excel_csv(table_cor,
+#'                        file = paste0(path_tables, "table_SI_2.csv"))
 #'
 #'
-#' ## Extended Data Table 8
+#' ## Supplementary Data Table 3
 #'
-#' table_training_initial(list_results_LMM = list(LMM_000, LMM_025, LMM_050, LMM_075, LMM_100),
+#' training_info_initial <- table_training_initial(
+#'                        list_results_LMM = list(LMM_000, LMM_025, LMM_050, LMM_075, LMM_100),
 #'                        list_results_RF = list(RF_000, RF_025, RF_050, RF_075, RF_100),
-#'                        data = data_rangers) -> training_info_initial
+#'                        data = data_rangers)
 #'
 #' readr::write_excel_csv(training_info_initial,
-#'                        file = paste0(path_tables, "table_training_sets_initial.csv"))
+#'                        file = paste0(path_tables, "table_SI_3.csv"))
 #'
 #'
-#' ## Extended Data Table 9
+#' ## Supplementary Data Table 4
 #'
-#' table_training_final(list_results_LMM = list(LMM_000, LMM_025, LMM_050, LMM_075, LMM_100),
+#' training_info_final <- table_training_final(
+#'                      list_results_LMM = list(LMM_000, LMM_025, LMM_050, LMM_075, LMM_100),
 #'                      list_results_RF = list(RF_000, RF_025, RF_050, RF_075, RF_100),
-#'                      data = data_rangers) -> training_info_final
+#'                      data = data_rangers)
 #'
 #' readr::write_excel_csv(training_info_final,
-#'                        file = paste0(path_tables, "table_training_sets_final.csv"))
+#'                        file = paste0(path_tables, "table_SI_4.csv"))
 #'
 #'
-#' ## Extended Data Table 10
+#' ## Supplementary Data Table 5
 #'
-#' table_tuning(list_results_LMM = list(LMM_000, LMM_025, LMM_050, LMM_075, LMM_100),
+#' fine_tuning_selected <- table_tuning(
+#'              list_results_LMM = list(LMM_000, LMM_025, LMM_050, LMM_075, LMM_100),
 #'              list_results_RF = list(RF_000, RF_025, RF_050, RF_075, RF_100),
-#'              data = data_rangers) -> fine_tunning_selected
+#'              data = data_rangers)
 #'
-#'  readr::write_excel_csv(fine_tunning_selected,
-#'                         file = paste0(path_tables, "table_fine_tuning.csv"))
+#' readr::write_excel_csv(fine_tuning_selected,
+#'                        file = paste0(path_tables, "table_SI_5.csv"))
 #'
 #'
-#' ###################################################### SMALL COMPUTATIONS
+#' ## Supplementary Data Table 6
+#'
+#' predictions_info <- table_predictions_data(
+#'                       list_results_LMM = list(LMM_000, LMM_025, LMM_050, LMM_075, LMM_100),
+#'                       list_results_RF = list(RF_000, RF_025, RF_050, RF_075, RF_100),
+#'                       data = data_rangers)
+#'
+#' readr::write_excel_csv(predictions_info,
+#'                        file = paste0(path_tables, "table_SI_6.csv"))
+#'
+#'
+#'
+#' ###################################################### OLD TABLES AND FIGURES NOT USED
+#'
+#' plot_projections(what = LMM_100, data = data_rangers)
+#'
+#' plot_map_reliability(data_rangers_with_geo)
+#'
+#' table_projections(what = LMM_100, data = data_rangers)
+#'
+#'
+#'
+#' ###################################################### COMPUTATIONS FOR TEXT
 #'
 #' ## Number of countries/territories surveyed:
 #' nrow(table_raw_data(data_rangers))

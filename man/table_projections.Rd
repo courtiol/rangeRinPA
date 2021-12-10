@@ -3,7 +3,7 @@
 \name{table_projections}
 \alias{table_projections}
 \title{This function creates the table that shows the requirements in rangers and all personal.
-IIt creates of the main text tables.}
+It creates of the main text tables.}
 \usage{
 table_projections(what, data)
 }
@@ -17,7 +17,7 @@ a tibble
 }
 \description{
 This function creates the table that shows the requirements in rangers and all personal.
-IIt creates of the main text tables.
+It creates of the main text tables.
 }
 \examples{
 # see see ?rangeRinPA
