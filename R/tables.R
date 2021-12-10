@@ -2,7 +2,7 @@
 #'
 #' This function creates the table with the core information about surveyed countries/territories.
 #'
-#' @param data the complete dataset created with [`fetch_data`()].
+#' @param data the complete dataset created with [`fetch_data`()](fetch_data).
 #'
 #' @return a tibble
 #' @export
@@ -12,12 +12,18 @@
 #'
 table_raw_data <- function(data) {
   data %>%
-    dplyr::select(countryname_eng, staff_others, staff_rangers, staff_total, PA_area_surveyed, area_PA_total, data_year_info) %>%
-    dplyr::filter(!is.na(staff_others) | !is.na(staff_rangers) | !is.na(staff_total)) %>%
-    dplyr::rename("Country/territory" = countryname_eng,
-                  "Non-rangers" = staff_others, Rangers = staff_rangers, "All personnel" = staff_total,
-                  "Area of PA surveyed" = PA_area_surveyed, "Total PA in country/territory" = area_PA_total,
-                  "Year(s) of the data" = data_year_info)
+    dplyr::select(.data$countryname_eng,
+                  .data$staff_others, .data$staff_rangers, .data$staff_total,
+                  .data$PA_area_surveyed, .data$area_PA_total,
+                  .data$data_year_info) %>%
+    dplyr::filter(!is.na(.data$staff_others) | !is.na(.data$staff_rangers) | !is.na(.data$staff_total)) %>%
+    dplyr::rename("Country/territory" = .data$countryname_eng,
+                  "Non-rangers" = .data$staff_others,
+                  Rangers = .data$staff_rangers,
+                  "All personnel" = .data$staff_total,
+                  "Area of PA surveyed" = .data$PA_area_surveyed,
+                  "Total PA in country/territory" = .data$area_PA_total,
+                  "Year(s) of the data" = .data$data_year_info)
 }
 
 

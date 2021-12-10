@@ -7,7 +7,7 @@
 table_raw_data(data)
 }
 \arguments{
-\item{data}{the complete dataset created with \link[=`fetch_data`]{\code{fetch_data}()}.}
+\item{data}{the complete dataset created with \href{fetch_data}{\code{fetch_data}()}.}
 }
 \value{
 a tibble
