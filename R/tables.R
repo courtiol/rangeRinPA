@@ -232,7 +232,9 @@ table_training_final <- function(list_results_LMM, list_results_RF, data) {
     dplyr::mutate(who = dplyr::case_when(.data$who == "All" ~ "All personnel",
                                          .data$who == "Rangers" ~ "Rangers",
                                          .data$who == "Others" ~ "Non-rangers"),
-                  who = forcats::fct_inorder(.data$who))
+                  who = forcats::fct_inorder(.data$who)) %>%
+    dplyr::mutate(n_pred = .data$ncol - 4L, .after = .data$obs) %>%
+    dplyr::select(-.data$ncol)
   }
 
 
@@ -323,6 +325,7 @@ table_predictions_per_method <- function(list_results_LMM, list_results_RF, data
 #'
 #' This function creates the table that shows the point predictions and their intervals, for the
 #' different continents.
+#' NOTE: superseeded by [`table_predictions_summary`()](table_predictions_summary).
 #'
 #' @inheritParams table_predictions_per_method
 #' @inheritParams plot_PA_by_data_type
@@ -464,7 +467,7 @@ table_predictions_summary <- function(what, data, with_PI = FALSE) {
 
 
 #' This function creates the table that shows the requirements in rangers and all personal.
-#' IIt creates of the main text tables.
+#' It creates of the main text tables.
 #'
 #' @inheritParams table_predictions_summary
 #'

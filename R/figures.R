@@ -130,7 +130,7 @@ plot_reliability_vs_sampling <- function(data){
     ggplot2::scale_x_continuous(breaks = seq(0, 100, 5), minor_breaks = 0:100) +
     ggplot2::scale_y_continuous(breaks = 10:20, minor_breaks = NULL) +
     ggplot2::theme_bw(base_size = 18) +
-    ggplot2::labs(x = "Surface of protected areas surveyed in country/territory (%)", y = "Reliability score (/20)")
+    ggplot2::labs(x = "Area of PAs surveyed in country/territory (%)", y = "Reliability score (/20)")
 }
 
 
@@ -163,7 +163,7 @@ plot_density_vs_sampling <- function(data, who = "rangers") {
                                   labels = scales::label_number(accuracy = 1)) +
       ggplot2::scale_x_continuous(breaks = seq(0, 100, 5), minor_breaks = 0:100) +
       ggplot2::coord_trans(y = "log") +
-      ggplot2::labs(x = "Surface of protected areas surveyed in country/territory (%)",
+      ggplot2::labs(x = "Area of PAs surveyed in country/territory (%)",
                     y = expression(paste("Area per ranger (km"^"2", ")"))) +
       ggplot2::theme_bw(base_size = 18)
 }
@@ -304,9 +304,9 @@ plot_features_selected <- function(list_results_LMM, list_results_RF, data, size
 
   res_long$predictor_included[res_long$spatial & res_long$predictor == "spatial_autocorr."] <- TRUE
 
-  res_long$predictor <- gsub(pattern = "_", replacement = " ", x = res_long$predictor, fixed = TRUE)
+  res_long$predictor <- gsub(pattern = "_", replacement = " ", x = totitle(res_long$predictor), fixed = TRUE)
 
-  res_long$predictor <- factor(res_long$predictor, levels = rev(gsub(pattern = "_", replacement = " ", x = all_predictors, fixed = TRUE)))
+  res_long$predictor <- factor(res_long$predictor, levels = rev(gsub(pattern = "_", replacement = " ", x = totitle(all_predictors), fixed = TRUE)))
 
   res_long %>%
     dplyr::mutate(type = dplyr::if_else(.data$type == "LMM", "LMM", "RF/ETs")) -> res_long
