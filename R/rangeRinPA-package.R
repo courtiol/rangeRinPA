@@ -251,6 +251,12 @@
 #'
 #' ###################################################### SI TABLES
 #'
+#' ## Extended Data Table X
+#' table_raw_data_formatted <- table_raw_data(data_rangers)
+#'
+#' readr::write_excel_csv(table_raw_data_formatted,
+#'                        file = paste0(path_tables, "table_raw_data_formatted.csv"))
+#'
 #' ## Extended Data Table 1
 #'
 #' table_predictions_main_with_PI <- table_predictions_summary(what = LMM_100, data = data_rangers,
@@ -344,7 +350,42 @@
 #'
 #' ###################################################### SMALL COMPUTATIONS
 #'
-#' ## Numerical example to explain how imputation is done (in SI):
+#' ## Number of countries/territories surveyed:
+#' nrow(table_raw_data(data_rangers))
+#'
+#'
+#' ## Rounded numbers for all personnel:
+#' table_projections <- table_projections(what = LMM_100, data = data_rangers)
+#' table_projections %>%
+#'   dplyr::group_by(.data$who) %>%
+#'   dplyr::summarize(dplyr::across(tidyselect::contains("number") |
+#'                                  tidyselect::contains("increase"),
+#'                    .fns = ~ 1000*round(.x/1000)))
+#'
+#'
+#' ## Rounded densities of all personnel:
+#' table_projections %>%
+#'   dplyr::group_by(.data$who) %>%
+#'   dplyr::summarize(dplyr::across(tidyselect::contains("density"), .fns = ~ round(.x, digits = 2)))
+#'
+#'
+#' ## Area covered by PAs:
+#' table_raw_data(data_rangers) %>%
+#'   dplyr::select(area_surveyed = .data$`Area of PA surveyed`,
+#'                 total_area = .data$`Total PA in country/territory`) %>%
+#'   dplyr::summarise(area_surveyed = sum(.data$area_surveyed),
+#'                    prop_total_area = area_surveyed/sum(.data$total_area))
+#'
+#'
+#' ## Percentage of land covered with PA in our study:
+#' data_rangers %>%
+#'   dplyr::filter(!is.na(staff_others) | !is.na(staff_rangers) | !is.na(staff_total)) %>%
+#'   dplyr::summarise(area_total = sum(.data$area_PA_total),
+#'                    prop_PA = .data$area_total / sum(.data$area_country)) -> coverage_PA
+#' round(100*coverage_PA$prop_PA, digits = 2)
+#'
+#'
+#' ## Numerical example to explain how imputation is done (in methods):
 #'
 #' data_rangers %>%
 #'   dplyr::filter(countryname_eng == "Spain") %>%
@@ -353,7 +394,6 @@
 #'                 .data$PA_area_unsurveyed) -> data_spain_before_imputation
 #'  data_spain_before_imputation
 #'  fill_PA_area(data_spain_before_imputation, coef = 1)
-#'  fill_PA_area(data_spain_before_imputation, coef = 0.5)
 #'
 #'
 #' ## Data reliability:

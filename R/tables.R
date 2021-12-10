@@ -1,8 +1,31 @@
+#' Create raw data table
+#'
+#' This function creates the table with the core information about surveyed countries/territories.
+#'
+#' @param data the complete dataset created with [`fetch_data`()].
+#'
+#' @return a tibble
+#' @export
+#'
+#' @examples
+#' table_raw_data(data_rangers)
+#'
+table_raw_data <- function(data) {
+  data %>%
+    dplyr::select(countryname_eng, staff_others, staff_rangers, staff_total, PA_area_surveyed, area_PA_total, data_year_info) %>%
+    dplyr::filter(!is.na(staff_others) | !is.na(staff_rangers) | !is.na(staff_total)) %>%
+    dplyr::rename("Country/territory" = countryname_eng,
+                  "Non-rangers" = staff_others, Rangers = staff_rangers, "All personnel" = staff_total,
+                  "Area of PA surveyed" = PA_area_surveyed, "Total PA in country/territory" = area_PA_total,
+                  "Year(s) of the data" = data_year_info)
+}
+
+
 #' Create completeness table (observations)
 #'
 #' This function creates the table that indicate how many countries and territories have ranger staff and other staff documented in our data.
 #'
-#' @param data the complete dataset
+#' @inheritParams table_raw_data
 #'
 #' @return a tibble
 #' @export

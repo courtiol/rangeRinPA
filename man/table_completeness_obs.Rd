@@ -7,7 +7,7 @@
 table_completeness_obs(data)
 }
 \arguments{
-\item{data}{the complete dataset}
+\item{data}{the complete dataset created with \link[=`fetch_data`]{\code{fetch_data}()}.}
 }
 \value{
 a tibble
