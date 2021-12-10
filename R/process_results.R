@@ -259,11 +259,7 @@ extract_training_info <- function(which, list_results_LMM = list(), list_results
 #'
 extract_training_info_internal <- function(which, what, who, type, data) {
 
-  if (!is.null(data)) {
-    what[[who]] -> data_info
-  } else {
-     data_info <- what[[who]]
-  }
+  data_info <- what[[who]]
 
   coef <- what[["meta"]]$coef_population
 
@@ -278,6 +274,86 @@ extract_training_info_internal <- function(which, what, who, type, data) {
   } else {
     stop("Argument `which =` should be either 'initial' or 'final'!")
   }
+}
+
+
+#' Extract info on predictions datasets
+#'
+#' @inheritParams extract_results
+#' @inheritParams run_LMM_workflow
+#'
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' LMM_small_test <- run_LMM_workflow(data = data_rangers, Ncpu = 2, coef = 0,
+#'                                      rep_feature_select = 2, rep_finetune = 2, rep_simu = 2)
+#'
+#' RF_small_test <- run_RF_workflow(data = data_rangers, Ncpu = 2, coef = 0,
+#'                                  rep_feature_select = 2, rep_finetune = 2, rep_simu = 2,
+#'                                  grid_type = "coarse",
+#'                                  n_trees = 100)
+#'
+#' extract_predictions_info(list_results_LMM = list(LMM_small_test),
+#'                          list_results_RF  = list(RF_small_test))
+#' }
+#'
+extract_predictions_info <- function(list_results_LMM = list(), list_results_RF = list(), data = NULL) {
+
+  d_LMM <- d_RF <- data.frame()
+
+  if (length(list_results_LMM) > 0) {
+    rangers_list_LMM <- lapply(list_results_LMM, function(x) extract_predictions_info_internal(what = x, who = "rangers"))
+    others_list_LMM  <- lapply(list_results_LMM, function(x) extract_predictions_info_internal(what = x, who = "others"))
+    all_list_LMM     <- lapply(list_results_LMM, function(x) extract_predictions_info_internal(what = x, who = "all"))
+    rbind(cbind(who = "All",     type = "LMM", as.data.frame(do.call("rbind", all_list_LMM))),
+          cbind(who = "Rangers", type = "LMM", as.data.frame(do.call("rbind", rangers_list_LMM))),
+          cbind(who = "Others",  type = "LMM", as.data.frame(do.call("rbind", others_list_LMM)))) -> d_LMM
+  }
+  if (length(list_results_RF) > 0) {
+    rangers_list_RF <- lapply(list_results_RF, function(x) extract_predictions_info_internal(what = x, who = "rangers"))
+    others_list_RF  <- lapply(list_results_RF, function(x) extract_predictions_info_internal(what = x, who = "others"))
+    all_list_RF     <- lapply(list_results_RF, function(x) extract_predictions_info_internal(what = x, who = "all"))
+    rbind(cbind(who = "All",     type = "RF/ETs", as.data.frame(do.call("rbind", all_list_RF))),
+          cbind(who = "Rangers", type = "RF/ETs", as.data.frame(do.call("rbind", rangers_list_RF))),
+          cbind(who = "Others",  type = "RF/ETs", as.data.frame(do.call("rbind", others_list_RF)))) -> d_RF
+  }
+  if (ncol(d_LMM) > 0 && ncol(d_RF) > 0) {
+    d <- rbind(d_LMM, d_RF)
+  } else if (ncol(d_LMM) > 0) {
+    d <- d_LMM
+  } else if (ncol(d_RF) > 0) {
+    d <- d_RF
+  }
+
+  d$who <- factor(d$who, levels = c("All", "Rangers", "Others"))
+  d <- tibble::as_tibble(d)
+  d
+}
+
+
+#' @describeIn extract_predictions_info an internal function fetching the info on predictions datasets
+#' @export
+#'
+extract_predictions_info_internal <- function(what, who) {
+
+  country_info <- what[[who]]$country_info[[1]]
+
+  coef <- what[["meta"]]$coef_population
+
+  country_info %>%
+    dplyr::filter(.data$PA_area_predicted > 0.01) %>%
+    dplyr::summarise(n_predictable = dplyr::n(),
+                     PA_predictable = sum(.data$PA_area_predicted)) -> predictable
+
+  country_info %>%
+    dplyr::filter(.data$PA_area_unknown > 0.01) %>%
+    dplyr::summarise(n_unpredictable = dplyr::n(),
+                     PA_unpredictable = sum(.data$PA_area_unknown)) -> unpredictable
+
+  dplyr::bind_cols(predictable, unpredictable) %>%
+    dplyr::mutate(coef = coef, .before = 1L)
+
 }
 
 
@@ -344,8 +420,9 @@ extract_finetuning_internal <- function(what, who, type, data) {
   }
 
   if (type == "LMM") {
-    fine_tunning_res <- tibble::tibble(method =  data_info$fine_tuning[[1]][["result_mean"]] %>% dplyr::slice_min(.data$RMSE) %>% dplyr::pull(.data$method),
+    fine_tunning_res <- tibble::tibble(method =  data_info$fine_tuning[[1]][["result_mean"]] %>% dplyr::slice_min(round(.data$RMSE, digits = 3L), with_ties = FALSE) %>% dplyr::pull(.data$method),
                                        mtry = NA, splitrule = NA, min.node.size = NA, replace = NA, sample.fraction = NA)
+    # Note: I round the RMSE because in fact, some variation are just noise (when model has no random effects) and in that case selecting ML makes more sense.
   } else if (type == "RF/ETs") {
     fine_tunning_res <- tibble::tibble(method = NA,
                                        mtry = sub(pattern = "function (p) \n", replacement = "",

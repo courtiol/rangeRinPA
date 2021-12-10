@@ -238,6 +238,33 @@ table_training_final <- function(list_results_LMM, list_results_RF, data) {
   }
 
 
+
+#' Create table with info on predictions datasets
+#'
+#' This function creates the table that shows the information about the datasets used for predictions.
+#'
+#' @inheritParams extract_results
+#'
+#' @return a tibble
+#' @export
+#'
+#' @examples
+#' # see see ?rangeRinPA
+#'
+table_predictions_data <- function(list_results_LMM, list_results_RF, data) {
+
+  extract_predictions_info(list_results_LMM = list_results_LMM,
+                           list_results_RF = list_results_RF,
+                           data = data) -> predictions_info
+
+  predictions_info %>%
+    dplyr::mutate(who = dplyr::case_when(.data$who == "All" ~ "All personnel",
+                                         .data$who == "Rangers" ~ "Rangers",
+                                         .data$who == "Others" ~ "Non-rangers"),
+                  who = forcats::fct_inorder(.data$who))
+  }
+
+
 #' Create table with info on fine tuning
 #'
 #' This function creates the table that shows the information about the fine tuning results.
