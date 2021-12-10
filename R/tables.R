@@ -411,7 +411,7 @@ table_predictions_summary <- function(what, data, with_PI = FALSE) {
                        density = .data$PA / .data$number) -> continents_summary_estimates
 
     continents_summary_estimates %>%
-      dplyr::full_join(what$all$tallies_details[[1]] %>% dplyr::select(.data$continent, .data$lwr, .data$upr),
+      dplyr::full_join(what[[who]]$tallies_details[[1]] %>% dplyr::select(.data$continent, .data$lwr, .data$upr),
                        by = "continent") %>%
       dplyr::rename(number_lwr = .data$lwr,
                     number_upr = .data$upr) %>%
