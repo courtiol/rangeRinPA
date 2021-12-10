@@ -551,3 +551,27 @@ clipout_polygon <- function(data, countryname_eng, lon, lat) {
   polygon_to_remove <- extract_polygon(data = data2, countryname_eng = countryname_eng, lon = lon, lat = lat)
   sf::st_combine(sf::st_difference(raw_polygons, polygon_to_remove))
 }
+
+
+#' Mixed case capitalizing
+#'
+#' This function turn the first letter of each word into a capital letter.
+#'
+#' @param x a string of characters
+#'
+#' @return a string of characters
+#' @export
+#'
+#' @examples
+#' totitle("once upon a time")
+#'
+totitle <- function(x) {
+
+  simpleCap <- function(x) { ## from ?toupper
+    s <- strsplit(x, " ")[[1]]
+    paste(toupper(substring(s, 1, 1)), substring(s, 2),
+          sep = "", collapse = " ")
+  }
+
+  sapply(x, simpleCap)
+}
