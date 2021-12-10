@@ -336,7 +336,8 @@ plot_tallies_across_methods <- function(list_results_LMM, list_results_RF, data)
 
   extract_results(list_results_LMM = list_results_LMM,
                   list_results_RF = list_results_RF, data = data) %>%
-    dplyr::mutate(type = dplyr::if_else(.data$type == "LMM", "LMM", "RF/ETs")) -> res
+    dplyr::mutate(type = dplyr::if_else(.data$type == "LMM", "LMM", "RF/ETs"),
+                  type = factor(.data$type, levels = c("RF/ETs", "LMM"))) -> res
 
   res %>%
     dplyr::mutate(who = dplyr::case_when(.data$who == "All" ~ "All personnel",
