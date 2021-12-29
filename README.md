@@ -15,16 +15,23 @@ The goal of rangeRinPA is to reproduce most results from the paper
 “Protected Area Personnel and Ranger Numbers are Insufficient to Deliver
 Global Expectations” by Appleton et al. (submitted).
 
-Note: this package was previously called rangeR but we changed the name
-since rangeRinPA is now using another package called ranger (to run
-random forests) with which it conflicted due to the similar name.
-
 ## Installation
 
 ### Option 1
 
-You can install rangeRinPA by clicking on the green button above with
-the label **“Code”** and then on **Download ZIP** (do not unzip it!).
+You can install rangeRinPA as any other R package stored on GitHub
+using:
+
+``` r
+# install.packages("remotes")
+remotes::install_github("courtiol/rangeRinPA", dependencies = TRUE, build_vignettes = TRUE)
+```
+
+### Option 2
+
+You can also install rangeRinPA by clicking on the green button above
+with the label **“Code”** and then on **Download ZIP** (do not unzip
+it!).
 
 Then, in R type:
 
@@ -37,16 +44,6 @@ It will open a windows for you to select the file `rangeR-master.zip`
 that you just have downloaded.
 
 (Note: the same also applies to released zip files stored on Zenodo)
-
-### Option 2
-
-You can also install rangeRinPA as any other R package stored on GitHub
-using:
-
-``` r
-# install.packages("remotes")
-remotes::install_github("courtiol/rangeRinPA", dependencies = TRUE, build_vignettes = TRUE)
-```
 
 ## Usage
 

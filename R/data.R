@@ -314,9 +314,11 @@ fetch_data <- function(keep_geometry = FALSE) {
       dplyr::select(!.data$geometry) -> d
   }
 
-  ### Adding flags
+  ### Privacy mask
   d$countryname_iso[d$countryname_eng == "W African Country"] <- "ZZZ" ## For privacy reasons
+  d$countryname_eng[d$countryname_iso == "ZZZ"] <- "Other country"
 
+  ### Adding flags
   d %>%
     dplyr::mutate(countryname_iso_temp = .data$countryname_iso) -> d
 
@@ -326,7 +328,7 @@ fetch_data <- function(keep_geometry = FALSE) {
   d$countryname_iso_temp[d$countryname_iso == "CSI"] <- "AUS"
   d$countryname_iso_temp[d$countryname_iso == "ESB"] <- "GBR"
   d$countryname_iso_temp[d$countryname_iso == "KAB"] <- "KAZ"
-  d$countryname_iso_temp[d$countryname_iso == "SER"] <- "COL" # disputed but I follow 2012 ruling from International Court of Justice
+  d$countryname_iso_temp[d$countryname_iso == "SER"] <- "COL" # disputed but I followed 2012 ruling from International Court of Justice
   d$countryname_iso_temp[d$countryname_iso == "USG"] <- "USA"
   d$countryname_iso_temp[d$countryname_iso == "WSB"] <- "GBR"
 
