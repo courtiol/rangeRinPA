@@ -11,9 +11,9 @@ experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](h
 status](https://www.r-pkg.org/badges/version/rangeR)](https://CRAN.R-project.org/package=rangeR)
 <!-- badges: end -->
 
-The goal of rangeRinPA is to provide data about the total number of
-people working in Protected Areas (PAs) on the planet, as well as
-identifying what contributes to variation in the workforce between PAs.
+The goal of rangeRinPA is to reproduce most results from the paper
+“Protected Area Personnel and Ranger Numbers are Insufficient to Deliver
+Global Expectations” by Appleton et al. (submitted).
 
 Note: this package was previously called rangeR but we changed the name
 since rangeRinPA is now using another package called ranger (to run
@@ -94,5 +94,5 @@ Here is a simple example:
 library(rangeRinPA)
 
 sum(data_rangers$staff_total, na.rm = TRUE)
-#> [1] 331238
+#> [1] 337877
 ```
