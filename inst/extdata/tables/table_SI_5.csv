@@ -1,0 +1,31 @@
+﻿"who","type","coef","method","mtry","splitrule","min.node.size","replace","sample.fraction"
+"All personnel","LMM",0,"ML",NA,NA,NA,NA,NA
+"All personnel","LMM",0.25,"ML",NA,NA,NA,NA,NA
+"All personnel","LMM",0.5,"ML",NA,NA,NA,NA,NA
+"All personnel","LMM",0.75,"ML",NA,NA,NA,NA,NA
+"All personnel","LMM",1,"ML",NA,NA,NA,NA,NA
+"Rangers","LMM",0,"ML",NA,NA,NA,NA,NA
+"Rangers","LMM",0.25,"ML",NA,NA,NA,NA,NA
+"Rangers","LMM",0.5,"ML",NA,NA,NA,NA,NA
+"Rangers","LMM",0.75,"ML",NA,NA,NA,NA,NA
+"Rangers","LMM",1,"ML",NA,NA,NA,NA,NA
+"Non-rangers","LMM",0,"ML",NA,NA,NA,NA,NA
+"Non-rangers","LMM",0.25,"ML",NA,NA,NA,NA,NA
+"Non-rangers","LMM",0.5,"ML",NA,NA,NA,NA,NA
+"Non-rangers","LMM",0.75,"ML",NA,NA,NA,NA,NA
+"Non-rangers","LMM",1,"ML",NA,NA,NA,NA,NA
+"All personnel","RF/ETs",0,NA,"p","extratrees",3,FALSE,1
+"All personnel","RF/ETs",0.25,NA,"p","extratrees",2,FALSE,1
+"All personnel","RF/ETs",0.5,NA,"p","extratrees",3,FALSE,1
+"All personnel","RF/ETs",0.75,NA,"p","extratrees",3,FALSE,1
+"All personnel","RF/ETs",1,NA,"floor(p/3)","extratrees",1,FALSE,1
+"Rangers","RF/ETs",0,NA,"p","extratrees",5,FALSE,1
+"Rangers","RF/ETs",0.25,NA,"p","extratrees",2,FALSE,1
+"Rangers","RF/ETs",0.5,NA,"p","extratrees",2,FALSE,1
+"Rangers","RF/ETs",0.75,NA,"p","extratrees",1,FALSE,1
+"Rangers","RF/ETs",1,NA,"p","extratrees",1,FALSE,1
+"Non-rangers","RF/ETs",0,NA,"floor(p/3)","variance",1,FALSE,0.632
+"Non-rangers","RF/ETs",0.25,NA,"p","extratrees",2,TRUE,0.632
+"Non-rangers","RF/ETs",0.5,NA,"p","extratrees",4,TRUE,0.632
+"Non-rangers","RF/ETs",0.75,NA,"p","variance",1,TRUE,0.632
+"Non-rangers","RF/ETs",1,NA,"p","variance",1,TRUE,0.632

@@ -1,0 +1,31 @@
+﻿"who","type","coef","n_predictable","PA_predictable","n_unpredictable","PA_unpredictable"
+"All personnel","LMM",0,56,1101219,25,45951.35
+"All personnel","LMM",0.25,56,1101219,25,45951.35
+"All personnel","LMM",0.5,56,1101219,25,45951.35
+"All personnel","LMM",0.75,56,1101219,25,45951.35
+"All personnel","LMM",1,56,1101219,25,45951.35
+"Rangers","LMM",0,51,823482,25,47035.35
+"Rangers","LMM",0.25,52,823516,24,47001.35
+"Rangers","LMM",0.5,73,870123.35,3,394
+"Rangers","LMM",0.75,73,870123.35,3,394
+"Rangers","LMM",1,73,870123.35,3,394
+"Non-rangers","LMM",0,63,1675129,26,47552.35
+"Non-rangers","LMM",0.25,63,1675129,26,47552.35
+"Non-rangers","LMM",0.5,63,1675129,26,47552.35
+"Non-rangers","LMM",0.75,63,1675129,26,47552.35
+"Non-rangers","LMM",1,59,1668668,30,54013.35
+"All personnel","RF/ETs",0,18,971463,63,175707.35
+"All personnel","RF/ETs",0.25,18,971463,63,175707.35
+"All personnel","RF/ETs",0.5,18,971463,63,175707.35
+"All personnel","RF/ETs",0.75,18,971463,63,175707.35
+"All personnel","RF/ETs",1,51,1093683,30,53487.35
+"Rangers","RF/ETs",0,12,688799,64,181718.35
+"Rangers","RF/ETs",0.25,14,695263,62,175254.35
+"Rangers","RF/ETs",0.5,14,695263,62,175254.35
+"Rangers","RF/ETs",0.75,14,695263,62,175254.35
+"Rangers","RF/ETs",1,14,695263,62,175254.35
+"Non-rangers","RF/ETs",0,63,1675129,26,47552.35
+"Non-rangers","RF/ETs",0.25,58,1667593,31,55088.35
+"Non-rangers","RF/ETs",0.5,58,1667593,31,55088.35
+"Non-rangers","RF/ETs",0.75,54,1568845,35,153836.35
+"Non-rangers","RF/ETs",1,54,1568845,35,153836.35

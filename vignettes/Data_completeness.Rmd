@@ -1,0 +1,257 @@
+---
+title: "Data completeness"
+output: 
+  rmarkdown::html_document:
+    df_print: paged
+    toc: true
+    toc_depth: 3
+    code_folding: hide
+vignette: >
+  %\VignetteIndexEntry{Data_completeness}
+  %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
+editor_options: 
+  chunk_output_type: console
+---
+
+<style type="text/css">
+.main-container {
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+}
+</style>
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  error = TRUE,
+  comment = "#>",
+  cache = FALSE, # don't put TRUE as inline chunk make R CMD check to crash
+  cache.path = "cache/cache_vignette_data_completeness/",
+  fig.path = "figs/fig_vignette_data_completeness/",
+  fig.align = 'center'
+)
+
+library(rangeRinPA)
+
+# set how to represent countries in plots:
+data_rangers$countryname <- data_rangers$countryname_iso
+
+# set overlap allowed in plots 
+options("ggrepel.max.overlaps" = Inf)
+```
+
+```{r setup, message=FALSE}
+library(sf)
+library(dplyr)
+library(tibble)
+library(ggplot2)
+library(forcats)
+library(tidyr)
+library(ggrepel)
+library(spaMM)
+library(countrycode)
+library(gt)
+```
+
+## Rangers
+
+Here is a plot showing the breakdown of the number of countries for which we retrieved the number of rangers:
+
+```{r completness_rangers computation}
+completness_rangers <- tibble(
+  Category = c("countries for which the numbers for rangers and other staff are both separately known",
+               "countries for which the numbers for rangers and other staff are both known but undistinguishable",
+               "countries for which only the number for rangers is known (other staff missing)",
+               "countries for which we have no data about rangers or staff"),
+  N = c(sum(!is.na(data_rangers$staff_rangers_others_known)),
+        sum(!is.na(data_rangers$staff_total_details_unknown)),
+        sum(!is.na(data_rangers$staff_rangers_others_unknown)),
+        sum((is.na(data_rangers$staff_rangers_others_known) &
+             is.na(data_rangers$staff_rangers_others_unknown) &
+             is.na(data_rangers$staff_total_details_unknown)))
+        ))
+```
+
+```{r completness_rangers pie}
+ggplot(completness_rangers) +
+  aes(x = "", y = N, fill = Category, label = N) +
+  geom_bar(stat = "identity") +
+  geom_text(position = position_stack(vjust = 0.5)) +
+  coord_polar("y", start = 0) +
+  theme_void() +
+  theme(legend.position = "top") +
+  guides(fill = guide_legend(nrow = 4, byrow = TRUE)) +
+  labs(fill = "")
+```
+
+**In summary:** for **`r sum(is.na(data_rangers$staff_rangers))`** we have no information on rangers per se, including **`r sum(is.na(data_rangers$staff_rangers_others_known) & is.na(data_rangers$staff_rangers_others_unknown) & is.na(data_rangers$staff_total_details_unknown))`** countries for which we have no information what-so-ever.
+
+The countries for which we miss information about rangers or other staff are the following ones (ordered by decreasing country area):
+```{r completness_rangers list}
+data_rangers %>%
+  filter(is.na(staff_rangers_others_known) &
+         is.na(staff_rangers_others_unknown) &
+         is.na(staff_total_details_unknown)) %>%
+  select(countryname_eng) %>%
+  mutate(info = "none") -> no_info_countries
+
+data_rangers %>%
+  filter(is.na(staff_rangers)) %>%
+  select(countryname_iso, countryname_eng, area_country) -> partial_info_countries
+  
+full_join(no_info_countries, partial_info_countries, by = "countryname_eng") %>%
+  mutate(info = if_else(is.na(info), "lumped with other staff", info)) %>%
+  arrange(desc(area_country)) %>%
+  mutate(flags = countrycode(sourcevar = countryname_iso, "iso3c", "unicode.symbol")) %>%
+  mutate(Country = paste(countryname_eng, flags)) %>%
+  select(Country, Info_on_rangers = info) %>%
+  gt()
+```
+
+Here are the countries where the number of rangers is known but 0:
+
+```{r no rangers}
+data_rangers %>%
+  filter(staff_rangers == 0) %>%
+  select("countryname_eng", contains("staff"))
+```
+
+Here are the countries where the number of non rangers is known but 0:
+
+```{r no non rangers, rows.print=25}
+data_rangers %>%
+  filter(staff_others == 0) %>%
+  select("countryname_eng", contains("staff"))
+```
+
+### by continents
+
+**Note**: tables sorted by PA area completeness
+
+```{r continent abs}
+data_rangers %>%
+  group_by(country_UN_continent) %>%
+  summarise(total_rangers_known = sum(staff_rangers, na.rm = TRUE),
+            n_missing_countries = sum(is.na(staff_rangers)),
+            PA_area_missing = sum(area_PA_WDPA[is.na(staff_rangers)]),
+            area_country_missing = sum(area_country[is.na(staff_rangers)])) %>%
+  arrange(PA_area_missing) %>%
+  bind_rows(
+    data_rangers %>%
+      summarise(total_rangers_known = sum(staff_rangers, na.rm = TRUE),
+                n_missing_countries = sum(is.na(staff_rangers)),
+                PA_area_missing = sum(area_PA_WDPA[is.na(staff_rangers)]),
+                area_country_missing = sum(area_country[is.na(staff_rangers)])) %>%
+      mutate(country_UN_continent = "ALL"))
+```
+
+```{r continent prop}
+data_rangers %>%
+  group_by(country_UN_continent) %>%
+  summarise(total_rangers_known = sum(staff_rangers, na.rm = TRUE),
+            n_missing_countries_pct = 100 * sum(is.na(staff_rangers)) / n(),
+            PA_area_missing_pct = 100 * sum(area_PA_WDPA[is.na(staff_rangers)]) / sum(area_PA_WDPA),
+            area_country_missing_pct = 100 * sum(area_country[is.na(staff_rangers)], na.rm = TRUE) / sum(area_country, na.rm = TRUE)) %>%
+  arrange(PA_area_missing_pct) %>%
+  bind_rows(
+    data_rangers %>%
+      summarise(total_rangers_known = sum(staff_rangers, na.rm = TRUE),
+                n_missing_countries_pct = 100 * sum(is.na(staff_rangers)) / n(),
+                PA_area_missing_pct = 100 * sum(area_PA_WDPA[is.na(staff_rangers)]) / sum(area_PA_WDPA),
+                area_country_missing_pct = 100 * sum(area_country[is.na(staff_rangers)]) / sum(area_country)) %>%
+      mutate(country_UN_continent = "ALL")) %>%
+      mutate(across(where(is.numeric), round, digits = 2))
+```
+
+### by sub-continents
+
+**Note**: tables sorted by PA area completeness
+
+```{r subcontinent abs, rows.print=25}
+data_rangers %>%
+  group_by(country_UN_subcontinent) %>%
+  summarise(total_rangers_known = sum(staff_rangers, na.rm = TRUE),
+            n_missing_countries = sum(is.na(staff_rangers)),
+            PA_area_missing = sum(area_PA_WDPA[is.na(staff_rangers)]),
+            area_country_missing = sum(area_country[is.na(staff_rangers)])) %>%
+  arrange(PA_area_missing) %>%
+  bind_rows(
+    data_rangers %>%
+      summarise(total_rangers_known = sum(staff_rangers, na.rm = TRUE),
+                n_missing_countries = sum(is.na(staff_rangers)),
+                PA_area_missing = sum(area_PA_WDPA[is.na(staff_rangers)]),
+                area_country_missing = sum(area_country[is.na(staff_rangers)])) %>%
+      mutate(country_UN_subcontinent = "ALL"))
+```
+
+```{r subcontinent prop, rows.print=25}
+data_rangers %>%
+  group_by(country_UN_subcontinent) %>%
+  summarise(total_rangers_known = sum(staff_rangers, na.rm = TRUE),
+            n_missing_countries_pct = 100 * sum(is.na(staff_rangers)) / n(),
+            PA_area_missing_pct = 100 * sum(area_PA_WDPA[is.na(staff_rangers)]) / sum(area_PA_WDPA),
+            area_country_missing_pct = 100 * sum(area_country[is.na(staff_rangers)]) / sum(area_country)) %>%
+  arrange(PA_area_missing_pct) %>%
+  bind_rows(
+    data_rangers %>%
+      summarise(total_rangers_known = sum(staff_rangers, na.rm = TRUE),
+                n_missing_countries_pct = 100 * sum(is.na(staff_rangers)) / n(),
+                PA_area_missing_pct = 100 * sum(area_PA_WDPA[is.na(staff_rangers)]) / sum(area_PA_WDPA),
+                area_country_missing_pct = 100 * sum(area_country[is.na(staff_rangers)]) / sum(area_country)) %>%
+      mutate(country_UN_subcontinent = "ALL")) %>%
+      mutate(across(where(is.numeric), round, digits = 2))
+```
+
+## Predictors
+
+```{r predictors, rows.print=30}
+data_rangers %>%
+  select(-contains("staff")) %>%
+  summarize(across(everything(), ~ sum(is.na(.)))) %>%
+  pivot_longer(everything(), values_to = "missings_all", names_to = "variable") -> missing_pred1
+
+data_rangers %>%
+  filter(!is.na(staff_others)) %>%
+  select(-contains("staff")) %>%
+  summarize(across(everything(), ~ sum(is.na(.)))) %>%
+  pivot_longer(everything(), values_to = "missings_rangers_known", names_to = "variable") -> missing_pred2
+
+data_rangers %>%
+  filter(is.na(staff_others)) %>%
+  select(-contains("staff")) %>%
+  summarize(across(everything(), ~ sum(is.na(.)))) %>%
+  pivot_longer(everything(), values_to = "missings_rangers_unknown", names_to = "variable") -> missing_pred3
+
+full_join(full_join(missing_pred1, missing_pred2), missing_pred3) %>%
+  arrange(missings_all, missings_rangers_known, missings_rangers_unknown)
+```
+
+Same for countries larger than 15000 km2:
+
+```{r predictors big countries, rows.print=30}
+data_rangers %>%
+  filter(area_country > 15000) -> data_rangers2
+
+data_rangers2 %>%
+  select(-contains("staff")) %>%
+  summarize(across(everything(), ~ sum(is.na(.)))) %>%
+  pivot_longer(everything(), values_to = "missings_all", names_to = "variable") -> missing_pred1
+
+data_rangers2 %>%
+  filter(!is.na(staff_others)) %>%
+  select(-contains("staff")) %>%
+  summarize(across(everything(), ~ sum(is.na(.)))) %>%
+  pivot_longer(everything(), values_to = "missings_rangers_known", names_to = "variable") -> missing_pred2
+
+data_rangers2 %>%
+  filter(is.na(staff_others)) %>%
+  select(-contains("staff")) %>%
+  summarize(across(everything(), ~ sum(is.na(.)))) %>%
+  pivot_longer(everything(), values_to = "missings_rangers_unknown", names_to = "variable") -> missing_pred3
+
+full_join(full_join(missing_pred1, missing_pred2), missing_pred3) %>%
+  arrange(missings_all, missings_rangers_known, missings_rangers_unknown)
+```
+
