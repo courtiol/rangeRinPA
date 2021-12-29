@@ -43,7 +43,7 @@ You can also install the development version of rangeRinPA with:
 
 ``` r
 # install.packages("remotes")
-remotes::install_github("courtiol/rangeR", dependencies = TRUE, build_vignettes = TRUE)
+remotes::install_github("courtiol/rangeRinPA", dependencies = TRUE, build_vignettes = TRUE)
 ```
 
 One difficulty however is that since this is a private GitHub
