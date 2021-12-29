@@ -315,7 +315,7 @@ fetch_data <- function(keep_geometry = FALSE) {
   }
 
   ### Adding flags
-  d$countryname_iso[d$countryname_eng == "W African Country"] <- "XXX" ## For privacy reasons
+  d$countryname_iso[d$countryname_eng == "W African Country"] <- "ZZZ" ## For privacy reasons
 
   d %>%
     dplyr::mutate(countryname_iso_temp = .data$countryname_iso) -> d
@@ -334,7 +334,7 @@ fetch_data <- function(keep_geometry = FALSE) {
     dplyr::mutate(flag = countrycode::countrycode(sourcevar = .data$countryname_iso_temp, "iso3c", "unicode.symbol",
                                                   custom_match = c("KOS" = NA, # Kosovo
                                                                    "KAS" = NA, "BJN" = NA, "PGA" = NA, "SCR" = NA, # disputed territories
-                                                                   "XXX" = NA))) -> d # privacy reason
+                                                                   "ZZZ" = NA))) -> d # privacy reason
 
   d %>% dplyr::select(-.data$countryname_iso_temp) -> d
 
