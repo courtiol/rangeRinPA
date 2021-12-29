@@ -16,7 +16,7 @@ The result of calling \code{rhs(lhs)}.
 }
 \description{
 This package was created while the native pipe got introduced in R, so we still rely on the
-pipe from maggritr which at the time of the writing offered a little more flexibility.
+pipe from magrittr which at the time of the writing offered a little more flexibility.
 See \code{magrittr::\link[magrittr:pipe]{\%>\%}} for details.
 }
 \keyword{internal}

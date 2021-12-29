@@ -3,7 +3,7 @@
 \name{extract_results}
 \alias{extract_results}
 \alias{extract_results_internal}
-\title{Extract and format the results produced by the worflow}
+\title{Extract and format the results produced by the workflow}
 \usage{
 extract_results(
   list_results_LMM = list(),
@@ -27,7 +27,7 @@ extract_results_internal(what, who, type, data)
 \item{type}{the type of workflow ("LMM" or "RF")}
 }
 \description{
-Extract and format the results produced by the worflow
+Extract and format the results produced by the workflow
 }
 \section{Functions}{
 \itemize{

@@ -3,7 +3,7 @@
 \name{extract_finetuning}
 \alias{extract_finetuning}
 \alias{extract_finetuning_internal}
-\title{Extract and format the finetuning results produced by the worflow}
+\title{Extract and format the finetuning results produced by the workflow}
 \usage{
 extract_finetuning(
   list_results_LMM = list(),
@@ -27,7 +27,7 @@ extract_finetuning_internal(what, who, type, data)
 \item{type}{the type of workflow ("LMM" or "RF")}
 }
 \description{
-Extract and format the finetuning results produced by the worflow
+Extract and format the finetuning results produced by the workflow
 }
 \section{Functions}{
 \itemize{

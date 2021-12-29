@@ -1,6 +1,6 @@
 Package: rangeRinPA
-Title: Estimate and Study the Total Number of People Working in Protected Areas
-Version: 0.0.1.9001
+Title: Protected Area Personnel and Ranger Numbers are Insufficient to Deliver Global Expectations
+Version: 2021.12.29
 Authors@R: 
   c(person("Alexandre", "Courtiol",
            email = "alexandre.courtiol@gmail.com",

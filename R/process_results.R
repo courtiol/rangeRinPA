@@ -1,4 +1,4 @@
-#' Extract and format the results produced by the worflow
+#' Extract and format the results produced by the workflow
 #'
 #' @param what an object produced by [`run_LMM_workflow()`] or [`run_RF_workflow()`]
 #' @param who the type of staff ("rangers", "others" or "all")
@@ -357,7 +357,7 @@ extract_predictions_info_internal <- function(what, who) {
 }
 
 
-#' Extract and format the finetuning results produced by the worflow
+#' Extract and format the finetuning results produced by the workflow
 #'
 #' @inheritParams extract_results
 #'

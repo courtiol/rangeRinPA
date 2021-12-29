@@ -1,17 +1,14 @@
-#' Estimate and Study the Total Number of People Working in Protected Areas
+#' Protected Area Personnel and Ranger Numbers are Insufficient to Deliver Global Expectations
 #'
-#' The goal of rangeRinPA is to provide data about the total number of people working in Protected Areas (PAs) on the planet, as well as identifying what contributes to variation in the workforce between PAs.
-#'
-#' In the examples below, we provide a simple example using the data contained in this package.
-#'
-#' The results of the paper are provided in R scripts using the functions from this package.
+#' The goal of rangeRinPA is to reproduce most results from the paper Protected Area Personnel and
+#' Ranger Numbers are Insufficient to Deliver Global Expectations by Appleton et al. (submitted)
 #'
 #' @name rangeRinPA-package
 #' @aliases rangeRinPA-package rangeR
 #' @docType package
 #'
 #' @references
-#' TODO
+#' TODO (now under submission)
 #'
 #' @keywords package
 #' @examples

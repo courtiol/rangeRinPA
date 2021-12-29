@@ -56,7 +56,7 @@ according to the choice, the variable PA_area is also adjusted.}
 
 \item{NA_in_resp}{whether or not to keep only NA (TRUE) or discard them all (FALSE) in response variable (default = NULL -> do nothing)}
 
-\item{NA_in_preds}{whether or not to keep only NA (TRUE) or discard them all (FALSE) in predictor variables (default = NULL -> do nothin)}
+\item{NA_in_preds}{whether or not to keep only NA (TRUE) or discard them all (FALSE) in predictor variables (default = NULL -> do nothing)}
 }
 \value{
 a tibble

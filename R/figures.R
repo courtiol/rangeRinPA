@@ -493,7 +493,7 @@ plot_density_staff <- function(what, who, data, ymax = 6000, breaks = c(10^(0:3)
     dplyr::mutate(PA = sum(dplyr::c_across(tidyselect::starts_with("PA"))),
                   exp(dplyr::across(tidyselect::ends_with("log"), .names = "value")) - 1) %>%
     dplyr::select(-tidyselect::starts_with("PA_"), -tidyselect::ends_with("log")) %>%
-    dplyr::mutate(km2_per_staff = .data$PA / .data$value) -> d ## TODO: check who is missing
+    dplyr::mutate(km2_per_staff = .data$PA / .data$value) -> d
 
   order_continents <- c("World", "Latin America \n& Caribbean", "Africa", "Oceania", "Asia", "Europe", "Northern\n America")
 

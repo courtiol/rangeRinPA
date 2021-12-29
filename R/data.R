@@ -458,7 +458,7 @@ fill_PA_area <- function(data, coef) {
 #'     - completely known ("complete")
 #' according to the choice, the variable PA_area is also adjusted.
 #' @param NA_in_resp whether or not to keep only NA (TRUE) or discard them all (FALSE) in response variable (default = NULL -> do nothing)
-#' @param NA_in_preds whether or not to keep only NA (TRUE) or discard them all (FALSE) in predictor variables (default = NULL -> do nothin)
+#' @param NA_in_preds whether or not to keep only NA (TRUE) or discard them all (FALSE) in predictor variables (default = NULL -> do nothing)
 #' @param keep_details whether or not to keep variables used for construction (default = FALSE)
 #' @param type either "prediction" or "training"
 #' @param outliers a vector with the name of the countries/territories to discard
