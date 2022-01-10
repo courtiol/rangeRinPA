@@ -505,6 +505,8 @@ plot_density_staff <- function(what, who, data, ymax = 6000, breaks = c(10^(0:3)
                                                TRUE ~ .data$continent),
                   continent = factor(.data$continent, levels = order_continents)) -> dd
 
+  dd[dd$countryname_eng == "W African Country", "continent"] <- "Africa"
+
   ## fix small negative values caused by fitting data on log(x + 1) to near 0 that can be plotted:
   dd$km2_per_staff[dd$km2_per_staff < 0] <- 0.01
   dd$km2_per_staff[dd$value <= 0] <- dd$PA[dd$value <= 0]
@@ -543,7 +545,7 @@ plot_density_staff <- function(what, who, data, ymax = 6000, breaks = c(10^(0:3)
                               ggplot2::aes(y = .data$value, x = "", fill = .data$name) +
                               ggplot2::geom_bar(stat = "identity", position = "stack", show.legend = FALSE) +
                               ggplot2::coord_polar(theta = "y", start = 0, direction = 1) +
-                              ggsci::scale_fill_npg() +
+                              ggplot2::scale_fill_manual(values = c(scales::alpha("#E64B35FF", 0.3), "#4DBBD5FF")) +
                               ggplot2::labs(title = paste0(round(100*data$value[1] / sum(data$value), 2), "%")) +
                               ggplot2::theme_void() +
                               ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5)))) -> data_pies
@@ -599,21 +601,17 @@ plot_density_staff <- function(what, who, data, ymax = 6000, breaks = c(10^(0:3)
     ggplot2::guides(colour = "none", size = "none", fill = "none", alpha = "none", shape = "none") -> main_plot
 
   main_plot +
+    ggplot2::labs(caption = ifelse(who == "rangers",
+                                   "Proportion of the area where density of rangers exceeds the average requirement:",
+                                   "Proportion of the area where density of personnel exceeds the average requirement:")) +
+    ggplot2::theme(plot.caption = ggplot2::element_text(face = "italic", size = 14, vjust = -6)) +
     patchwork::inset_element(data_pies$gg[[1]], 0.15, 0,    0.05 + 1/4.5, 0.2, align_to = "full") +
     patchwork::inset_element(data_pies$gg[[2]], 0.15, 0.03, 0.05 + 2/4.5, 0.17, align_to = "full") +
     patchwork::inset_element(data_pies$gg[[3]], 0.15, 0.03, 0.05 + 3/4.5, 0.17, align_to = "full") +
     patchwork::inset_element(data_pies$gg[[4]], 0.15, 0.03, 0.05 + 4/4.5, 0.17, align_to = "full") +
     patchwork::inset_element(data_pies$gg[[5]], 0.15, 0.03, 0.05 + 5/4.5, 0.17, align_to = "full") +
     patchwork::inset_element(data_pies$gg[[6]], 0.15, 0.03, 0.05 + 6/4.5, 0.17, align_to = "full") +
-    patchwork::inset_element(data_pies$gg[[7]], 0.15, 0.03, 0.05 + 7/4.5, 0.17, align_to = "full") +
-    patchwork::plot_annotation(caption = ifelse(who == "rangers",
-                                                "Proportion of area where each ranger manages less than the average requirement:",
-                                                "Proportion of area where each person manages less than the average requirement:"),
-                               theme = ggplot2::theme(plot.caption = ggplot2::element_text(face = "italic", size = 14, hjust = 0.5, vjust = 45))) #-> plot_final
-
-  #print(plot_final)
-
-  #invisible(dd_all %>% dplyr::arrange(dplyr::desc(.data$km2_per_staff)))
+    patchwork::inset_element(data_pies$gg[[7]], 0.15, 0.03, 0.05 + 7/4.5, 0.17, align_to = "full")
 }
 
 
@@ -632,7 +630,7 @@ plot_density_panel <- function(what, data, ymax = 6000, breaks = c(10^(0:3), 2*1
 
   plot_density_staff(what = what, who = "rangers", ymax = ymax, breaks = breaks, data = data, tag = "B.") -> plot_rangers
 
-  plot_all + plot_rangers
+  plot_all / plot_rangers
 }
 
 
