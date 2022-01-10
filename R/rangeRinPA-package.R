@@ -116,9 +116,9 @@
 #' ## Figure 2
 #'
 #' plot_density_panel(what = LMM_100, data = data_rangers)
-#' ggplot2::ggsave(filename = paste0(path_figures, "figure_main_2new.pdf"),
+#' ggplot2::ggsave(filename = paste0(path_figures, "figure_main_2.pdf"),
 #'                  width = 13, height = 24, scale = 0.7)
-#' ggplot2::ggsave(filename = paste0(path_figures, "figure_main_2new.png"),
+#' ggplot2::ggsave(filename = paste0(path_figures, "figure_main_2.png"),
 #'                  width = 13, height = 24, scale = 0.7)
 #'
 #'
