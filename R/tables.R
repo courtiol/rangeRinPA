@@ -12,12 +12,15 @@
 #'
 table_raw_data <- function(data) {
   data %>%
-    dplyr::select(.data$countryname_eng,
+    dplyr::select(.data$countryname_iso,
+                  .data$countryname_eng,
                   .data$staff_others, .data$staff_rangers, .data$staff_total,
                   .data$PA_area_surveyed, .data$area_PA_total,
                   .data$data_year_info) %>%
     dplyr::filter(!is.na(.data$staff_others) | !is.na(.data$staff_rangers) | !is.na(.data$staff_total)) %>%
-    dplyr::rename("Country/territory" = .data$countryname_eng,
+    dplyr::mutate(dplyr::across(where(is.numeric), round)) %>%
+    dplyr::rename("ISO Code" = .data$countryname_iso,
+                  "Country/territory" = .data$countryname_eng,
                   "Non-rangers" = .data$staff_others,
                   Rangers = .data$staff_rangers,
                   "All personnel" = .data$staff_total,
