@@ -1,6 +1,6 @@
 Package: rangeRinPA
 Title: Protected Area Personnel and Ranger Numbers are Insufficient to Deliver Global Expectations
-Version: 2021.12.29
+Version: 2022.06.14
 Authors@R: 
   c(person("Alexandre", "Courtiol",
            email = "alexandre.courtiol@gmail.com",

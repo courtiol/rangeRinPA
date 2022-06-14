@@ -173,7 +173,7 @@
 #'
 #' ## Extended Data Table 1
 #'
-#' table_core_data_formatted <- table_core_data(data_rangers)
+#' table_core_data_formatted <- table_core_data(data_rangers, what = LMM_100)
 #'
 #' readr::write_excel_csv(table_core_data_formatted,
 #'                        file = paste0(path_tables, "table_extended_1.csv"))
