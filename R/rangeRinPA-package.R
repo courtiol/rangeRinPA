@@ -173,9 +173,9 @@
 #'
 #' ## Extended Data Table 1
 #'
-#' table_raw_data_formatted <- table_raw_data(data_rangers)
+#' table_core_data_formatted <- table_core_data(data_rangers)
 #'
-#' readr::write_excel_csv(table_raw_data_formatted,
+#' readr::write_excel_csv(table_core_data_formatted,
 #'                        file = paste0(path_tables, "table_extended_1.csv"))
 #'
 #'

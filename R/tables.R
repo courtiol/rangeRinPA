@@ -1,4 +1,4 @@
-#' Create raw data table
+#' Create core data table
 #'
 #' This function creates the table with the core information about surveyed countries/territories.
 #'
@@ -8,9 +8,9 @@
 #' @export
 #'
 #' @examples
-#' table_raw_data(data_rangers)
+#' table_core_data(data_rangers)
 #'
-table_raw_data <- function(data) {
+table_core_data <- function(data) {
   data %>%
     dplyr::select(.data$countryname_iso,
                   .data$countryname_eng,
@@ -43,7 +43,7 @@ table_raw_data <- function(data) {
 #'
 #' This function creates the table that indicate how many countries and territories have ranger staff and other staff documented in our data.
 #'
-#' @inheritParams table_raw_data
+#' @inheritParams table_core_data
 #'
 #' @return a tibble
 #' @export
