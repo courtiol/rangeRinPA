@@ -293,8 +293,9 @@ fetch_data <- function(keep_geometry = FALSE) {
     dplyr::full_join(world_sf %>% dplyr::select(.data$center, .data$rne_iso_a3_eh, .data$rne_adm0_a3, .data$rne_name), by = c("countryname_iso" = "rne_iso_a3_eh")) -> d
 
   d %>%
-    tidyr::unnest_wider(col = .data$center, names_sep = "") %>%
-    dplyr::rename(long = .data$center1, lat = .data$center2) -> d
+    dplyr::mutate(long = sf::st_coordinates(.data$center)[, "X"],
+                  lat  = sf::st_coordinates(.data$center)[, "Y"]) %>%
+    dplyr::select(-.data$center) -> d
 
 
   ### Fix country names:
