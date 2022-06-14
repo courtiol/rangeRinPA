@@ -19,6 +19,6 @@ This function creates the table that shows the point predictions and their inter
 different countries.
 }
 \examples{
-# see see ?rangeRinPA
+# see see ?table_core_data
 
 }

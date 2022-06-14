@@ -1,7 +1,9 @@
 #' Create core data table
 #'
 #' This function creates the table with the core information about surveyed countries/territories.
+#' If the argument `what` is not null, it will also include estimates and densities for all PAs.
 #'
+#' @inheritParams plot_PA_by_data_type
 #' @param data the complete dataset created with [`fetch_data`()](fetch_data).
 #'
 #' @return a tibble
@@ -10,7 +12,8 @@
 #' @examples
 #' table_core_data(data_rangers)
 #'
-table_core_data <- function(data) {
+table_core_data <- function(data, what = NULL) {
+
   data %>%
     dplyr::select(.data$countryname_iso,
                   .data$countryname_eng,
@@ -18,24 +21,61 @@ table_core_data <- function(data) {
                   .data$staff_others, .data$staff_rangers, .data$staff_total,
                   .data$PA_area_surveyed, .data$area_PA_total) %>%
     dplyr::filter(!is.na(.data$staff_others) | !is.na(.data$staff_rangers) | !is.na(.data$staff_total)) %>%
-    dplyr::mutate(pct_covered = round(100 * .data$PA_area_surveyed / .data$area_PA_total, 2),
-                  density_staff_others = round(.data$PA_area_surveyed / .data$staff_others, 2),
-                  density_staff_rangers = round(.data$PA_area_surveyed / .data$staff_rangers, 2),
-                  density_staff_total = round(.data$PA_area_surveyed / .data$staff_total, 2)) %>%
+    dplyr::mutate(pct_covered = round(100 * .data$PA_area_surveyed / .data$area_PA_total, 1),
+                  density_staff_others = round(.data$PA_area_surveyed / .data$staff_others, 1),
+                  density_staff_rangers = round(.data$PA_area_surveyed / .data$staff_rangers, 1),
+                  density_staff_total = round(.data$PA_area_surveyed / .data$staff_total, 1)) %>%
     dplyr::mutate(dplyr::across(.cols = tidyselect::starts_with("density"), ~ dplyr::na_if(.x, y = Inf))) %>%
+    dplyr::mutate(dplyr::across(.cols = tidyselect::starts_with("density"), ~ dplyr::if_else(is.nan(.x), NA_real_, .x))) %>%
+    dplyr::mutate(pct_covered = dplyr::if_else(is.nan(.data$pct_covered), 100, .data$pct_covered)) %>%
     dplyr::mutate(dplyr::across(.cols = c("PA_area_surveyed", "area_PA_total"), round)) %>%
     dplyr::rename("ISO Code" = .data$countryname_iso,
                   "Country/territory" = .data$countryname_eng,
-                  "Non-rangers" = .data$staff_others,
-                  Rangers = .data$staff_rangers,
-                  "All personnel" = .data$staff_total,
+                  "Non-rangers (surveyed)" = .data$staff_others,
+                  "Rangers (surveyed)" = .data$staff_rangers,
+                  "All personnel (surveyed)" = .data$staff_total,
                   "Area of terrestrial PA surveyed (km^2)" = .data$PA_area_surveyed,
-                  "Total area of terrestrial PA in country/territory (km^2)" = .data$area_PA_total,
-                  "Percentage of the total terrestrial PA area surveyed" = .data$pct_covered,
                   "Observed densities for non-rangers from terrestrial PAs surveyed (area in km^2 of PA per person)" = .data$density_staff_others,
                   "Observed densities for rangers from terrestrial PAs surveyed (area in km^2 of PA per person)" = .data$density_staff_rangers,
                   "Observed densities for all personnel from terrestrial PAs surveyed (area in km^2 of PA per person)" = .data$density_staff_total,
-                  "Year(s) of the data" = .data$data_year_info)
+                  "Year(s) of the data" = .data$data_year_info,
+                  "Total area of terrestrial PA in country/territory (km^2)" = .data$area_PA_total,
+                  "Percentage of the total terrestrial PA area surveyed" = .data$pct_covered) %>%
+    dplyr::relocate("Total area of terrestrial PA in country/territory (km^2)",
+                    .after = "Observed densities for all personnel from terrestrial PAs surveyed (area in km^2 of PA per person)") %>%
+    dplyr::relocate("Percentage of the total terrestrial PA area surveyed",
+                    .after = "Observed densities for all personnel from terrestrial PAs surveyed (area in km^2 of PA per person)") %>%
+    dplyr::relocate("Area of terrestrial PA surveyed (km^2)", .after = "Year(s) of the data") -> table_raw
+
+  if (is.null(what)) return(table_raw)
+
+  table_predictions_per_country(what = what, data = data) %>%
+    dplyr::mutate(dplyr::across(.cols = tidyselect::ends_with("density"), ~ dplyr::na_if(.x, y = Inf))) %>%
+    dplyr::mutate(countryname_eng = dplyr::if_else(.data$countryname_eng == "W African Country", "Other country", .data$countryname_eng)) %>%
+    dplyr::left_join(data %>% dplyr::select(.data$countryname_iso, .data$countryname_eng), by = "countryname_eng") %>%
+    dplyr::mutate(PA_total = round(.data$PA_total)) %>%
+    dplyr::rename("ISO Code" = .data$countryname_iso,
+                  "Country/territory" = .data$countryname_eng,
+                  "Total area of terrestrial PA in country/territory (km^2)" = .data$PA_total) %>%
+    dplyr::mutate(dplyr::across(.cols = tidyselect::ends_with("density"),
+                                .fns = round, digits = 1)) %>%
+    dplyr::mutate(dplyr::across(.cols = tidyselect::ends_with("estimate"),
+                                .fns = round, digits = 0)) -> table_estimates
+
+  dplyr::full_join(table_raw, table_estimates,
+                   by = c("ISO Code", "Country/territory", "Total area of terrestrial PA in country/territory (km^2)")) -> table_all
+
+  table_all %>%
+    dplyr::mutate(all_estimate = dplyr::if_else(.data$"Non-rangers (surveyed)" == 0 & .data$"Percentage of the total terrestrial PA area surveyed" == 100 & is.na(.data$all_estimate), 0, .data$all_estimate)) %>%
+    dplyr::mutate(rangers_estimate = dplyr::if_else(.data$"Rangers (surveyed)" == 0 & .data$"Percentage of the total terrestrial PA area surveyed" == 100 & is.na(.data$rangers_estimate), 0, .data$rangers_estimate)) %>%
+    dplyr::mutate(others_estimate = dplyr::if_else(.data$"Non-rangers (surveyed)" == 0 & .data$"Percentage of the total terrestrial PA area surveyed" == 100 & is.na(.data$others_estimate), 0, .data$others_estimate)) %>%
+    dplyr::rename("All personnel (estimate for all PAs)" = .data$all_estimate,
+                  "Rangers (estimate for all PAs)" = .data$rangers_estimate,
+                  "Non-rangers (estimate for all PAs)" = .data$others_estimate,
+                  "Estimated densities for all personnel for total area of terrestrial PA in country/territory (area in km^2 of PA per person)" = .data$all_density,
+                  "Estimated densities for rangers for total area of terrestrial PA in country/territory (area in km^2 of PA per person)" = .data$rangers_density,
+                  "Estimated densities for non-rangers for total area of terrestrial PA in country/territory (area in km^2 of PA per person)" = .data$others_density)
+
 }
 
 
@@ -413,7 +453,7 @@ table_predictions_per_continent <- function(what, data) {
 #' @export
 #'
 #' @examples
-#' # see see ?rangeRinPA
+#' # see see ?table_core_data
 #'
 table_predictions_per_country <- function(what, data) {
 
@@ -423,11 +463,12 @@ table_predictions_per_country <- function(what, data) {
     var_staff <- colnames(what[[who]]$country_info[[1]])[grepl("staff", colnames(what[[who]]$country_info[[1]]))]
 
     what[[who]]$country_info[[1]] %>%
-      dplyr::mutate(staff = delog1p(!!rlang::sym(var_staff))) %>%
+      dplyr::mutate(staff = pmax(delog1p(!!rlang::sym(var_staff)), 0)) %>%
       dplyr::rowwise() %>%
       dplyr::mutate(PA_total = sum(dplyr::c_across(tidyselect::starts_with("PA")))) %>%
       dplyr::ungroup() %>%
       dplyr::mutate(density = .data$PA_total / .data$staff) %>%
+      dplyr::mutate(density = dplyr::if_else(.data$staff < 1, NA_real_, .data$density)) %>%
       dplyr::arrange(.data$countryname_eng) %>%
       dplyr::select(.data$countryname_eng, .data$staff, .data$PA_total, .data$density) %>%
       dplyr::rename("{who}_estimate" := .data$staff,
@@ -439,7 +480,9 @@ table_predictions_per_country <- function(what, data) {
   tables[["all"]] %>%
     dplyr::full_join(tables[["rangers"]], by = c("countryname_eng", "PA_total")) %>%
     dplyr::full_join(tables[["others"]], by = c("countryname_eng", "PA_total")) %>%
-    dplyr::relocate(.data$PA_total, .before = 2L)
+    dplyr::select(.data$countryname_eng, .data$PA_total,
+                  .data$others_estimate, .data$rangers_estimate, .data$all_estimate,
+                  .data$others_density, .data$rangers_density, .data$all_density)
 
 }
 
