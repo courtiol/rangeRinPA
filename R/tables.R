@@ -400,6 +400,50 @@ table_predictions_per_continent <- function(what, data) {
 }
 
 
+#' Create table with predictions (per country)
+#'
+#' This function creates the table that shows the point predictions and their intervals, for the
+#' different countries.
+#'
+#' @inheritParams table_predictions_per_method
+#' @inheritParams plot_PA_by_data_type
+#' @importFrom rlang :=
+#'
+#' @return a tibble
+#' @export
+#'
+#' @examples
+#' # see see ?rangeRinPA
+#'
+table_predictions_per_country <- function(what, data) {
+
+  who_to_do <- c("all", "rangers", "others")
+
+    lapply(who_to_do, \(who) {
+    var_staff <- colnames(what[[who]]$country_info[[1]])[grepl("staff", colnames(what[[who]]$country_info[[1]]))]
+
+    what[[who]]$country_info[[1]] %>%
+      dplyr::mutate(staff = delog1p(!!rlang::sym(var_staff))) %>%
+      dplyr::rowwise() %>%
+      dplyr::mutate(PA_total = sum(dplyr::c_across(tidyselect::starts_with("PA")))) %>%
+      dplyr::ungroup() %>%
+      dplyr::mutate(density = .data$PA_total / .data$staff) %>%
+      dplyr::arrange(.data$countryname_eng) %>%
+      dplyr::select(.data$countryname_eng, .data$staff, .data$PA_total, .data$density) %>%
+      dplyr::rename("{who}_estimate" := .data$staff,
+                    "{who}_density" := .data$density)
+    }) -> tables
+
+  names(tables) <- who_to_do
+
+  tables[["all"]] %>%
+    dplyr::full_join(tables[["rangers"]], by = c("countryname_eng", "PA_total")) %>%
+    dplyr::full_join(tables[["others"]], by = c("countryname_eng", "PA_total")) %>%
+    dplyr::relocate(.data$PA_total, .before = 2L)
+
+}
+
+
 #' This function creates the table that shows the point predictions, for the
 #' different continents and for the world. It creates of the main text tables.
 #'
