@@ -24,8 +24,8 @@ table_raw_data <- function(data) {
                   "Non-rangers" = .data$staff_others,
                   Rangers = .data$staff_rangers,
                   "All personnel" = .data$staff_total,
-                  "Area of PA surveyed" = .data$PA_area_surveyed,
-                  "Total PA in country/territory" = .data$area_PA_total,
+                  "Area of terrestrial PA surveyed (km^2)" = .data$PA_area_surveyed,
+                  "Total area of terrestrial PA in country/territory (km^2)" = .data$area_PA_total,
                   "Year(s) of the data" = .data$data_year_info)
 }
 
