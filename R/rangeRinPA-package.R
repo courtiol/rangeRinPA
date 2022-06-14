@@ -8,7 +8,7 @@
 #' @docType package
 #'
 #' @references
-#' TODO (now under submission)
+#' Protected area personnel and ranger numbers are insufficient to deliver global expectations. Appleton et al. (2022). Nature Sustainability.
 #'
 #' @keywords package
 #' @examples
