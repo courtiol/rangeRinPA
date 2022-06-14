@@ -14,11 +14,16 @@ table_raw_data <- function(data) {
   data %>%
     dplyr::select(.data$countryname_iso,
                   .data$countryname_eng,
+                  .data$data_year_info,
                   .data$staff_others, .data$staff_rangers, .data$staff_total,
-                  .data$PA_area_surveyed, .data$area_PA_total,
-                  .data$data_year_info) %>%
+                  .data$PA_area_surveyed, .data$area_PA_total) %>%
     dplyr::filter(!is.na(.data$staff_others) | !is.na(.data$staff_rangers) | !is.na(.data$staff_total)) %>%
-    dplyr::mutate(dplyr::across(where(is.numeric), round)) %>%
+    dplyr::mutate(pct_covered = round(100 * .data$PA_area_surveyed / .data$area_PA_total, 2),
+                  density_staff_others = round(.data$PA_area_surveyed / .data$staff_others, 2),
+                  density_staff_rangers = round(.data$PA_area_surveyed / .data$staff_rangers, 2),
+                  density_staff_total = round(.data$PA_area_surveyed / .data$staff_total, 2)) %>%
+    dplyr::mutate(dplyr::across(.cols = tidyselect::starts_with("density"), ~ dplyr::na_if(.x, y = Inf))) %>%
+    dplyr::mutate(dplyr::across(.cols = c("PA_area_surveyed", "area_PA_total"), round)) %>%
     dplyr::rename("ISO Code" = .data$countryname_iso,
                   "Country/territory" = .data$countryname_eng,
                   "Non-rangers" = .data$staff_others,
@@ -26,6 +31,10 @@ table_raw_data <- function(data) {
                   "All personnel" = .data$staff_total,
                   "Area of terrestrial PA surveyed (km^2)" = .data$PA_area_surveyed,
                   "Total area of terrestrial PA in country/territory (km^2)" = .data$area_PA_total,
+                  "Percentage of the total terrestrial PA area surveyed" = .data$pct_covered,
+                  "Observed densities for non-rangers from terrestrial PAs surveyed (area in km^2 of PA per person)" = .data$density_staff_others,
+                  "Observed densities for rangers from terrestrial PAs surveyed (area in km^2 of PA per person)" = .data$density_staff_rangers,
+                  "Observed densities for all personnel from terrestrial PAs surveyed (area in km^2 of PA per person)" = .data$density_staff_total,
                   "Year(s) of the data" = .data$data_year_info)
 }
 
