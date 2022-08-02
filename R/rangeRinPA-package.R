@@ -108,27 +108,21 @@
 #'
 #' plot_map_sampling(data_rangers_with_geo)
 #' ggplot2::ggsave(filename = paste0(path_figures, "figure_main_1.pdf"),
-#'                 width = ggplot2::unit(15, "cm"))
-#' ggplot2::ggsave(filename = paste0(path_figures, "figure_main_1.png"),
-#'                 width = ggplot2::unit(15, "cm"))
+#'                 width = 8.8, height = 3.1, units = "cm")
 #'
 #'
 #' ## Figure 2
 #'
 #' plot_density_panel(what = LMM_100, data = data_rangers)
 #' ggplot2::ggsave(filename = paste0(path_figures, "figure_main_2.pdf"),
-#'                  width = 13, height = 24, scale = 0.7)
-#' ggplot2::ggsave(filename = paste0(path_figures, "figure_main_2.png"),
-#'                  width = 13, height = 24, scale = 0.7)
+#'                 width = 18, height = 21, units = "cm")
 #'
 #'
 #' ## Figure 3
 #'
 #' plot_density_vs_PA_panel(data = data_rangers, coef = 1)
 #' ggplot2::ggsave(filename = paste0(path_figures, "figure_main_3.pdf"),
-#'                 width = ggplot2::unit(10, "cm"))
-#' ggplot2::ggsave(filename = paste0(path_figures, "figure_main_3.png"),
-#'                 width = ggplot2::unit(10, "cm"))
+#'                 width = 18, height = 21, units = "cm")
 #'
 #'
 #' ## Figure 4 & 5 not made with R!
@@ -152,9 +146,7 @@
 #'
 #' plot_tallies_across_continents(what = LMM_100, data = data_rangers)
 #' ggplot2::ggsave(filename = paste0(path_figures, "figure_extended_1.pdf"),
-#'                 width = ggplot2::unit(14, "cm"))
-#' ggplot2::ggsave(filename = paste0(path_figures, "figure_extended_1.png"),
-#'                 width = ggplot2::unit(14, "cm"))
+#'                 width = 18, height = 9, units = "cm")
 #'
 #'
 #' ## Extended Data Figure 2
@@ -163,9 +155,7 @@
 #'                             list_results_RF = list(RF_000, RF_025, RF_050, RF_075, RF_100),
 #'                             data = data_rangers)
 #' ggplot2::ggsave(filename = paste0(path_figures, "figure_extended_2.pdf"),
-#'                 width = ggplot2::unit(14, "cm"))
-#' ggplot2::ggsave(filename = paste0(path_figures, "figure_extended_2.png"),
-#'                 width = ggplot2::unit(14, "cm"))
+#'                 width = 18, height = 9, units = "cm")
 #'
 #'
 #'
