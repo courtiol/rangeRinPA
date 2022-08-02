@@ -403,7 +403,9 @@ globalVariables(".data")
 #' @seealso [`fetch_data()`] for the function used to create such a dataset
 #'
 #' @examples
-#' data_rangers_with_geo
+#' if (require(sf)) {
+#'   data_rangers_with_geo
+#' }
 #'
 "data_rangers_with_geo"
 
