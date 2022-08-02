@@ -4,7 +4,12 @@
 \alias{plot_tallies_across_methods}
 \title{Plot tallies across methods}
 \usage{
-plot_tallies_across_methods(list_results_LMM, list_results_RF, data)
+plot_tallies_across_methods(
+  list_results_LMM,
+  list_results_RF,
+  data,
+  basesize = 7
+)
 }
 \arguments{
 \item{list_results_LMM}{a list of objects produced by \code{\link[=run_LMM_workflow]{run_LMM_workflow()}}}
@@ -12,6 +17,8 @@ plot_tallies_across_methods(list_results_LMM, list_results_RF, data)
 \item{list_results_RF}{a list of objects produced by \code{\link[=run_RF_workflow]{run_RF_workflow()}}}
 
 \item{data}{a dataset with info on continents if breakdown by continent is required (optional)}
+
+\item{basesize}{the value for the argument \code{base_size} used in \href{ggplot2::theme}{\code{ggplot2::theme()}}}
 }
 \description{
 Plot tallies across methods

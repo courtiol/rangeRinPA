@@ -4,12 +4,14 @@
 \alias{plot_tallies_across_continents}
 \title{Plot details about estimations}
 \usage{
-plot_tallies_across_continents(what, data)
+plot_tallies_across_continents(what, data, basesize = 7)
 }
 \arguments{
 \item{what}{an object produced by \code{\link[=run_LMM_workflow]{run_LMM_workflow()}} or \code{\link[=run_RF_workflow]{run_RF_workflow()}}}
 
 \item{data}{a dataset with info on continents if breakdown by continent is required (optional)}
+
+\item{basesize}{the value for the argument \code{base_size} used in \href{ggplot2::theme}{\code{ggplot2::theme()}}}
 }
 \description{
 Plot details about estimations

@@ -31,9 +31,9 @@ Extract and format the results produced by the workflow
 }
 \section{Functions}{
 \itemize{
-\item \code{extract_results_internal}: an internal function fetching the results
-}}
+\item \code{extract_results_internal()}: an internal function fetching the results
 
+}}
 \examples{
 \dontrun{
 LMM_small_test <- run_LMM_workflow(data = data_rangers, Ncpu = 2, coef = 1,

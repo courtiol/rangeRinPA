@@ -59,8 +59,8 @@ Perform feature selection on RFs
 }
 \section{Functions}{
 \itemize{
-\item \code{feature_selection_RF}: wrapper function performing the feature selection on RFs with and without the spatial terms
+\item \code{feature_selection_RF()}: wrapper function performing the feature selection on RFs with and without the spatial terms
 
-\item \code{feature_selection_RF_internal}: internal function performing the feature selection on RFs
+\item \code{feature_selection_RF_internal()}: internal function performing the feature selection on RFs
+
 }}
-

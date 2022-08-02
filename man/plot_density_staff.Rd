@@ -10,7 +10,8 @@ plot_density_staff(
   data,
   ymax = 6000,
   breaks = c(10^(0:3), 2 * 10^(0:3), 5 * 10^(0:3)),
-  tag = ""
+  tag = "",
+  basesize = 7
 )
 }
 \arguments{
@@ -25,6 +26,8 @@ plot_density_staff(
 \item{breaks}{a vector of number defining the horizontal lines in the plot (i.e. breaks in ggplot jargon)}
 
 \item{tag}{a tag to be used for building a panel (e.g "A.")}
+
+\item{basesize}{the value for the argument \code{base_size} used in \href{ggplot2::theme}{\code{ggplot2::theme()}}}
 }
 \description{
 Plot densities of rangers or all personnel

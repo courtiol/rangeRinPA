@@ -4,12 +4,14 @@
 \alias{plot_density_vs_PA_panel}
 \title{Plot densities of personnel and rangers vs area PA}
 \usage{
-plot_density_vs_PA_panel(data, coef)
+plot_density_vs_PA_panel(data, coef, basesize = 7)
 }
 \arguments{
 \item{data}{the complete dataset}
 
 \item{coef}{the coefficient for the imputation}
+
+\item{basesize}{the value for the argument \code{base_size} used in \href{ggplot2::theme}{\code{ggplot2::theme()}}}
 }
 \description{
 Plot densities of personnel and rangers vs area PA

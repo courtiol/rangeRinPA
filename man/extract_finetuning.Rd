@@ -31,9 +31,9 @@ Extract and format the finetuning results produced by the workflow
 }
 \section{Functions}{
 \itemize{
-\item \code{extract_finetuning_internal}: an internal function fetching the info on finetuning
-}}
+\item \code{extract_finetuning_internal()}: an internal function fetching the info on finetuning
 
+}}
 \examples{
 \dontrun{
 LMM_small_test <- run_LMM_workflow(data = data_rangers, Ncpu = 2, coef = 0,

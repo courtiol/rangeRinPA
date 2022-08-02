@@ -16,7 +16,9 @@ Compared to \code{\link{data_rangers}}, this dataset contains polygons correspon
 It therefore contains additional rows for which we did not collect any information.
 }
 \examples{
-data_rangers_with_geo
+if (require(sf)) {
+  data_rangers_with_geo
+}
 
 }
 \seealso{

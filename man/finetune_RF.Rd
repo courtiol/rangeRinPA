@@ -48,6 +48,6 @@ Fine tune the parameters of a random forest
 }
 \section{Functions}{
 \itemize{
-\item \code{finetune_RF_grid}: Fine tune the parameters of a random forest all at once
-}}
+\item \code{finetune_RF_grid()}: Fine tune the parameters of a random forest all at once
 
+}}

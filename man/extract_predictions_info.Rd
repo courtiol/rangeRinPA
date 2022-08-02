@@ -29,9 +29,9 @@ Extract info on predictions datasets
 }
 \section{Functions}{
 \itemize{
-\item \code{extract_predictions_info_internal}: an internal function fetching the info on predictions datasets
-}}
+\item \code{extract_predictions_info_internal()}: an internal function fetching the info on predictions datasets
 
+}}
 \examples{
 \dontrun{
 LMM_small_test <- run_LMM_workflow(data = data_rangers, Ncpu = 2, coef = 0,
