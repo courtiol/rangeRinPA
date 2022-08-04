@@ -55,12 +55,12 @@ plot_map_sampling <- function(data, proj = "+proj=moll", basesize = 7) {
     ggplot2::scale_fill_manual(values = c(scales::brewer_pal(type = "seq", palette = 2, direction = -1)(length(unique(data$sampled_coverage2)) - 2), "white"),
                                labels = c(levels(data$sampled_coverage2), "excluded (see legend)"),
                                na.value = "grey50",
-                               guide = ggplot2::guide_legend(title = "Area surveyed (%)")) +
+                               guide = ggplot2::guide_legend(title = "Area surveyed (%)", nrow = 2)) +
     ggplot2::theme_void(base_size = basesize) +
-    ggplot2::theme(legend.position = "left",
+    ggplot2::theme(legend.position = "bottom",
                    #panel.grid = ggplot2::element_line(colour = "GREY", size = 0.3),
                    panel.grid = ggplot2::element_blank(),
-                   plot.margin = ggplot2::margin(r = 5),
+                   plot.margin = ggplot2::margin(r = 1, l = 1, t = 1),
                    legend.key.size = ggplot2::unit(2, "mm")) +
     ggplot2::coord_sf(expand = FALSE, crs = proj)
 
@@ -610,7 +610,7 @@ plot_density_staff <- function(what, who, data, ymax = 6000, breaks = c(10^(0:3)
     ggplot2::labs(caption = ifelse(who == "rangers",
                                    "Proportion of the area where density of rangers exceeds the average requirement:",
                                    "Proportion of the area where density of personnel exceeds the average requirement:")) +
-    ggplot2::theme(plot.caption = ggplot2::element_text(face = "italic", size = basesize, vjust = -6)) +
+    ggplot2::theme(plot.caption = ggplot2::element_text(size = basesize, vjust = -6)) +
     patchwork::inset_element(data_pies$gg[[1]], 0.15, 0.03, 0 + 1/4.5, 0.17, align_to = "full") +
     patchwork::inset_element(data_pies$gg[[2]], 0.15, 0.03, 0 + 2/4.5, 0.17, align_to = "full") +
     patchwork::inset_element(data_pies$gg[[3]], 0.15, 0.03, 0 + 3/4.5, 0.17, align_to = "full") +
