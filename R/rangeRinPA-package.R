@@ -1,18 +1,21 @@
 #' Protected Area Personnel and Ranger Numbers are Insufficient to Deliver Global Expectations
 #'
-#' The goal of rangeRinPA is to reproduce most results from the paper Protected Area Personnel and
-#' Ranger Numbers are Insufficient to Deliver Global Expectations by Appleton et al. (submitted)
+#' The goal of rangeRinPA is to reproduce most results from the paper entitled "Protected area personnel and ranger numbers are insufficient to deliver global expectations" by Appleton et al. (Nature Sustainability, 2022).
+#'
+#' For reproducing the results of our paper, just follow the code presented in the section "Examples" below.
 #'
 #' @name rangeRinPA-package
-#' @aliases rangeRinPA-package rangeR
+#' @aliases rangeRinPA-package rangeRinPA
 #' @docType package
 #'
 #' @references
-#' Protected area personnel and ranger numbers are insufficient to deliver global expectations. Appleton et al. (2022). Nature Sustainability.
+#' Protected area personnel and ranger numbers are insufficient to deliver global expectations. Appleton et al. Nature Sustainability (2022).
 #'
 #' @keywords package
 #' @examples
 #' \dontrun{
+#'
+#' ###################################################### MAIN ANALYSIS
 #'
 #' ## Set and create all directories to store files
 #'
@@ -29,14 +32,13 @@
 #' if (!dir.exists(path_predictions)) dir.create(path_predictions)
 #'
 #'
-#' ### Predictions
+#' ## Perform imputations and predictions
 #'
-#' #Ncpu <- 2L
-#' Ncpu <- 100 ## define the number of CPUs to use
+#' Ncpu <- 2L  ## define the number of CPUs to use
 #' n_trees <- 2000
 #'
 #'
-#' ## Run all LMM workflows and save results
+#' ## Run all LMM workflows and save results (optional, see below)
 #'
 #' LMM_100 <- run_LMM_workflow(data = data_rangers, Ncpu = Ncpu, coef = 1)
 #' save(LMM_100, file = paste0(path_predictions, "LMM_100.Rdata"))
@@ -64,7 +66,7 @@
 #' gc()
 #'
 #'
-#' ## Run all RF workflows and save results
+#' ## Run all RF workflows and save results (optional, see below)
 #'
 #' RF_100 <- run_RF_workflow(data = data_rangers, Ncpu = Ncpu, coef = 1, n_trees = n_trees)
 #' save(RF_100, file = paste0(path_predictions, paste0("RF_100_", n_trees, ".Rdata")))
@@ -92,7 +94,8 @@
 #' gc()
 #'
 #'
-#' ## Load all results saved on disk (useful only if all objects created above are not already in memory)
+#' ## Load all results saved on disk
+#' ## (useful only if all objects created above are not already in memory)
 #'
 #' files_to_load <- c("LMM_000.Rdata", "LMM_025.Rdata", "LMM_050.Rdata", "LMM_075.Rdata",
 #'                    "LMM_100.Rdata", paste0(c("RF_000_", "RF_025_", "RF_050_", "RF_075_", "RF_100_"),
@@ -129,7 +132,7 @@
 #'
 #'
 #'
-#' ###################################################### MAIN TABLES
+#' ###################################################### MAIN TABLE
 #'
 #' ## Table 1
 #'
@@ -209,19 +212,11 @@
 #'
 #' set.seed(123)
 #' plot_reliability_vs_sampling(data_rangers)
-#' ggplot2::ggsave(filename = paste0(path_figures, "figure_SI_1.pdf"),
-#'                 width = ggplot2::unit(8, "cm"))
-#' ggplot2::ggsave(filename = paste0(path_figures, "figure_SI_1.png"),
-#'                 width = ggplot2::unit(8, "cm"))
 #'
 #'
 #' ## Supplementary Data Figure 2
 #'
 #' plot_density_vs_sampling(data_rangers)
-#' ggplot2::ggsave(filename = paste0(path_figures, "figure_SI_2.pdf"),
-#'                 width = ggplot2::unit(8, "cm"))
-#' ggplot2::ggsave(filename = paste0(path_figures, "figure_SI_2.png"),
-#'                 width = ggplot2::unit(8, "cm"))
 #'
 #'
 #' ## Supplementary Data Figure 3
@@ -229,39 +224,21 @@
 #' plot_features_selected(list_results_LMM = list(LMM_000, LMM_025, LMM_050, LMM_075, LMM_100),
 #'                        list_results_RF  = list(RF_000, RF_025, RF_050, RF_075, RF_100),
 #'                        data = data_rangers)
-#' ggplot2::ggsave(filename = paste0(path_figures, "figure_SI_3.pdf"),
-#'                 width = ggplot2::unit(8, "cm"), height = ggplot2::unit(10, "cm"))
-#' ggplot2::ggsave(filename = paste0(path_figures, "figure_SI_3.png"),
-#'                 width = ggplot2::unit(8, "cm"), height = ggplot2::unit(10, "cm"))
 #'
 #'
 #' ## Supplementary Data Figure 4
 #'
 #' plot_features_selection_panel(result1 = LMM_100, result2 = RF_100, who = "rangers")
-#' ggplot2::ggsave(filename = paste0(path_figures, "figure_SI_4.pdf"),
-#'                 width = ggplot2::unit(8, "cm"))
-#' ggplot2::ggsave(filename = paste0(path_figures, "figure_SI_4.png"),
-#'                 width = ggplot2::unit(8, "cm"))
 #'
 #'
 #' ## Supplementary Data Figure 5
 #'
 #' plot_finetuning(result = RF_100, who = "rangers")
-#' ggplot2::ggsave(filename = paste0(path_figures, "figure_SI_5.pdf"),
-#'                 width = ggplot2::unit(8, "cm"))
-#' ggplot2::ggsave(filename = paste0(path_figures, "figure_SI_5.png"),
-#'                 width = ggplot2::unit(8, "cm"))
 #'
 #'
 #' ## Supplementary Data Figure 6
 #'
 #' plot_PA_by_data_type(what = RF_100, data = data_rangers)
-#' ggplot2::ggsave(filename = paste0(path_figures, "figure_SI_6.pdf"),
-#'                 width = ggplot2::unit(11, "cm"))
-#' ggplot2::ggsave(filename = paste0(path_figures, "figure_SI_6.png"),
-#'                 width = ggplot2::unit(11, "cm"))
-#'
-#'
 #'
 #'
 #' ###################################################### SUPPLEMENTARY DATA TABLES
@@ -403,3 +380,4 @@
 #'                 dplyr::summarize(total_time_h = sum(.data$time))
 #'
 #' }
+NULL
