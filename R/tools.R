@@ -471,6 +471,8 @@ add_continents <- function(tbl, data, levels = NULL) {
     dplyr::right_join(tbl, by = "countryname_eng") %>%
     dplyr::rename(continent = .data$country_UN_continent) -> tbl
 
+  tbl$continent[tbl$countryname_eng %in% c("W African Country", "Other country")] <- "Africa"
+
   if (!is.null(levels)) {
     tbl %>%
       dplyr::mutate(continent = factor(.data$continent, levels = levels)) -> tbl
