@@ -1,0 +1,49 @@
+Package: rangeRinPA
+Title: Protected Area Personnel and Ranger Numbers are Insufficient to Deliver Global Expectations
+Version: 2022.08.05
+Authors@R: 
+  c(person("Alexandre", "Courtiol",
+           email = "alexandre.courtiol@gmail.com",
+           role = c("aut", "cre"),
+           comment = c(ORCID = "0000-0003-0637-2959")),
+    person("Re:Wild",
+           role = "cph"))
+Description: This packages provides the data and reproduces the results presented in the paper "Protected area personnel and ranger numbers are insufficient to deliver global expectations" by Appleton et al. Nature Sustainability (2022). 
+License: CC BY 4.0 + file LICENSE
+Imports:
+    dplyr,
+    forcats,
+    ggplot2,
+    ggsci,
+    scales,
+    tidyselect,
+    magrittr,
+    ranger,
+    rlang,
+    spaMM,
+    tibble,
+    tidyr
+Suggests:
+    ape,
+    countrycode,
+    ggrepel,
+    googlesheets4,
+    gt,
+    knitr,
+    patchwork,
+    R.utils,
+    rgeos,
+    rmarkdown,
+    rnaturalearth,
+    rnaturalearthdata,
+    sf,
+    testthat (>= 3.0.0),
+    usethis
+Config/testthat/edition: 3
+Encoding: UTF-8
+LazyData: true
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.2.1
+Depends: 
+    R (>= 4.1.0)
+VignetteBuilder: knitr
