@@ -370,9 +370,9 @@
 #'
 #'
 #' ## Area covered by PAs:
-#' table_raw_data(data_rangers) %>%
-#'   dplyr::select(area_surveyed = .data$`Area of PA surveyed`,
-#'                 total_area = .data$`Total PA in country/territory`) %>%
+#' data_rangers %>%
+#'   dplyr::select(area_surveyed = .data$PA_area_surveyed,
+#'                 total_area = .data$area_PA_total) %>%
 #'   dplyr::summarise(area_surveyed = sum(.data$area_surveyed),
 #'                    prop_total_area = area_surveyed/sum(.data$total_area))
 #'
