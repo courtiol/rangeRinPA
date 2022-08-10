@@ -54,23 +54,6 @@ following command:
 ?rangeRinPA
 ```
 
-## How to access the vignettes?
-
-The different analyses we have done are stored in the package as HTML
-vignettes.
-
-To view such vignettes, simply install the package (see above) and then
-type:
-
-``` r
-browseVignettes("rangeRinPA")
-```
-
-Note: if the vignettes are not found, it is probably because you did not
-successfully install the package. In particular, you must type
-`build_vignettes = TRUE` while installing the package as indicated
-above.
-
 ## How to use our data?
 
 The data are embedded in the package, so you can use them after
@@ -88,8 +71,8 @@ sum(data_rangers$staff_total, na.rm = TRUE)
 
 ## Environment
 
-Here is the information about the R session used to produce the results
-presented in the paper:
+Here is the information about the R session used to produce the
+numerical results presented in the paper:
 
 ``` text
 R version 4.1.2 (2021-11-01)

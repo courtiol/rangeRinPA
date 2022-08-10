@@ -55,8 +55,8 @@ Perform feature selection on LMMs
 }
 \section{Functions}{
 \itemize{
-\item \code{feature_selection_LMM}: wrapper function performing the feature selection on LMMs with and without the Matern term
+\item \code{feature_selection_LMM()}: wrapper function performing the feature selection on LMMs with and without the Matern term
 
-\item \code{feature_selection_LMM_internal}: internal function performing the feature selection on LMMs
+\item \code{feature_selection_LMM_internal()}: internal function performing the feature selection on LMMs
+
 }}
-

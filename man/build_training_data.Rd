@@ -66,25 +66,25 @@ These functions create a subset of the dataset \code{\link{data_rangers}} and lo
 }
 \section{Functions}{
 \itemize{
-\item \code{build_initial_training_data}: build the initial training datasets
+\item \code{build_initial_training_data()}: build the initial training datasets
 
-\item \code{build_final_training_data}: build the final training datasets
+\item \code{build_final_training_data()}: build the final training datasets
 
-\item \code{build_final_pred_data}: build the final prediction datasets
+\item \code{build_final_pred_data()}: build the final prediction datasets
 
-\item \code{build_data}: internal function to build the training and prediction datasets
+\item \code{build_data()}: internal function to build the training and prediction datasets
 
-\item \code{handle_PA_area}: internal function to handle PA_area while building the datasets
+\item \code{handle_PA_area()}: internal function to handle PA_area while building the datasets
 
-\item \code{handle_outliers}: internal function to handle outliers while building the datasets
+\item \code{handle_outliers()}: internal function to handle outliers while building the datasets
 
-\item \code{handle_transform}: internal function to handle variable transformation while building the datasets
+\item \code{handle_transform()}: internal function to handle variable transformation while building the datasets
 
-\item \code{handle_order}: internal function to handle order of variables while building the datasets
+\item \code{handle_order()}: internal function to handle order of variables while building the datasets
 
-\item \code{handle_na}: internal function to handle missing data while building the datasets
+\item \code{handle_na()}: internal function to handle missing data while building the datasets
+
 }}
-
 \examples{
 \dontrun{
 ## Here is how we created the data stored in this package:

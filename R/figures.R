@@ -3,6 +3,7 @@
 #'
 #' @param data the complete dataset
 #' @param proj the projection to be used (e.g. "+proj=moll" - the default)
+#' @param basesize the value for the argument `base_size` used in [`ggplot2::theme()`](ggplot2::theme)
 #'
 #' @export
 #'
@@ -21,7 +22,7 @@
 #'   plot_map_sampling(data_rangers_with_geo, proj = "+proj=boggs")
 #' }
 #'
-plot_map_sampling <- function(data, proj = "+proj=moll") {
+plot_map_sampling <- function(data, proj = "+proj=moll", basesize = 7) {
 
   if (!requireNamespace("sf", quietly = TRUE)) stop("You need to install the package sf for this function to run")
 
@@ -54,11 +55,13 @@ plot_map_sampling <- function(data, proj = "+proj=moll") {
     ggplot2::scale_fill_manual(values = c(scales::brewer_pal(type = "seq", palette = 2, direction = -1)(length(unique(data$sampled_coverage2)) - 2), "white"),
                                labels = c(levels(data$sampled_coverage2), "excluded (see legend)"),
                                na.value = "grey50",
-                               guide = ggplot2::guide_legend(title = "Area surveyed (%)")) +
-    ggplot2::theme_void(base_size = 24) +
-    ggplot2::theme(legend.position = "left",
+                               guide = ggplot2::guide_legend(title = "Area surveyed (%)", nrow = 2)) +
+    ggplot2::theme_void(base_size = basesize) +
+    ggplot2::theme(legend.position = "bottom",
                    #panel.grid = ggplot2::element_line(colour = "GREY", size = 0.3),
-                   panel.grid = ggplot2::element_blank()) +
+                   panel.grid = ggplot2::element_blank(),
+                   plot.margin = ggplot2::margin(r = 1, l = 1, t = 1),
+                   legend.key.size = ggplot2::unit(2, "mm")) +
     ggplot2::coord_sf(expand = FALSE, crs = proj)
 
 }
@@ -327,12 +330,13 @@ plot_features_selected <- function(list_results_LMM, list_results_RF, data, size
 #' Plot tallies across methods
 #'
 #' @inheritParams extract_results
+#' @inheritParams plot_map_sampling
 #' @export
 #'
 #' @examples
 #' # see ?rangeRinPA
 #'
-plot_tallies_across_methods <- function(list_results_LMM, list_results_RF, data) {
+plot_tallies_across_methods <- function(list_results_LMM, list_results_RF, data, basesize = 7) {
 
   extract_results(list_results_LMM = list_results_LMM,
                   list_results_RF = list_results_RF, data = data) %>%
@@ -349,10 +353,10 @@ plot_tallies_across_methods <- function(list_results_LMM, list_results_RF, data)
                    ymin = pmin(.data$lwr, .data$point_pred), ymax = .data$upr) +
       ggplot2::geom_col(position = "dodge", colour = "black", size = 0.2) +
       ggplot2::geom_linerange(position = ggplot2::position_dodge(width = 0.9), size = 0.5) +
-      ggplot2::scale_y_continuous(breaks = (0:10) * 1e5, minor_breaks = (0:200) * 1e4,
-                                  labels = scales::label_number(accuracy = 1)) +
+      ggplot2::scale_y_continuous(breaks = (0:10) * 1.5e5, minor_breaks = (0:200) * 1e4,
+                                  labels = scales::label_number(accuracy = 1), ) +
       ggsci::scale_fill_npg(guide = ggplot2::guide_legend(reverse = TRUE), alpha = 0.8) + # values = c("#52734D", "#FEFFDE", "#91C788")
-      ggplot2::theme_minimal() +
+      ggplot2::theme_minimal(base_size = basesize) +
       ggplot2::coord_flip() +
       ggplot2::labs(x = "Coefficient used for imputation",
                     y = "Estimated total number of personnel",
@@ -365,12 +369,13 @@ plot_tallies_across_methods <- function(list_results_LMM, list_results_RF, data)
 #' Plot details about estimations
 #'
 #' @inheritParams extract_results
+#' @inheritParams plot_map_sampling
 #' @export
 #'
 #' @examples
 #' # see ?rangeRinPA
 #'
-plot_tallies_across_continents <- function(what, data) {
+plot_tallies_across_continents <- function(what, data, basesize = 7) {
 
   if (length(what) != 4) stop("Wrong input: 'what' should be a list produced by a workflow function")
 
@@ -415,7 +420,7 @@ plot_tallies_across_continents <- function(what, data) {
       ggplot2::scale_y_continuous(breaks = (0:10) * 1e5, minor_breaks = (0:100) * 1e4,
                                   labels = scales::label_number(accuracy = 1)) +
        ggplot2::scale_fill_manual(values = ggsci::pal_npg()(4)[2:4]) + ## for concordance colours with plot_PA_by_data_type()
-      ggplot2::theme_bw(base_size = 14) +
+      ggplot2::theme_bw(base_size = basesize) +
       ggplot2::labs(fill = "Source of data on personnel:", y = "Personnel number", x = NULL) +
       ggplot2::theme(plot.title.position = "plot",
                      legend.position = "bottom", axis.text.x = ggplot2::element_text(angle = 90, vjust = 0.5, hjust = 1)) +
@@ -476,6 +481,7 @@ plot_PA_by_data_type <- function(what, data) {
 #' Plot densities of rangers or all personnel
 #'
 #' @inheritParams extract_results
+#' @inheritParams plot_map_sampling
 #' @inheritParams run_RF_workflow
 #' @param ymax the maximal value for the y-axis
 #' @param breaks a vector of number defining the horizontal lines in the plot (i.e. breaks in ggplot jargon)
@@ -484,7 +490,7 @@ plot_PA_by_data_type <- function(what, data) {
 #' @examples
 #' # see ?rangeRinPA
 #'
-plot_density_staff <- function(what, who, data, ymax = 6000, breaks = c(10^(0:3), 2*10^(0:3), 5*10^(0:3)), tag = "") {
+plot_density_staff <- function(what, who, data, ymax = 6000, breaks = c(10^(0:3), 2*10^(0:3), 5*10^(0:3)), tag = "", basesize = 7) {
 
     if (!requireNamespace("patchwork", quietly = TRUE)) stop("You need to install the package patchwork for this function to run")
 
@@ -548,40 +554,40 @@ plot_density_staff <- function(what, who, data, ymax = 6000, breaks = c(10^(0:3)
                               ggplot2::scale_fill_manual(values = c(scales::alpha("#E64B35FF", 0.3), "#4DBBD5FF")) +
                               ggplot2::labs(title = paste0(round(100*data$value[1] / sum(data$value), 2), "%")) +
                               ggplot2::theme_void() +
-                              ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5)))) -> data_pies
+                              ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5, size = 7)))) -> data_pies
 
   dd %>%
     ggplot2::ggplot() +
-    ggplot2::geom_polygon(data = data.frame(x = c(0, 0, 8, 8, 0), y = c(6000, 0.01, 0.01, 6000, 6000)),
+    ggplot2::geom_polygon(data = data.frame(x = c(0, 0, 7.7, 7.7, 0), y = c(6000, 0.01, 0.01, 6000, 6000)),
                           mapping = ggplot2::aes(x = .data$x, y = .data$y), fill = NA, colour = NA, alpha = 0) +
-    ggplot2::geom_segment(data = data.frame(x = 7.8, xend = 7.8, y = 0.01, yend = 6000),
+    ggplot2::geom_segment(data = data.frame(x = 7.55, xend = 7.55, y = 0.01, yend = 6000),
                           mapping = ggplot2::aes(x = .data$x, y = .data$y, xend = .data$xend, yend = .data$yend),
                           arrow = ggplot2::arrow(type = "closed", length = ggplot2::unit(0.3, units = "cm"), ends = "both")) +
-    ggplot2::geom_text(data.frame(x = 7.9, y = 2), mapping = ggplot2::aes(x = .data$x, y = .data$y), label = "better", angle = 270) +
-    ggplot2::geom_text(data.frame(x = 7.9, y = 3000), mapping = ggplot2::aes(x = .data$x, y = .data$y), label = "worse", angle = 270) +
+    ggplot2::geom_text(data.frame(x = 7.6, y = 3), mapping = ggplot2::aes(x = .data$x, y = .data$y), label = "better", angle = 270, size = 2) +
+    ggplot2::geom_text(data.frame(x = 7.6, y = 2000), mapping = ggplot2::aes(x = .data$x, y = .data$y), label = "worse", angle = 270, size = 2) +
     ggplot2::geom_polygon(data = data.frame(x = c(0.5, 0.5, 1.5, 1.5, 0.5), y = c(6000, 0.1, 0.1, 6000, 6000)),
                           mapping = ggplot2::aes(x = .data$x, y = .data$y), fill = "grey", colour = NA, alpha = 0.5) +
     ggplot2::geom_jitter(ggplot2::aes(y = .data$km2_per_staff, x = .data$continent, size = .data$PA,
                                   alpha = .data$km2_per_staff < threshold,
                                   colour = .data$continent, fill = .data$continent,
-                                  shape = .data$type),
+                                  shape = .data$type, stroke = dplyr::if_else(.data$type == "predicted", 0.4, 0)),
                      position = ggplot2::position_jitter(seed = 1L, width = 0.15, height = 0), data = dd_all) +
     ggplot2::geom_point(ggplot2::aes(y = .data$mean, x = .data$continent, fill = .data$continent),
                         shape = 23, colour = "black", size = 3, data = dd_mean) +
     ggplot2::geom_polygon(data = data.frame(x = c(0.2, 0.2, 7.5, 7.5, 0.2), y = c(threshold, 0.01, 0.01, threshold, threshold)),
                           mapping = ggplot2::aes(x = .data$x, y = .data$y), fill = "darkgreen", colour = NA, alpha = 0.1) +
     { if (who == "rangers") ggplot2::geom_hline(yintercept = 5, colour = "darkgreen", linetype = "dashed") } +
-    { if (who == "rangers") ggplot2::geom_text(ggplot2::aes(y = .data$y, x = .data$x), colour = "darkgreen",
-                                               size = 3, label = "Recommended by IUCN",
-         alpha = 0.95,
-         hjust = 0.5, vjust = -0.2,
+    { if (who == "rangers") ggplot2::geom_text(ggplot2::aes(y = .data$y, x = .data$x + 0.5), colour = "darkgreen",
+                                               size = 2, label = "Recommended by IUCN",
+                                               alpha = 0.95,
+                                               hjust = 1, vjust = -0.2,
          data = data.frame(x = 7, y = 5)) } +
     ggplot2::geom_text(ggplot2::aes(y = .data$mean, x = .data$continent, label = round(.data$mean)),
-                       nudge_x = 0.3, size = 6, data = dd_mean) +
+                       nudge_x = 0.3, size = 4, data = dd_mean) +
     ggplot2::geom_hline(yintercept = threshold, colour = "darkgreen", linetype = "dashed") +
-    ggplot2::geom_text(ggplot2::aes(y = .data$y, x = .data$x), colour = "darkgreen",
-                       size = 3, label = "Average requirement",
-                       hjust = 0.5, vjust = -0.2,
+    ggplot2::geom_text(ggplot2::aes(y = .data$y, x = .data$x + 0.5), colour = "darkgreen",
+                       size = 2, label = "Average requirement",
+                       hjust = 1, vjust = -0.2,
                        data = data.frame(x = 7, y = threshold)) + # if not in data, coord_trans does not pick it up...
     ggplot2::scale_y_continuous(limits = c(ymax, 0.01), breaks = breaks, minor_breaks = NULL,
                                 labels = scales::label_number(accuracy = 1), trans = "reverse") +
@@ -594,24 +600,24 @@ plot_density_staff <- function(what, who, data, ymax = 6000, breaks = c(10^(0:3)
     ggplot2::coord_trans(y = "pseudo_log") +
     { if (who == "rangers") ggplot2::labs(x = "", y = expression(paste("Area per ranger (km"^"2", ")")), tag = tag) } +
     { if (who == "all") ggplot2::labs(x = "", y = expression(paste("Area per person (km"^"2", ")")), tag = tag) } +
-    ggplot2::theme_minimal(base_size = 18) +
+    ggplot2::theme_minimal(base_size = basesize) +
     ggplot2::theme(panel.grid.major.x = ggplot2::element_blank(),
-                   plot.caption = ggplot2::element_text(hjust = 0, vjust = 45), axis.text.x = ggplot2::element_text(size = 12),
-                   plot.margin = ggplot2::margin(t = 0, b = 2, r = 0.5, unit = "in")) +
+                   plot.caption = ggplot2::element_text(hjust = 0, vjust = 45), axis.text.x = ggplot2::element_text(size = 7),
+                   plot.margin = ggplot2::margin(t = 0, b = 0.9, r = 0.5, unit = "in")) +
     ggplot2::guides(colour = "none", size = "none", fill = "none", alpha = "none", shape = "none") -> main_plot
 
   main_plot +
     ggplot2::labs(caption = ifelse(who == "rangers",
                                    "Proportion of the area where density of rangers exceeds the average requirement:",
                                    "Proportion of the area where density of personnel exceeds the average requirement:")) +
-    ggplot2::theme(plot.caption = ggplot2::element_text(face = "italic", size = 14, vjust = -6)) +
-    patchwork::inset_element(data_pies$gg[[1]], 0.15, 0,    0.05 + 1/4.5, 0.2, align_to = "full") +
-    patchwork::inset_element(data_pies$gg[[2]], 0.15, 0.03, 0.05 + 2/4.5, 0.17, align_to = "full") +
-    patchwork::inset_element(data_pies$gg[[3]], 0.15, 0.03, 0.05 + 3/4.5, 0.17, align_to = "full") +
-    patchwork::inset_element(data_pies$gg[[4]], 0.15, 0.03, 0.05 + 4/4.5, 0.17, align_to = "full") +
-    patchwork::inset_element(data_pies$gg[[5]], 0.15, 0.03, 0.05 + 5/4.5, 0.17, align_to = "full") +
-    patchwork::inset_element(data_pies$gg[[6]], 0.15, 0.03, 0.05 + 6/4.5, 0.17, align_to = "full") +
-    patchwork::inset_element(data_pies$gg[[7]], 0.15, 0.03, 0.05 + 7/4.5, 0.17, align_to = "full")
+    ggplot2::theme(plot.caption = ggplot2::element_text(size = basesize, vjust = -6)) +
+    patchwork::inset_element(data_pies$gg[[1]], 0.15, 0.03, 0 + 1/4.5, 0.17, align_to = "full") +
+    patchwork::inset_element(data_pies$gg[[2]], 0.15, 0.03, 0 + 2/4.5, 0.17, align_to = "full") +
+    patchwork::inset_element(data_pies$gg[[3]], 0.15, 0.03, 0 + 3/4.5, 0.17, align_to = "full") +
+    patchwork::inset_element(data_pies$gg[[4]], 0.15, 0.03, 0 + 4/4.5, 0.17, align_to = "full") +
+    patchwork::inset_element(data_pies$gg[[5]], 0.15, 0.03, 0 + 5/4.5, 0.17, align_to = "full") +
+    patchwork::inset_element(data_pies$gg[[6]], 0.15, 0.03, 0 + 6/4.5, 0.17, align_to = "full") +
+    patchwork::inset_element(data_pies$gg[[7]], 0.15, 0.03, 0 + 7/4.5, 0.17, align_to = "full")
 }
 
 
@@ -637,12 +643,13 @@ plot_density_panel <- function(what, data, ymax = 6000, breaks = c(10^(0:3), 2*1
 #' Plot densities of staff vs area PA
 #'
 #' @inheritParams plot_density_vs_sampling
+#' @inheritParams plot_map_sampling
 #' @param coef the coefficient for the imputation
 #' @export
 #' @examples
 #' plot_density_vs_PA(data = data_rangers, who = "rangers", coef = 1)
 #'
-plot_density_vs_PA <- function(data, who, coef = 1) {
+plot_density_vs_PA <- function(data, who, coef = 1, basesize = 7) {
 
   if (!requireNamespace("ggrepel", quietly = TRUE)) stop("You need to install the package ggrepel for this function to run")
 
@@ -687,6 +694,7 @@ plot_density_vs_PA <- function(data, who, coef = 1) {
                        data = data.frame(x = 10, y = 5000,
                                          label = paste0("Allometric coef. = ", res_coef[1], " (", res_coef[2], "-", res_coef[3], ")")),
                        hjust = 0,
+                       size = 3,
                        inherit.aes = FALSE) +
     ggplot2::geom_point() +
     ggplot2::coord_trans(y = "log1p", x = "log1p") +
@@ -697,7 +705,9 @@ plot_density_vs_PA <- function(data, who, coef = 1) {
     ggplot2::scale_y_continuous(breaks = ybreaks, minor_breaks = NULL,
                                 limits = c(min(d$coverage_staff, na.rm = TRUE), min(ybreaks[ybreaks > max(d$coverage_staff, na.rm = TRUE)])),
                                 labels = scales::label_number(accuracy = 1)) +
-    ggplot2::theme_bw(base_size = 14) +
+    ggplot2::theme_bw(base_size = basesize) +
+    ggplot2::theme(legend.position = "bottom") +
+    ggplot2::guides(colour = ggplot2::guide_legend(nrow = 1)) +
     ggplot2::labs(y = y_title,
          x = expression(paste("Area of protected areas (km"^"2", ")")),
          colour = "Continent:") -> plot
@@ -715,12 +725,12 @@ plot_density_vs_PA <- function(data, who, coef = 1) {
 #' @examples
 #' plot_density_vs_PA_panel(data = data_rangers, coef = 1)
 #'
-plot_density_vs_PA_panel <- function(data, coef) {
+plot_density_vs_PA_panel <- function(data, coef, basesize = 7) {
 
   if (!requireNamespace("patchwork", quietly = TRUE)) stop("You need to install the package patchwork for this function to run")
 
-  p1 <- plot_density_vs_PA(data = data, who = "all", coef = coef) + ggplot2::labs(tag = "A.")
-  p2 <- plot_density_vs_PA(data = data, who = "rangers", coef = coef) + ggplot2::labs(tag = "B.") + ggplot2::theme(legend.position = "none")
+  p1 <- plot_density_vs_PA(data = data, who = "all", coef = coef, basesize = basesize) + ggplot2::labs(tag = "A.") + ggplot2::theme(legend.position = "none")
+  p2 <- plot_density_vs_PA(data = data, who = "rangers", coef = coef, basesize = basesize) + ggplot2::labs(tag = "B.")
 
   p1 / p2
 }

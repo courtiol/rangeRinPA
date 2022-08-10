@@ -4,7 +4,7 @@
 \alias{plot_density_vs_PA}
 \title{Plot densities of staff vs area PA}
 \usage{
-plot_density_vs_PA(data, who, coef = 1)
+plot_density_vs_PA(data, who, coef = 1, basesize = 7)
 }
 \arguments{
 \item{data}{the complete dataset}
@@ -12,6 +12,8 @@ plot_density_vs_PA(data, who, coef = 1)
 \item{who}{\code{"rangers"} (default), \code{"others"} or \code{"all"}}
 
 \item{coef}{the coefficient for the imputation}
+
+\item{basesize}{the value for the argument \code{base_size} used in \href{ggplot2::theme}{\code{ggplot2::theme()}}}
 }
 \description{
 Plot densities of staff vs area PA

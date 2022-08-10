@@ -29,23 +29,18 @@ table_core_data <- function(data, what = NULL) {
     dplyr::mutate(dplyr::across(.cols = tidyselect::starts_with("density"), ~ dplyr::if_else(is.nan(.x), NA_real_, .x))) %>%
     dplyr::mutate(pct_covered = dplyr::if_else(is.nan(.data$pct_covered), 100, .data$pct_covered)) %>%
     dplyr::mutate(dplyr::across(.cols = c("PA_area_surveyed", "area_PA_total"), round)) %>%
-    dplyr::rename("ISO Code" = .data$countryname_iso,
+    dplyr::select("ISO Code" = .data$countryname_iso,
                   "Country/territory" = .data$countryname_eng,
-                  "Non-rangers (surveyed)" = .data$staff_others,
-                  "Rangers (surveyed)" = .data$staff_rangers,
-                  "All personnel (surveyed)" = .data$staff_total,
-                  "Area of terrestrial PA surveyed (km^2)" = .data$PA_area_surveyed,
-                  "Observed densities for non-rangers from terrestrial PAs surveyed (area in km^2 of PA per person)" = .data$density_staff_others,
-                  "Observed densities for rangers from terrestrial PAs surveyed (area in km^2 of PA per person)" = .data$density_staff_rangers,
-                  "Observed densities for all personnel from terrestrial PAs surveyed (area in km^2 of PA per person)" = .data$density_staff_total,
+                  "Total area of terrestrial PAs in country/territory (km^2) World Database on Protected Areas 2020" = .data$area_PA_total,
                   "Year(s) of the data" = .data$data_year_info,
-                  "Total area of terrestrial PA in country/territory (km^2)" = .data$area_PA_total,
-                  "Percentage of the total terrestrial PA area surveyed" = .data$pct_covered) %>%
-    dplyr::relocate("Total area of terrestrial PA in country/territory (km^2)",
-                    .after = "Observed densities for all personnel from terrestrial PAs surveyed (area in km^2 of PA per person)") %>%
-    dplyr::relocate("Percentage of the total terrestrial PA area surveyed",
-                    .after = "Observed densities for all personnel from terrestrial PAs surveyed (area in km^2 of PA per person)") %>%
-    dplyr::relocate("Area of terrestrial PA surveyed (km^2)", .after = "Year(s) of the data") -> table_raw
+                  "Area of terrestrial PA surveyed (km^2)" = .data$PA_area_surveyed,
+                  "Percentage of the total terrestrial PA area of the country/territory surveyed" = .data$pct_covered,
+                  "All personnel in surveyed area" = .data$staff_total,
+                  "Rangers in surveyed area" = .data$staff_rangers,
+                  "Non-rangers in surveyed area" = .data$staff_others,
+                  "Observed densities for all personnel in surveyed area( km^2 of PA per person)" = .data$density_staff_total,
+                  "Observed densities for rangers in surveyed area (km^2 of PA per person)" = .data$density_staff_rangers
+                  ) -> table_raw
 
   if (is.null(what)) return(table_raw)
 
@@ -56,25 +51,37 @@ table_core_data <- function(data, what = NULL) {
     dplyr::mutate(PA_total = round(.data$PA_total)) %>%
     dplyr::rename("ISO Code" = .data$countryname_iso,
                   "Country/territory" = .data$countryname_eng,
-                  "Total area of terrestrial PA in country/territory (km^2)" = .data$PA_total) %>%
+                  "Total area of terrestrial PAs in country/territory (km^2) World Database on Protected Areas 2020" = .data$PA_total) %>%
     dplyr::mutate(dplyr::across(.cols = tidyselect::ends_with("density"),
                                 .fns = round, digits = 1)) %>%
     dplyr::mutate(dplyr::across(.cols = tidyselect::ends_with("estimate"),
                                 .fns = round, digits = 0)) -> table_estimates
 
   dplyr::full_join(table_raw, table_estimates,
-                   by = c("ISO Code", "Country/territory", "Total area of terrestrial PA in country/territory (km^2)")) -> table_all
+                   by = c("ISO Code", "Country/territory", "Total area of terrestrial PAs in country/territory (km^2) World Database on Protected Areas 2020")) -> table_all
 
   table_all %>%
-    dplyr::mutate(all_estimate = dplyr::if_else(.data$"Non-rangers (surveyed)" == 0 & .data$"Percentage of the total terrestrial PA area surveyed" == 100 & is.na(.data$all_estimate), 0, .data$all_estimate)) %>%
-    dplyr::mutate(rangers_estimate = dplyr::if_else(.data$"Rangers (surveyed)" == 0 & .data$"Percentage of the total terrestrial PA area surveyed" == 100 & is.na(.data$rangers_estimate), 0, .data$rangers_estimate)) %>%
-    dplyr::mutate(others_estimate = dplyr::if_else(.data$"Non-rangers (surveyed)" == 0 & .data$"Percentage of the total terrestrial PA area surveyed" == 100 & is.na(.data$others_estimate), 0, .data$others_estimate)) %>%
-    dplyr::rename("All personnel (estimate for all PAs)" = .data$all_estimate,
-                  "Rangers (estimate for all PAs)" = .data$rangers_estimate,
-                  "Non-rangers (estimate for all PAs)" = .data$others_estimate,
-                  "Estimated densities for all personnel for total area of terrestrial PA in country/territory (area in km^2 of PA per person)" = .data$all_density,
-                  "Estimated densities for rangers for total area of terrestrial PA in country/territory (area in km^2 of PA per person)" = .data$rangers_density,
-                  "Estimated densities for non-rangers for total area of terrestrial PA in country/territory (area in km^2 of PA per person)" = .data$others_density)
+    dplyr::mutate(all_estimate = dplyr::if_else(.data$"Non-rangers in surveyed area" == 0 & .data$"Percentage of the total terrestrial PA area of the country/territory surveyed" == 100 & is.na(.data$all_estimate), 0, .data$all_estimate)) %>%
+    dplyr::mutate(rangers_estimate = dplyr::if_else(.data$"Rangers in surveyed area" == 0 & .data$"Percentage of the total terrestrial PA area of the country/territory surveyed" == 100 & is.na(.data$rangers_estimate), 0, .data$rangers_estimate)) %>%
+    dplyr::rename("Total personnel" = .data$all_estimate,
+                  "Total rangers" = .data$rangers_estimate,
+                  "Density of all personnel (km^2 of PA per person))" = .data$all_density,
+                  "Density of rangers (km^2 of PA per person)" = .data$rangers_density) %>%
+    dplyr::select("ISO Code",
+                  "Country/territory",
+                  "Total area of terrestrial PAs in country/territory (km^2) World Database on Protected Areas 2020",
+                  "Year(s) of the data",
+                  "Area of terrestrial PA surveyed (km^2)",
+                  "Percentage of the total terrestrial PA area of the country/territory surveyed",
+                  "All personnel in surveyed area",
+                  "Rangers in surveyed area",
+                  "Non-rangers in surveyed area",
+                  "Observed densities for all personnel in surveyed area( km^2 of PA per person)",
+                  "Observed densities for rangers in surveyed area (km^2 of PA per person)",
+                  "Total personnel",
+                  "Total rangers",
+                  "Density of all personnel (km^2 of PA per person))",
+                  "Density of rangers (km^2 of PA per person)")
 
 }
 

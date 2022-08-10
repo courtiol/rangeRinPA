@@ -4,10 +4,5 @@
 ^README\.Rmd$
 ^doc$
 ^Meta$
-vignettes/cache
-vignettes/figs
-vignettes/Simple\_modelling.Rmd
-vignettes/Predicting\_rangers\_RF.Rmd
-vignettes/Predicting\_rangers\_LMM\_BROKEN.Rmd
 ^local$
 ^scripts$

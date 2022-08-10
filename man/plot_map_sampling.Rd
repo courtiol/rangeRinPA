@@ -4,12 +4,14 @@
 \alias{plot_map_sampling}
 \title{Plot the map of the sampling design}
 \usage{
-plot_map_sampling(data, proj = "+proj=moll")
+plot_map_sampling(data, proj = "+proj=moll", basesize = 7)
 }
 \arguments{
 \item{data}{the complete dataset}
 
 \item{proj}{the projection to be used (e.g. "+proj=moll" - the default)}
+
+\item{basesize}{the value for the argument \code{base_size} used in \href{ggplot2::theme}{\code{ggplot2::theme()}}}
 }
 \description{
 Plot the map of the sampling design

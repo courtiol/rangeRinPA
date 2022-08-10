@@ -34,9 +34,9 @@ Extract training data info
 }
 \section{Functions}{
 \itemize{
-\item \code{extract_training_info_internal}: an internal function fetching the info on training datasets
-}}
+\item \code{extract_training_info_internal()}: an internal function fetching the info on training datasets
 
+}}
 \examples{
 \dontrun{
 LMM_small_test <- run_LMM_workflow(data = data_rangers, Ncpu = 2, coef = 0,
