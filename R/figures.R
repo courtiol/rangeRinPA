@@ -403,11 +403,11 @@ plot_tallies_across_continents <- function(what, data, basesize = 7) {
   breakdown %>%
     dplyr::filter(.data$continent != "Antarctica") %>%
     #dplyr::filter(.data$who != "Others") %>%
-    dplyr::mutate(continent = dplyr::case_when(.data$continent == "Latin America & Caribbean" ~ "Latin America &\nCarribbean",
-                                               .data$continent == "Northern America" ~ "Northern\nAmerica",
+    dplyr::mutate(continent = dplyr::case_when(.data$continent == "Latin America & Caribbean" ~ "Latin America &\nCaribbean",
+                                               .data$continent == "Northern America" ~ "Northern America",
                                                TRUE ~ .data$continent),
                   continent = factor(.data$continent,
-                                     levels = c("World", "Africa", "Asia", "Europe", "Latin America &\nCarribbean", "Northern\nAmerica", "Oceania")),
+                                     levels = c("World", "Africa", "Asia", "Europe", "Latin America &\nCaribbean", "Northern America", "Oceania")),
                   who = dplyr::case_when(.data$who == "All" ~ "All personnel",
                                      .data$who == "Rangers" ~ "Rangers",
                                      .data$who == "Others" ~ "Non-rangers"),

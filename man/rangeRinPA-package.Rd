@@ -110,7 +110,7 @@ sapply(paste0(path_predictions, files_to_load), function(file) load(file, envir 
 
 plot_map_sampling(data_rangers_with_geo)
 ggplot2::ggsave(filename = paste0(path_figures, "figure_main_1.pdf"),
-                width = 8.8, height = 5, units = "cm")
+                width = 8.8, height = 5.4, units = "cm")
 
 
 ## Figure 2
