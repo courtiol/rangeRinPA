@@ -32,8 +32,8 @@ plot_map_sampling <- function(data, proj = "+proj=moll", basesize = 7) {
   ## binning variable of interest for plotting:
   data %>%
     dplyr::mutate(sampled_coverage2 = cut(.data$sampled_coverage, breaks = c(0.1, seq(0, 100, 20)),
-                                          labels = c("0", paste0(floor(min(data$sampled_coverage[data$sampled_coverage > 0 & !is.na(data$sampled_coverage)])), "-20"), "20-40", "40-60", "60-80", "80-100")),
-                  sampled_coverage2 = forcats::fct_rev(.data$sampled_coverage2)) -> data
+                                          labels = c("0", "(0-20]", "(20-40]", "(40-60]", "(60-80]", "(80-100]")),
+                  sampled_coverage2 = .data$sampled_coverage2) -> data
 
   data$sampled_coverage2[data$PA_area_surveyed == 0 & data$PA_area_unsurveyed > 0] <- "0"
 
@@ -52,16 +52,16 @@ plot_map_sampling <- function(data, proj = "+proj=moll", basesize = 7) {
     ggplot2::geom_sf(data = border, fill = NA, size = 0.1, colour = "black") +
     ggplot2::geom_sf(mapping = ggplot2::aes(fill = .data$sampled_coverage2, geometry = .data$geometry),
                      data = data, colour = "black", size = 0.05) +
-    ggplot2::scale_fill_manual(values = c(scales::brewer_pal(type = "seq", palette = 2, direction = -1)(length(unique(data$sampled_coverage2)) - 2), "white"),
-                               labels = c(levels(data$sampled_coverage2), "excluded (see legend)"),
-                               na.value = "grey50",
+    ggplot2::scale_fill_manual(values = c("white", scales::brewer_pal(type = "seq", palette = 2, direction = 1)(length(unique(data$sampled_coverage2)) - 2)),
+                               labels = c(levels(data$sampled_coverage2), "Excluded (see caption)"),
+                               na.value = "black",
                                guide = ggplot2::guide_legend(title = "Area surveyed (%)", nrow = 2)) +
     ggplot2::theme_void(base_size = basesize) +
     ggplot2::theme(legend.position = "bottom",
                    #panel.grid = ggplot2::element_line(colour = "GREY", size = 0.3),
                    panel.grid = ggplot2::element_blank(),
                    plot.margin = ggplot2::margin(r = 1, l = 1, t = 1),
-                   legend.key.size = ggplot2::unit(2, "mm")) +
+                   legend.key.size = ggplot2::unit(3, "mm")) +
     ggplot2::coord_sf(expand = FALSE, crs = proj)
 
 }
