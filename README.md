@@ -3,17 +3,10 @@
 
 # rangeRinPA
 
-<!-- badges: start -->
-
-[![Lifecycle:
-experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
-[![CRAN
-status](https://www.r-pkg.org/badges/version/rangeR)](https://CRAN.R-project.org/package=rangeR)
-<!-- badges: end -->
-
 The goal of rangeRinPA is to reproduce most results from the paper
 “Protected Area Personnel and Ranger Numbers are Insufficient to Deliver
-Global Expectations” by Appleton et al. (submitted).
+Global Expectations” by Appleton et al. (2022):
+<https://doi.org/10.1038/s41893-022-00970-0>
 
 ## Installation
 

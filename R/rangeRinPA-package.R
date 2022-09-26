@@ -1,6 +1,6 @@
 #' Protected Area Personnel and Ranger Numbers are Insufficient to Deliver Global Expectations
 #'
-#' The goal of rangeRinPA is to reproduce most results from the paper entitled "Protected area personnel and ranger numbers are insufficient to deliver global expectations" by Appleton et al. (Nature Sustainability, 2022).
+#' The goal of rangeRinPA is to reproduce most results from the paper entitled "Protected area personnel and ranger numbers are insufficient to deliver global expectations" by Appleton et al. (Nature Sustainability, 2022; https://doi.org/10.1038/s41893-022-00970-0).
 #'
 #' For reproducing the results of our paper, just follow the code presented in the section "Examples" below.
 #'
